@@ -1,0 +1,24 @@
+project_name = Lith
+source_dir = src
+source_dir = src/driver
+source_dir = src/evaluator
+source_dir = src/machine
+source_dir = src/objects
+source_dir = src/parser
+depend = { project = Gcs version = any }
+depend = { project = WLib version = any }
+main_unit = lith-driver
+exec_name = lith
+config_dir = config
+path_unit = { unit = Lith.Paths path = src/driver/lith-paths.ads }
+builder_option = "-g"
+builder_option = "-k"
+builder_option = "-s"
+compiler_option = "-g"
+compiler_option = "-gnatwae.wl"
+compiler_option = "-gnata"
+compiler_option = "-gnato"
+compiler_option = "-gnaty3abcefhiklmnoprstOSuxBA"
+compiler_option = "-gnat2012"
+compiler_option = "-fstack-check"
+linker_option = "-g"
