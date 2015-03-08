@@ -6,7 +6,7 @@ with Lith.Symbols;
 
 package body Lith.Evaluator is
 
-   Trace_Eval   : constant Boolean := True;
+   Trace_Eval   : constant Boolean := False;
    Trace_Macros : constant Boolean := False;
 
    function Evaluate
