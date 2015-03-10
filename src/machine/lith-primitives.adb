@@ -1,5 +1,7 @@
 with Ada.Text_IO;
 
+with WL.Random;
+
 with Lith.Environment;
 with Lith.Evaluator;
 with Lith.Objects.Interfaces;
@@ -39,12 +41,6 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
-   function Evaluate_Define
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects;
-      Environment : Lith.Objects.Object)
-      return Lith.Objects.Object;
-
    function Evaluate_Eq
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -73,6 +69,11 @@ package body Lith.Primitives is
       return Lith.Objects.Object;
 
    function Evaluate_Pair
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Random
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
@@ -108,6 +109,7 @@ package body Lith.Primitives is
       Define_Function ("load", 1, Evaluate_Load'Access);
       Define_Function ("null?", 1, Evaluate_Null'Access);
       Define_Function ("pair?", 1, Evaluate_Pair'Access);
+      Define_Function ("random", 1, Evaluate_Random'Access);
       Define_Function ("set!", 2, False, Evaluate_Set'Access);
       Define_Function ("write-char", 2, Evaluate_Write_Char'Access);
       Lith.Primitives.ALU.Add_Operators;
@@ -349,6 +351,24 @@ package body Lith.Primitives is
          return Lith.Symbols.False_Atom;
       end if;
    end Evaluate_Pair;
+
+   ---------------------
+   -- Evaluate_Random --
+   ---------------------
+
+   function Evaluate_Random
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      pragma Unreferenced (Store);
+      Max : constant Integer :=
+              Lith.Objects.To_Integer (Arguments (Arguments'First));
+      Result : constant Integer :=
+                 WL.Random.Random_Number (0, Max - 1);
+   begin
+      return Lith.Objects.To_Object (Result);
+   end Evaluate_Random;
 
    ------------------
    -- Evaluate_Set --
