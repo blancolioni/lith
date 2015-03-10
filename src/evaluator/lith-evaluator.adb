@@ -1,4 +1,5 @@
-with Ada.Text_IO;
+with Ada.Characters.Conversions;
+with Ada.Wide_Wide_Text_IO;
 
 with Lith.Environment;
 with Lith.Objects.Interfaces;
@@ -62,9 +63,9 @@ package body Lith.Evaluator is
       Result    : Object  := Env;
    begin
       if Trace_Eval then
-         Ada.Text_IO.Put_Line
+         Ada.Wide_Wide_Text_IO.Put_Line
            ("create-env: formals: " & Store.Show (Formals));
-         Ada.Text_IO.Put_Line
+         Ada.Wide_Wide_Text_IO.Put_Line
            ("create-env: actuals: " & Store.Show (Actuals));
       end if;
 
@@ -73,7 +74,8 @@ package body Lith.Evaluator is
       end if;
       if not Is_Pair (Formals) and then not Is_Symbol (Formals) then
          raise Evaluation_Error with
-         Store.Show (Formal_It) & " cannot be used as a formal argument";
+         Ada.Characters.Conversions.To_String (Store.Show (Formal_It))
+           & " cannot be used as a formal argument";
       end if;
 
       while Actual_It /= Nil loop
@@ -89,7 +91,7 @@ package body Lith.Evaluator is
                Acc := Store.Pop;
             else
                if Trace_Eval then
-                  Ada.Text_IO.Put_Line
+                  Ada.Wide_Wide_Text_IO.Put_Line
                     (Store.Show (Store.Car (Formal_It))
                      & " <-- "
                      & Store.Show (Value));
@@ -125,7 +127,7 @@ package body Lith.Evaluator is
             Store.Push (Store.Cons (Store.Pop, Result));
             Result := Store.Pop;
             if Trace_Eval then
-               Ada.Text_IO.Put_Line
+               Ada.Wide_Wide_Text_IO.Put_Line
                  (Store.Show (Rest_Name)
                   & " <-- "
                   & Store.Show (T));
@@ -153,7 +155,7 @@ package body Lith.Evaluator is
    begin
 
       if Trace_Eval then
-         Ada.Text_IO.Put_Line
+         Ada.Wide_Wide_Text_IO.Put_Line
            ("apply: [" & Store.Show (Fn) & "] " & Store.Show (Args));
       end if;
       if Is_Integer (Fn) then
@@ -201,7 +203,8 @@ package body Lith.Evaluator is
                else
 --                  return Store.Cons (Fn, Args);
                   raise Evaluation_Error with
-                    "undefined function: " & Store.Show (Fn);
+                    "undefined function: "
+                    & Ada.Characters.Conversions.To_String (Store.Show (Fn));
                end if;
             end;
          end if;
@@ -243,7 +246,7 @@ package body Lith.Evaluator is
                         return Result;
                      else
                         if Trace_Macros then
-                           Ada.Text_IO.Put_Line
+                           Ada.Wide_Wide_Text_IO.Put_Line
                              ("expansion: "
                               & Store.Show (Result));
                         end if;
@@ -296,11 +299,11 @@ package body Lith.Evaluator is
    begin
 
       if Trace_Eval then
-         Ada.Text_IO.Put_Line
+         Ada.Wide_Wide_Text_IO.Put_Line
            ("Eval: "
             & (if Quasiquoting then "[qq] " else "")
             & Store.Show (Expr));
-         Ada.Text_IO.Put_Line ("  in env: " & Store.Show (Env));
+         Ada.Wide_Wide_Text_IO.Put_Line ("  in env: " & Store.Show (Env));
       end if;
 
       if Expr = Nil then
@@ -322,7 +325,9 @@ package body Lith.Evaluator is
                   Result := Value; --  Evaluate (Store, Value, Env, False);
                else
                   raise Evaluation_Error with
-                    "undefined: " & Store.Show (Expr);
+                    "undefined: "
+                    & Ada.Characters.Conversions.To_String
+                    (Store.Show (Expr));
                end if;
             end;
          end if;
@@ -348,7 +353,7 @@ package body Lith.Evaluator is
       end if;
 
       if Trace_Eval then
-         Ada.Text_IO.Put_Line
+         Ada.Wide_Wide_Text_IO.Put_Line
            ("Result: "
             & Store.Show (Result));
       end if;
