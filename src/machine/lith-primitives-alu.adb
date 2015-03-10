@@ -107,6 +107,7 @@ package body Lith.Primitives.ALU is
       Operator ("*", 1, Unit_Fn_Mul'Access, Acc_Fn_Mul'Access);
       Operator ("/", 1, Unit_Fn_Div'Access, Acc_Fn_Div'Access);
       Operator ("mod", 1, Unit_Fn_Mod'Access, Acc_Fn_Mod'Access);
+      Operator ("remainder", 1, Unit_Fn_Mod'Access, Acc_Fn_Mod'Access);
       Operator ("<=", 0, Identity_Fn'Access, Acc_Fn_Leq'Access);
       Operator (">=", 0, Identity_Fn'Access, Acc_Fn_Geq'Access);
       Operator ("<", 0, Identity_Fn'Access, Acc_Fn_Lt'Access);
