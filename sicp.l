@@ -14,5 +14,15 @@
         ((= kinds-of-coins 3) 10)
         ((= kinds-of-coins 4) 25)
         ((= kinds-of-coins 5) 50)))
+
+(define (expmod base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (remainder (square (expmod base (/ exp 2) m)) m))
+        (else (remainder (* base (expmod base (- exp 1) m)) m))))
+
+(define (fermat-test n)
+   (let ((try-it (lambda (a) (= (expmod a n n) a))))
+        (try-it (+ 1 (random (- n 1))))))
         
-(write (count-change 10))
+   
