@@ -246,6 +246,7 @@ package body Lith.Parser.Lexical is
          when ';' =>
             Stop_Token;
             Current_Stream.Line := Current_Stream.Line + 1;
+            Current_Stream.Column := 0;
             Current_Stream.Ch := ' ';
             Scan;
          when '"' =>
