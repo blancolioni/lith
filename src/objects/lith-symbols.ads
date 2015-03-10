@@ -6,8 +6,11 @@ package Lith.Symbols is
    function Get_Name (Symbol : Lith.Objects.Symbol_Type) return String;
 
    function Begin_Atom return Lith.Objects.Object;
+   function Choice_Atom return Lith.Objects.Object;
+   function Define_Atom return Lith.Objects.Object;
    function Dot return Lith.Objects.Object;
    function False_Atom return Lith.Objects.Object;
+   function If_Atom return Lith.Objects.Object;
    function Lambda return Lith.Objects.Object;
    function Macro return Lith.Objects.Object;
    function Quote return Lith.Objects.Object;

@@ -28,6 +28,20 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("begin"));
    end Begin_Atom;
 
+   -----------------
+   -- Choice_Atom --
+   -----------------
+
+   function Choice_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("(choice)"));
+   end Choice_Atom;
+
+   function Define_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("define"));
+   end Define_Atom;
+
    ---------
    -- Dot --
    ---------
@@ -70,6 +84,15 @@ package body Lith.Symbols is
       end if;
       return Result;
    end Get_Symbol;
+
+   -------------
+   -- If_Atom --
+   -------------
+
+   function If_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("if"));
+   end If_Atom;
 
    ------------
    -- Lambda --

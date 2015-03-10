@@ -4,9 +4,10 @@ with Ada.Strings.Fixed;
 with Ada.Text_IO;
 
 with Lith.Environment;
-with Lith.Evaluator;
 with Lith.Parser;
 with Lith.Symbols;
+
+with Lith.Machine.SECD;
 
 package body Lith.Machine is
 
@@ -151,6 +152,8 @@ package body Lith.Machine is
       Machine.Core (Machine.Core'Last) := (Nil, Nil);
       Machine.Free_List := To_Object (Cell_Address'(0));
       Machine.Stack := Nil;
+      Machine.Control := Nil;
+      Machine.Dump := Nil;
       Machine.Alloc_Count := 0;
       Machine.Alloc_Limit := Natural (Machine.Core'Length) - 100;
       return Machine;
@@ -166,16 +169,10 @@ package body Lith.Machine is
       Environment : Lith.Objects.Object)
       return Lith.Objects.Object
    is
-      Result : constant Lith.Objects.Object :=
-                 Lith.Evaluator.Evaluate
-                   (Store => Machine,
-                    Expr  => Expression,
-                    Env   => Environment);
    begin
-      Machine.Push (Result);
---        if Machine.Alloc_Count > Natural (Machine.Core'Length) / 2 then
---           Machine.GC;
---        end if;
+      Machine.Environment := Environment;
+      Machine.Control := Machine.Cons (Expression, Lith.Objects.Nil);
+      Lith.Machine.SECD.Evaluate (Machine);
       return Machine.Pop;
    end Evaluate;
 
@@ -198,6 +195,9 @@ package body Lith.Machine is
          Machine.Free.all := (others => True);
          Lith.Environment.Mark (Machine);
          Machine.Mark (Machine.Stack);
+         Machine.Mark (Machine.Environment);
+         Machine.Mark (Machine.Control);
+         Machine.Mark (Machine.Dump);
 
          for I in Machine.Core'Range loop
             if Machine.Marked (I) then
@@ -505,6 +505,8 @@ package body Lith.Machine is
          return Lith.Symbols.Get_Name (To_Symbol (Value));
       elsif Is_Function (Value) then
          return Lith.Objects.Hex_Image (Value);
+      elsif Is_Apply (Value) then
+         return "apply" & Integer'Image (-Argument_Count (Value));
       elsif Is_Pair (Value) then
          if Machine.Car (Value) = Lith.Symbols.String_Atom then
             return '"' & String_Image (Machine.Cdr (Value)) & '"';

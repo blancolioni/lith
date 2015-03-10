@@ -1,7 +1,6 @@
 with Ada.Containers.Vectors;
 
 with Lith.Environment;
-with Lith.Evaluator;
 with Lith.Symbols;
 
 package body Lith.Objects.Interfaces is
@@ -74,19 +73,11 @@ package body Lith.Objects.Interfaces is
       return Object
    is
       Def : constant Function_Record := Defs (Positive (Fn));
-      Args : Array_Of_Objects := Arguments;
    begin
-      if Def.Strict then
-         for I in Args'Range loop
-            Args (I) :=
-              Lith.Evaluator.Evaluate (Store, Args (I), Environment);
-         end loop;
-      end if;
-
       if Def.Simple then
-         return Def.Simple_Eval (Store, Args);
+         return Def.Simple_Eval (Store, Arguments);
       else
-         return Def.Env_Eval (Store, Args, Environment);
+         return Def.Env_Eval (Store, Arguments, Environment);
       end if;
    end Evaluate;
 

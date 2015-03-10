@@ -8,7 +8,8 @@ with Lith.Symbols;
 package body Lith.Parser is
 
    procedure Parse_S_Expression
-     (Machine   : Lith.Machine.Lith_Machine);
+     (Machine    : Lith.Machine.Lith_Machine;
+      Quasiquote : Boolean);
    --  Parse a single s-expression, leaving the result on the top of the stack
 
    ----------------------
@@ -22,7 +23,7 @@ package body Lith.Parser is
    is
    begin
       Open_String (Expr);
-      Parse_S_Expression (Machine);
+      Parse_S_Expression (Machine, Quasiquote => False);
       Close;
       return Machine.Pop;
    end Parse_Expression;
@@ -38,7 +39,7 @@ package body Lith.Parser is
    begin
       Open (Path);
       while Tok /= Tok_End_Of_File loop
-         Parse_S_Expression (Machine);
+         Parse_S_Expression (Machine, Quasiquote => False);
 
          declare
             Top : constant Lith.Objects.Object := Machine.Pop;
@@ -59,7 +60,8 @@ package body Lith.Parser is
    ------------------------
 
    procedure Parse_S_Expression
-     (Machine   : Lith.Machine.Lith_Machine)
+     (Machine    : Lith.Machine.Lith_Machine;
+      Quasiquote : Boolean)
    is
 
       procedure Parse_Rest_Of_List;
@@ -70,7 +72,7 @@ package body Lith.Parser is
 
       procedure Parse_Rest_Of_List is
       begin
-         Parse_S_Expression (Machine);
+         Parse_S_Expression (Machine, Quasiquote);
 
          if Tok = Tok_Right_Paren then
             Machine.Push (Lith.Objects.Nil);
@@ -93,10 +95,23 @@ package body Lith.Parser is
             Machine.Push (Lith.Objects.Nil);
          when Tok_Left_Paren =>
             Scan;
+            if Quasiquote then
+               Machine.Push ("list");
+            end if;
             Parse_Rest_Of_List;
+            if Quasiquote then
+               Machine.Cons;
+            end if;
          when Tok_Identifier =>
-            Machine.Push
-              (Lith.Objects.To_Object (Lith.Symbols.Get_Symbol (Tok_Text)));
+            if Quasiquote then
+               Machine.Push ("quote");
+               Machine.Push (Tok_Text);
+               Machine.Push (Lith.Objects.Nil);
+               Machine.Cons;
+               Machine.Cons;
+            else
+               Machine.Push (Tok_Text);
+            end if;
             Scan;
          when Tok_Character =>
             Machine.Push
@@ -115,30 +130,25 @@ package body Lith.Parser is
             Scan;
          when Tok_Quote =>
             Scan;
-            Machine.Push ("quote");
-            Parse_S_Expression (Machine);
+            if Quasiquote then
+               Machine.Push ("quote");
+               Machine.Push ("quote");
+               Machine.Push (Lith.Objects.Nil);
+               Machine.Cons;
+               Machine.Cons;
+            else
+               Machine.Push ("quote");
+            end if;
+            Parse_S_Expression (Machine, Quasiquote);
             Machine.Push (Lith.Objects.Nil);
             Machine.Cons;
             Machine.Cons;
          when Tok_Quasiquote =>
             Scan;
-            Machine.Push ("quasiquote");
-            Parse_S_Expression (Machine);
-            Machine.Push (Lith.Objects.Nil);
-            Machine.Cons;
-            Machine.Cons;
+            Parse_S_Expression (Machine, True);
          when Tok_Comma =>
             Scan;
-            if Tok = Tok_At then
-               Scan;
-               Machine.Push (Lith.Symbols.Unquote_Splicing);
-            else
-               Machine.Push (Lith.Symbols.Unquote);
-            end if;
-            Parse_S_Expression (Machine);
-            Machine.Push (Lith.Objects.Nil);
-            Machine.Cons;
-            Machine.Cons;
+            Parse_S_Expression (Machine, False);
          when Tok_Integer =>
             Machine.Push (Lith.Objects.To_Object (Integer'Value (Tok_Text)));
             Scan;

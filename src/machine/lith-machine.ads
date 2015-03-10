@@ -2,6 +2,8 @@ with Lith.Objects;
 
 package Lith.Machine is
 
+   Evaluation_Error : exception;
+
    type Root_Lith_Machine is limited new Lith.Objects.Object_Store
    with private;
 
@@ -109,6 +111,9 @@ private
          Marked       : access Memory_Tag_Type;
          Free         : access Memory_Tag_Type;
          Stack        : Lith.Objects.Object;
+         Environment  : Lith.Objects.Object;
+         Control      : Lith.Objects.Object;
+         Dump         : Lith.Objects.Object;
          Free_List    : Lith.Objects.Object;
          Alloc_Count  : Natural;
          Alloc_Limit  : Natural;
