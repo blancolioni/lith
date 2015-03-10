@@ -1,3 +1,4 @@
+with Ada.Characters.Conversions;
 with Ada.Text_IO;
 
 with WL.Random;
@@ -168,7 +169,8 @@ package body Lith.Primitives is
    begin
       if Lith.Objects.Is_Atom (Xs) then
          raise Constraint_Error with
-           "car: not a list: " & Store.Show (Xs);
+           "car: not a list: "
+           & Ada.Characters.Conversions.To_String (Store.Show (Xs));
       else
          return Store.Car (Xs);
       end if;
@@ -187,7 +189,8 @@ package body Lith.Primitives is
    begin
       if Lith.Objects.Is_Atom (Xs) then
          raise Constraint_Error with
-           "cdr: not a list: " & Store.Show (Xs);
+           "cdr: not a list: "
+           & Ada.Characters.Conversions.To_String (Store.Show (Xs));
       else
          return Store.Cdr (Xs);
       end if;
@@ -304,7 +307,7 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object
    is
-      Path : constant String :=
+      Path : constant Wide_Wide_String :=
                Store.To_String (Arguments (Arguments'First));
    begin
       if Store.Load (Path) then
@@ -400,12 +403,14 @@ package body Lith.Primitives is
       return Lith.Objects.Object
    is
       use Lith.Objects;
-      Text : constant String := Store.Show (Arguments (Arguments'First));
+      Text : constant Wide_Wide_String :=
+               Store.Show (Arguments (Arguments'First));
       Result : Object := Nil;
    begin
       for Ch of reverse Text loop
          Result :=
-           Store.Cons ((To_Object (Integer'(Character'Pos (Ch)))), Result);
+           Store.Cons ((To_Object (Integer'(Wide_Wide_Character'Pos (Ch)))),
+                       Result);
       end loop;
       Result := Store.Cons (Lith.Symbols.String_Atom, Result);
       return Result;

@@ -1,4 +1,4 @@
-with Ada.Text_IO;
+with Ada.Wide_Wide_Text_IO;
 
 with Lith.Parser.Tokens;             use Lith.Parser.Tokens;
 with Lith.Parser.Lexical;            use Lith.Parser.Lexical;
@@ -18,7 +18,7 @@ package body Lith.Parser is
 
    function Parse_Expression
      (Machine : Lith.Machine.Lith_Machine;
-      Expr    : String)
+      Expr    : Wide_Wide_String)
       return Lith.Objects.Object
    is
    begin
@@ -34,7 +34,7 @@ package body Lith.Parser is
 
    procedure Parse_File
      (Machine : Lith.Machine.Lith_Machine;
-      Path    : String)
+      Path    : Wide_Wide_String)
    is
    begin
       Open (Path);
@@ -47,7 +47,7 @@ package body Lith.Parser is
                        Machine.Evaluate (Top, Lith.Objects.Nil);
          begin
             if False then
-               Ada.Text_IO.Put_Line
+               Ada.Wide_Wide_Text_IO.Put_Line
                  (Machine.Show (Result));
             end if;
          end;
@@ -116,12 +116,12 @@ package body Lith.Parser is
          when Tok_Character =>
             Machine.Push
               (Lith.Objects.To_Object
-                 (Integer'(Character'Pos (Tok_Character_Value))));
+                 (Integer'(Wide_Wide_Character'Pos (Tok_Character_Value))));
             Scan;
          when Tok_String =>
             Machine.Push (Lith.Symbols.String_Atom);
             for Ch of Tok_Text loop
-               Machine.Push (Character'Pos (Ch));
+               Machine.Push (Wide_Wide_Character'Pos (Ch));
             end loop;
             Machine.Push (Lith.Objects.Nil);
             for I in 1 .. Tok_Text'Length + 1 loop
@@ -150,7 +150,8 @@ package body Lith.Parser is
             Scan;
             Parse_S_Expression (Machine, False);
          when Tok_Integer =>
-            Machine.Push (Lith.Objects.To_Object (Integer'Value (Tok_Text)));
+            Machine.Push
+              (Lith.Objects.To_Object (Tok_Integer_Value));
             Scan;
          when others =>
             Error ("bad token");

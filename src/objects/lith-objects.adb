@@ -247,15 +247,16 @@ package body Lith.Objects is
 
    function To_String (Store    : Object_Store'Class;
                        Item     : Object)
-                       return String
+                       return Wide_Wide_String
    is
       It : Object := Store.Cdr (Item);
-      Result : String (1 .. 100);
+      Result : Wide_Wide_String (1 .. 100);
       Count  : Natural := 0;
    begin
       while It /= Nil loop
          Count := Count + 1;
-         Result (Count) := Character'Val (To_Integer (Store.Car (It)));
+         Result (Count) :=
+           Wide_Wide_Character'Val (To_Integer (Store.Car (It)));
          It := Store.Cdr (It);
       end loop;
       return Result (1 .. Count);

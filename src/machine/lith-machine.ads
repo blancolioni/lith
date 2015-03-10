@@ -23,7 +23,7 @@ package Lith.Machine is
 
    procedure Push
      (Machine : in out Root_Lith_Machine'Class;
-      Symbol_Name : String);
+      Symbol_Name : Wide_Wide_String);
 
    procedure Push
      (Machine : in out Root_Lith_Machine'Class;
@@ -77,7 +77,7 @@ package Lith.Machine is
    overriding function Show
      (Machine : Root_Lith_Machine;
       Value   : Lith.Objects.Object)
-      return String;
+      return Wide_Wide_String;
 
    procedure Report
      (Machine : Root_Lith_Machine'Class);
@@ -87,7 +87,7 @@ package Lith.Machine is
       Start   : in     Lith.Objects.Object);
 
    overriding function Load (Machine : in out Root_Lith_Machine;
-                             Path    : String)
+                             Path    : Wide_Wide_String)
                              return Boolean;
 
 private

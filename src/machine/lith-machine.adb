@@ -1,7 +1,8 @@
 with Ada.Calendar;
+with Ada.Characters.Conversions;
 with Ada.Exceptions;
-with Ada.Strings.Fixed;
-with Ada.Text_IO;
+with Ada.Strings.Wide_Wide_Fixed;
+with Ada.Wide_Wide_Text_IO;
 
 with Lith.Environment;
 with Lith.Parser;
@@ -184,7 +185,7 @@ package body Lith.Machine is
      (Machine : in out Root_Lith_Machine'Class)
    is
    begin
-      Ada.Text_IO.Put_Line ("Garbage collecting ...");
+      Ada.Wide_Wide_Text_IO.Put_Line ("Garbage collecting ...");
       declare
          use Ada.Calendar;
          Start : constant Time := Clock;
@@ -212,11 +213,11 @@ package body Lith.Machine is
 
          Machine.Marked.all := (others => False);
 
-         Ada.Text_IO.Put_Line
+         Ada.Wide_Wide_Text_IO.Put_Line
            ("GC freed"
-            & Integer'Image (Old_Alloc_Count - Machine.Alloc_Count)
+            & Integer'Wide_Wide_Image (Old_Alloc_Count - Machine.Alloc_Count)
             & " cells in"
-            & Duration'Image ((Clock - Start) * 1000.0)
+            & Duration'Wide_Wide_Image ((Clock - Start) * 1000.0)
             & "ms");
       end;
    end GC;
@@ -239,7 +240,7 @@ package body Lith.Machine is
    ----------
 
    overriding function Load (Machine : in out Root_Lith_Machine;
-                             Path    : String)
+                             Path    : Wide_Wide_String)
                              return Boolean
    is
    begin
@@ -247,11 +248,13 @@ package body Lith.Machine is
       return True;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line
-           (Ada.Text_IO.Standard_Error,
-            "Cannot load " & Path
+         Ada.Wide_Wide_Text_IO.Put_Line
+           (Ada.Wide_Wide_Text_IO.Standard_Error,
+            "Cannot load "
+            & Path
             & ": "
-            & Ada.Exceptions.Exception_Message (E));
+            & Ada.Characters.Conversions.To_Wide_Wide_String
+              (Ada.Exceptions.Exception_Message (E)));
          return False;
    end Load;
 
@@ -308,7 +311,8 @@ package body Lith.Machine is
       Result : constant Lith.Objects.Object := Machine.Car (Machine.Stack);
    begin
       if Trace_Machine then
-         Ada.Text_IO.Put_Line ("machine: pop " & Machine.Show (Result));
+         Ada.Wide_Wide_Text_IO.Put_Line
+           ("machine: pop " & Machine.Show (Result));
       end if;
       Machine.Stack := Machine.Cdr (Machine.Stack);
       return Result;
@@ -324,7 +328,8 @@ package body Lith.Machine is
    is
    begin
       if Trace_Machine then
-         Ada.Text_IO.Put_Line ("machine: push " & Machine.Show (Value));
+         Ada.Wide_Wide_Text_IO.Put_Line
+           ("machine: push " & Machine.Show (Value));
       end if;
       Machine.Stack := Allocate (Machine, Value, Machine.Stack);
    end Push;
@@ -347,7 +352,7 @@ package body Lith.Machine is
 
    procedure Push
      (Machine : in out Root_Lith_Machine'Class;
-      Symbol_Name : String)
+      Symbol_Name : Wide_Wide_String)
    is
    begin
       Machine.Push
@@ -411,15 +416,19 @@ package body Lith.Machine is
       end Hex_Image;
 
    begin
-      Ada.Text_IO.Put_Line ("Total number of cells:"
-                            & Cell_Address'Image (Machine.Core'Length));
-      Ada.Text_IO.Put_Line ("Allocated cell count: "
-                              & Machine.Alloc_Count'Img);
-      Ada.Text_IO.Put_Line ("Free cell count: "
-                            & Natural'Image
-                              (Natural (Machine.Core'Length
-                               - Machine.Alloc_Count)));
-      Ada.Text_IO.Put_Line ("Stack: " & Machine.Show (Machine.Stack));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Total number of cells:"
+         & Cell_Address'Wide_Wide_Image (Machine.Core'Length));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Allocated cell count: "
+         & Natural'Wide_Wide_Image (Machine.Alloc_Count));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Free cell count: "
+         & Natural'Wide_Wide_Image
+           (Natural (Machine.Core'Length
+            - Machine.Alloc_Count)));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Stack: " & Machine.Show (Machine.Stack));
    end Report;
 
    ----------
@@ -429,7 +438,7 @@ package body Lith.Machine is
    overriding function Show
      (Machine : Root_Lith_Machine;
       Value   : Lith.Objects.Object)
-      return String
+      return Wide_Wide_String
    is
       use Lith.Objects;
 
@@ -437,11 +446,11 @@ package body Lith.Machine is
 
       function List_Image
         (Current : Object)
-         return String;
+         return Wide_Wide_String;
 
       function String_Image
         (Start : Object)
-         return String;
+         return Wide_Wide_String;
 
       -------------
       -- Is_List --
@@ -462,7 +471,7 @@ package body Lith.Machine is
 
       function List_Image
         (Current : Object)
-         return String
+         return Wide_Wide_String
       is
       begin
          if Is_Pair (Current) then
@@ -483,13 +492,14 @@ package body Lith.Machine is
 
       function String_Image
         (Start : Object)
-         return String
+         return Wide_Wide_String
       is
       begin
          if Start = Nil then
             return "";
          else
-            return Character'Val (To_Integer (Machine.Car (Start)))
+            return
+              Wide_Wide_Character'Val (To_Integer (Machine.Car (Start)))
               & String_Image (Machine.Cdr (Start));
          end if;
       end String_Image;
@@ -498,13 +508,14 @@ package body Lith.Machine is
       if Value = Nil then
          return "()";
       elsif Is_Integer (Value) then
-         return Ada.Strings.Fixed.Trim
-           (Integer'Image (To_Integer (Value)),
+         return Ada.Strings.Wide_Wide_Fixed.Trim
+           (Integer'Wide_Wide_Image (To_Integer (Value)),
             Ada.Strings.Left);
       elsif Is_Symbol (Value) then
          return Lith.Symbols.Get_Name (To_Symbol (Value));
       elsif Is_Function (Value) then
-         return Lith.Objects.Hex_Image (Value);
+         return Ada.Characters.Conversions.To_Wide_Wide_String
+           (Lith.Objects.Hex_Image (Value));
       elsif Is_Apply (Value) then
          return "apply" & Integer'Image (-Argument_Count (Value));
       elsif Is_Pair (Value) then
@@ -522,7 +533,10 @@ package body Lith.Machine is
             end;
          end if;
       else
-         return "<error: unknown object type [" & Hex_Image (Value) & "]";
+         return "<error: unknown object type ["
+           & Ada.Characters.Conversions.To_Wide_Wide_String
+           (Hex_Image (Value))
+           & "]";
       end if;
    end Show;
 

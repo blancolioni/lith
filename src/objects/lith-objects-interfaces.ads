@@ -12,13 +12,13 @@ package Lith.Objects.Interfaces is
      return Object;
 
    procedure Define_Function
-     (Name           : String;
+     (Name           : Wide_Wide_String;
       Argument_Count : Natural;
       Strict         : Boolean;
       Eval           : Evaluator);
 
    procedure Define_Function
-     (Name           : String;
+     (Name           : Wide_Wide_String;
       Argument_Count : Natural;
       Eval           : Simple_Evaluator);
 
