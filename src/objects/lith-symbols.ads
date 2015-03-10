@@ -2,8 +2,11 @@ with Lith.Objects;
 
 package Lith.Symbols is
 
-   function Get_Symbol (Name : String) return Lith.Objects.Symbol_Type;
-   function Get_Name (Symbol : Lith.Objects.Symbol_Type) return String;
+   function Get_Symbol (Name : Wide_Wide_String)
+                        return Lith.Objects.Symbol_Type;
+
+   function Get_Name (Symbol : Lith.Objects.Symbol_Type)
+                      return Wide_Wide_String;
 
    function Begin_Atom return Lith.Objects.Object;
    function Dot return Lith.Objects.Object;

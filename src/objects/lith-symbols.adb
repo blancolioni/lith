@@ -1,5 +1,5 @@
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Strings.Fixed.Hash;
+with Ada.Strings.Wide_Wide_Fixed.Wide_Wide_Hash;
 
 with Lith.Objects.Symbol_Vectors;
 
@@ -7,14 +7,14 @@ package body Lith.Symbols is
 
    package Symbol_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps
-       (Key_Type        => String,
+       (Key_Type        => Wide_Wide_String,
         Element_Type    => Lith.Objects.Symbol_Type,
-        Hash            => Ada.Strings.Fixed.Hash,
+        Hash            => Ada.Strings.Wide_Wide_Fixed.Wide_Wide_Hash,
         Equivalent_Keys => "=",
         "="             => Lith.Objects."=");
 
    package Symbol_Names is
-     new Lith.Objects.Symbol_Vectors (String);
+     new Lith.Objects.Symbol_Vectors (Wide_Wide_String);
 
    Symbol_To_Name_Map : Symbol_Names.Vector;
    Name_To_Symbol_Map : Symbol_Maps.Map;
@@ -50,7 +50,9 @@ package body Lith.Symbols is
    -- Get_Name --
    --------------
 
-   function Get_Name (Symbol : Lith.Objects.Symbol_Type) return String is
+   function Get_Name
+     (Symbol : Lith.Objects.Symbol_Type)
+      return Wide_Wide_String is
    begin
       return Symbol_To_Name_Map.Element (Symbol);
    end Get_Name;
@@ -59,7 +61,10 @@ package body Lith.Symbols is
    -- Get_Symbol --
    ----------------
 
-   function Get_Symbol (Name : String) return Lith.Objects.Symbol_Type is
+   function Get_Symbol
+     (Name : Wide_Wide_String)
+      return Lith.Objects.Symbol_Type
+   is
       Result : Lith.Objects.Symbol_Type;
    begin
       if not Name_To_Symbol_Map.Contains (Name) then

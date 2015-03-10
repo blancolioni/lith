@@ -1,3 +1,5 @@
+with Ada.Characters.Conversions;
+
 with Lith.Objects.Symbol_Maps;
 with Lith.Symbols;
 
@@ -26,7 +28,7 @@ package body Lith.Primitives.ALU is
 
    Ops : Operator_Maps.Map;
 
-   procedure Operator (Symbol : String;
+   procedure Operator (Symbol : Wide_Wide_String;
                        Identity : Integer;
                        Unit_Fn  : Unit_Operator_Evaluator;
                        Acc_Fn   : Operator_Accumulator);
@@ -145,7 +147,9 @@ package body Lith.Primitives.ALU is
          end;
       else
          raise Constraint_Error with
-           "no such ALU function: " & Lith.Symbols.Get_Name (Op);
+           "no such ALU function: "
+           & Ada.Characters.Conversions.To_String
+           (Lith.Symbols.Get_Name (Op));
       end if;
    end Apply;
 
@@ -153,7 +157,7 @@ package body Lith.Primitives.ALU is
    -- Operator --
    --------------
 
-   procedure Operator (Symbol : String;
+   procedure Operator (Symbol : Wide_Wide_String;
                        Identity : Integer;
                        Unit_Fn  : Unit_Operator_Evaluator;
                        Acc_Fn   : Operator_Accumulator)

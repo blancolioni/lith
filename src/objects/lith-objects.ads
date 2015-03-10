@@ -71,17 +71,17 @@ package Lith.Objects is
 
    function Show (Store    : Object_Store;
                   Item     : Object)
-                  return String
+                  return Wide_Wide_String
                   is abstract;
 
    function Load (Store    : in out Object_Store;
-                  Path     : String)
+                  Path     : Wide_Wide_String)
                   return Boolean
                   is abstract;
 
    function To_String (Store    : Object_Store'Class;
                        Item     : Object)
-                       return String;
+                       return Wide_Wide_String;
 
    function Cons (Store : in out Object_Store;
                   Car, Cdr : Object)
