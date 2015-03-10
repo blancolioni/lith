@@ -517,7 +517,7 @@ package body Lith.Machine is
          return Ada.Characters.Conversions.To_Wide_Wide_String
            (Lith.Objects.Hex_Image (Value));
       elsif Is_Apply (Value) then
-         return "apply" & Integer'Image (-Argument_Count (Value));
+         return "apply" & Integer'Wide_Wide_Image (-Argument_Count (Value));
       elsif Is_Pair (Value) then
          if Machine.Car (Value) = Lith.Symbols.String_Atom then
             return '"' & String_Image (Machine.Cdr (Value)) & '"';
