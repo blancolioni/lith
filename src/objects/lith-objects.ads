@@ -33,6 +33,11 @@ package Lith.Objects is
    function To_Integer (Item : Object) return Integer
      with Pre => Is_Integer (Item);
 
+   function Is_Apply (Item : Object) return Boolean;
+   function Apply_Object (Argument_Count : Natural) return Object;
+   function Argument_Count (Item : Object) return Natural
+     with Pre => Is_Apply (Item);
+
    function Is_Atom (Item : Object) return Boolean;
    function Is_Pair (Item : Object) return Boolean;
 
@@ -109,11 +114,15 @@ package Lith.Objects is
 
 private
 
-   type Object_Payload is mod 2 ** 30;
+   type Object_Payload is mod 2 ** 29;
    type Object_Tag is (Integer_Object,
                        Pair_Object,
                        Primitive_Object,
-                       Symbol_Object);
+                       Symbol_Object,
+                       Apply_Object,
+                       Unused_Tag_5,
+                       Unused_Tag_6,
+                       Unused_Tag_7);
 
    type Object is
       record

@@ -1,5 +1,23 @@
 package body Lith.Objects is
 
+   ------------------
+   -- Apply_Object --
+   ------------------
+
+   function Apply_Object (Argument_Count : Natural) return Object is
+   begin
+      return (Object_Payload (Argument_Count), Apply_Object);
+   end Apply_Object;
+
+   --------------------
+   -- Argument_Count --
+   --------------------
+
+   function Argument_Count (Item : Object) return Natural is
+   begin
+      return Natural (Item.Payload);
+   end Argument_Count;
+
    ---------------
    -- Hex_Image --
    ---------------
@@ -12,7 +30,11 @@ package body Lith.Objects is
                       when Integer_Object   => 'i',
                       when Pair_Object      => 'p',
                       when Primitive_Object => 'f',
-                      when Symbol_Object    => 's');
+                      when Symbol_Object    => 's',
+                      when Apply_Object     => 'a',
+                      when Unused_Tag_5     => '5',
+                      when Unused_Tag_6     => '6',
+                      when Unused_Tag_7     => '7');
 
       Result : String (1 .. 8);
 
@@ -45,6 +67,15 @@ package body Lith.Objects is
    begin
       return Item.Tag = Pair_Object;
    end Is_Address;
+
+   --------------
+   -- Is_Apply --
+   --------------
+
+   function Is_Apply (Item : Object) return Boolean is
+   begin
+      return Item.Tag = Apply_Object;
+   end Is_Apply;
 
    -------------
    -- Is_Atom --
@@ -124,7 +155,11 @@ package body Lith.Objects is
       return Integer
    is
    begin
-      return Integer (Item.Payload) - 2 ** 27;
+      if Item.Payload < 2 ** 28 then
+         return Integer (Item.Payload);
+      else
+         return Integer (Item.Payload) - 2 ** 29;
+      end if;
    end To_Integer;
 
    ---------------
@@ -151,7 +186,11 @@ package body Lith.Objects is
 
    function To_Object (Value : Integer) return Object is
    begin
-      return (Object_Payload (Value + 2 ** 27), Integer_Object);
+      if Value >= 0 then
+         return (Object_Payload (Value), Integer_Object);
+      else
+         return (Object_Payload (Value + 2 ** 29), Integer_Object);
+      end if;
    end To_Object;
 
    ---------------
