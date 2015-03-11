@@ -1,6 +1,12 @@
 (define nil '())
 (define list (lambda x x))
 
+(define (equal? x y)
+  (cond ((eq? x y) #t)
+        ((and (pair? x) (pair? y)) (and (equal? (car x) (car y)) (equal? (cdr x) (cdr y))))
+        (else #f)))
+
+
 (define defmacro (macro (name args body) `(define ,name (macro ,args ,body))))
 
 (define __exit nil)
