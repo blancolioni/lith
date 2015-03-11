@@ -51,6 +51,15 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("."));
    end Dot;
 
+   ---------------
+   -- Eval_Atom --
+   ---------------
+
+   function Eval_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("eval"));
+   end Eval_Atom;
+
    ----------------
    -- False_Atom --
    ----------------
@@ -134,6 +143,15 @@ package body Lith.Symbols is
    begin
       return Lith.Objects.To_Object (Get_Symbol ("quote"));
    end Quote;
+
+   ----------------------
+   -- Stack_To_Control --
+   ----------------------
+
+   function Stack_To_Control return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("(stack->control)"));
+   end Stack_To_Control;
 
    -----------------
    -- String_Atom --

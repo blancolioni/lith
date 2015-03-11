@@ -1,11 +1,7 @@
 (define nil '())
 (define list (lambda x x))
-;(define m1 (macro (f x) ('list f x)))
-;(define m2 (macro (x) (m1 (lambda (x) x) x)))
-;(m2 2)
 
-;(define defmacro (macro (name args body) `(define ,name (macro ,args ,body))))
-;(defmacro defun (name args body) `(define ,name (lambda ,args ,body)))
+(define defmacro (macro (name args body) `(define ,name (macro ,args ,body))))
 
 (define __exit nil)
 (define (exit) (set! __exit '#t))
@@ -47,47 +43,44 @@
 (define (append xs ys)
   (if (null? xs) ys (cons (car xs) (append (cdr xs) ys))))
 
-(define let (lambda (bindings expr)
+(define let (macro (bindings expr)
   (cons (list 'lambda (map car bindings) expr) (map cadr bindings))))
 
 (define (let*2let bindings expr)
   (if (null? bindings) expr
     (list 'let (list (car bindings)) (let*2let (cdr bindings) expr))))
 
-;(define let* (macro (bindings expr) (let*2let bindings expr)))
-
+(define let* (macro (bindings expr) (let*2let bindings expr)))
   
 (define (if2cond clauses)
   (if (null? clauses) nil
     (if (eq? (caar clauses) 'else) (cadar clauses)
       (list 'if (caar clauses) (cadar clauses) (if2cond (cdr clauses))))))
 
-;(define cond (macro clauses (if2cond clauses)))
+(define cond (macro clauses (if2cond clauses)))
 
-;(define and (macro (x y) `(if ,x ,y ,x)))
-;(define or (macro (x y) `(if ,x ,x ,y)))
+(define and (macro (x y) `(if ,x ,y ,x)))
+(define or (macro (x y) `(if ,x ,x ,y)))
 (define (not x) (if x '#f '#t))
 
-;(define alu (macro (op) `(define (,op x) (#alu (quote ,op) x))))
+(define alu (macro (op) `(define ,op (lambda x (#alu (quote ,op) x)))))
                     ;(defun + x (#alu '+ x))
-;(alu +)
-;(alu -)
-;(alu *)
-;(alu /)
-;(alu mod)
-;(alu <)
-;(alu >)
-;(alu <=)
-;(alu >=)
-;(alu =)
-;(alu remainder)
+(alu +)
+(alu -)
+(alu *)
+(alu /)
+(alu mod)
+(alu <)
+(alu >)
+(alu <=)
+(alu >=)
+(alu =)
+(alu remainder)
 
-;(define (square x) (* x x))
+(define (square x) (* x x))
 
-;(define (even? x) (eq? (mod x 2) 0))
-;(define (odd? x) (eq? (mod x 2) 1))
-
-(define + (lambda xs (#alu '+ xs)))
+(define (even? x) (eq? (mod x 2) 0))
+(define (odd? x) (eq? (mod x 2) 1))
 
 (define (string? x) (and (pair? x) (eq? (car x) '#string)))
 
@@ -117,7 +110,7 @@
 (define (write-string x)
   (wchars (cdr x)))
   
-(define (newline) (write-char 10))
+(define (newline) (begin (write-char 13) (write-char 10)))
 (define (write x) (begin (display x) (newline)))
 
 (define (do-string-append xs)

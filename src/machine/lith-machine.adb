@@ -372,11 +372,11 @@ package body Lith.Machine is
         (Lith.Objects.To_Object (Value));
    end Push;
 
-   ------------
-   -- Report --
-   ------------
+   -------------------
+   -- Report_Memory --
+   -------------------
 
-   procedure Report
+   procedure Report_Memory
      (Machine : Root_Lith_Machine'Class)
    is
 
@@ -427,9 +427,25 @@ package body Lith.Machine is
          & Natural'Wide_Wide_Image
            (Natural (Machine.Core'Length
             - Machine.Alloc_Count)));
+   end Report_Memory;
+
+   ------------------
+   -- Report_State --
+   ------------------
+
+   procedure Report_State
+     (Machine : Root_Lith_Machine'Class)
+   is
+   begin
       Ada.Wide_Wide_Text_IO.Put_Line
-        ("Stack: " & Machine.Show (Machine.Stack));
-   end Report;
+        (" S: " & Machine.Show (Machine.Stack));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        (" E: " & Machine.Show (Machine.Environment));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        (" C: " & Machine.Show (Machine.Control));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        (" D: " & Machine.Show (Machine.Dump));
+   end Report_State;
 
    ----------
    -- Show --

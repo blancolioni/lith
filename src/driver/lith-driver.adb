@@ -30,15 +30,17 @@ begin
       end if;
    end if;
 
-   if False then
+   if True then
       Lith.Repl.Execute (Machine);
    end if;
 
-   Machine.Report;
+   Machine.Report_State;
+   Machine.Report_Memory;
 
 exception
    when others =>
-      Machine.Report;
+      Machine.Report_State;
+      Machine.Report_Memory;
       Ada.Text_IO.Put_Line (Ada.Text_IO.Standard_Error,
                             "exiting because of unhandled exception");
       raise;
