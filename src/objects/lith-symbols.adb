@@ -117,6 +117,24 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("lambda"));
    end Lambda;
 
+   ----------------------
+   -- Lith_Define_Atom --
+   ----------------------
+
+   function Lith_Define_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("lith-define"));
+   end Lith_Define_Atom;
+
+   -------------------
+   -- Lith_Set_Atom --
+   -------------------
+
+   function Lith_Set_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("(lith-set!)"));
+   end Lith_Set_Atom;
+
    -----------
    -- Macro --
    -----------
@@ -143,6 +161,15 @@ package body Lith.Symbols is
    begin
       return Lith.Objects.To_Object (Get_Symbol ("quote"));
    end Quote;
+
+   --------------
+   -- Set_Atom --
+   --------------
+
+   function Set_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("set!"));
+   end Set_Atom;
 
    ----------------------
    -- Stack_To_Control --

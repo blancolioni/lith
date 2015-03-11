@@ -18,7 +18,7 @@ package body Lith.Repl is
       use Lith.Objects;
    begin
       while Lith.Environment.Get
-        (Lith.Symbols.Get_Symbol ("__exit")) = Nil
+        (Lith.Symbols.Get_Symbol ("__exit")) = Lith.Symbols.False_Atom
       loop
          Put ("Lith> ");
          Flush;
