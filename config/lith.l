@@ -110,7 +110,7 @@
 (define (write-string x)
   (wchars (cdr x)))
   
-(define (newline) (begin (write-char 13) (write-char 10)))
+(define (newline) (write-char 10))
 (define (write x) (begin (display x) (newline)))
 
 (define (do-string-append xs)

@@ -1,5 +1,5 @@
 with Ada.Characters.Conversions;
-with Ada.Text_IO;
+with Ada.Wide_Wide_Text_IO;
 
 with WL.Random;
 
@@ -426,10 +426,14 @@ package body Lith.Primitives is
       return Lith.Objects.Object
    is
       pragma Unreferenced (Store);
+      Code : constant Integer :=
+               Lith.Objects.To_Integer (Arguments (Arguments'First));
    begin
-      Ada.Text_IO.Put
-        (Character'Val
-           (Lith.Objects.To_Integer (Arguments (Arguments'First))));
+      if Code = 10 then
+         Ada.Wide_Wide_Text_IO.New_Line;
+      else
+         Ada.Wide_Wide_Text_IO.Put (Wide_Wide_Character'Val (Code));
+      end if;
       return Arguments (Arguments'First);
    end Evaluate_Write_Char;
 
