@@ -21,6 +21,13 @@ package body Lith.Machine.SECD is
       Result  : out Lith.Objects.Object;
       Found   : out Boolean);
 
+   procedure Get
+     (Machine : Root_Lith_Machine'Class;
+      Symbol  : Lith.Objects.Symbol_Type;
+      Result  : out Lith.Objects.Object;
+      Found   : out Boolean;
+      Global  : out Boolean);
+
    function Length
      (Machine : Root_Lith_Machine'Class;
       Xs      : Lith.Objects.Object)
@@ -221,6 +228,36 @@ package body Lith.Machine.SECD is
                   Machine.Control := Cs;
                   Push_Control (Machine.Pop);
                   C_Updated := True;
+               elsif C = Lith_Set_Atom then
+                  declare
+                     Value : constant Object := Machine.Pop;
+                     Name  : constant Object := Machine.Pop;
+                     Old_Value : Object;
+                     Found     : Boolean;
+                     Global    : Boolean;
+                  begin
+                     Get (Machine, To_Symbol (Name), Old_Value,
+                          Found, Global);
+
+                     if (not Found and then Machine.Environment = Nil)
+                       or else (Found and then Global)
+                     then
+                        if Found then
+                           Lith.Environment.Replace
+                             (To_Symbol (Name), Value);
+                        else
+                           Lith.Environment.Define
+                             (To_Symbol (Name), Value);
+                        end if;
+                     else
+                        Machine.Push (Name);
+                        Machine.Push (Value);
+                        Machine.Cons;
+                        Machine.Environment :=
+                          Machine.Cons (Machine.Pop, Machine.Environment);
+                     end if;
+                     Machine.Push (Name);
+                  end;
                else
                   declare
                      Value : Lith.Objects.Object;
@@ -312,6 +349,13 @@ package body Lith.Machine.SECD is
                        (Machine.Car (Machine.Cdr (Machine.Cdr (Args))));
                      Machine.Push (Machine.Cadr (Args));
                      C_Updated := True;
+                  elsif F = Set_Atom then
+                     Machine.Control :=
+                       Machine.Cons (Lith_Set_Atom, Cs);
+                     Machine.Control :=
+                       Machine.Cons (Machine.Cadr (Args), Machine.Control);
+                     Machine.Push (Machine.Car (Args));
+                     C_Updated := True;
                   elsif F = Define_Atom then
                      Machine.Push
                        (Lith.Primitives.Evaluate_Define
@@ -398,6 +442,23 @@ package body Lith.Machine.SECD is
       Result  : out Lith.Objects.Object;
       Found   : out Boolean)
    is
+      Global : Boolean;
+      pragma Unreferenced (Global);
+   begin
+      Get (Machine, Symbol, Result, Found, Global);
+   end Get;
+
+   ---------
+   -- Get --
+   ---------
+
+   procedure Get
+     (Machine : Root_Lith_Machine'Class;
+      Symbol  : Lith.Objects.Symbol_Type;
+      Result  : out Lith.Objects.Object;
+      Found   : out Boolean;
+      Global  : out Boolean)
+   is
       use Lith.Objects;
       Outer : Object := Machine.Environment;
    begin
@@ -412,6 +473,7 @@ package body Lith.Machine.SECD is
                   if To_Symbol (Machine.Car (Item)) = Symbol then
                      Result := Machine.Cdr (Item);
                      Found := True;
+                     Global := False;
                      return;
                   end if;
                end;
@@ -422,6 +484,8 @@ package body Lith.Machine.SECD is
       end loop;
 
       Lith.Environment.Get (Symbol, Result, Found);
+      Global := Found;
+
    end Get;
 
    --------------

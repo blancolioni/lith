@@ -4,7 +4,6 @@ with Ada.Wide_Wide_Text_IO;
 with WL.Random;
 
 with Lith.Environment;
-with Lith.Evaluator;
 with Lith.Objects.Interfaces;
 with Lith.Primitives.ALU;
 with Lith.Symbols;
@@ -19,12 +18,6 @@ package body Lith.Primitives is
    function Evaluate_Symbol_To_String
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object;
-
-   function Evaluate_Begin
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects;
-      Environment : Lith.Objects.Object)
       return Lith.Objects.Object;
 
    function Evaluate_Car
@@ -53,12 +46,6 @@ package body Lith.Primitives is
       return Lith.Objects.Object
    is (Arguments (Arguments'First));
 
-   function Evaluate_If
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects;
-      Environment : Lith.Objects.Object)
-      return Lith.Objects.Object;
-
    function Evaluate_Load
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -79,12 +66,6 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
-   function Evaluate_Set
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects;
-      Environment : Lith.Objects.Object)
-      return Lith.Objects.Object;
-
    function Evaluate_Write_Char
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -99,19 +80,16 @@ package body Lith.Primitives is
    begin
       Define_Function ("#alu", 2, Evaluate_ALU'Access);
       Define_Function ("symbol->string", 1, Evaluate_Symbol_To_String'Access);
-      Define_Function ("begin", 1, False, Evaluate_Begin'Access);
       Define_Function ("car", 1, Evaluate_Car'Access);
       Define_Function ("cdr", 1, Evaluate_Cdr'Access);
       Define_Function ("cons", 2, Evaluate_Cons'Access);
       Define_Function ("define", 2, False, Evaluate_Define'Access);
       Define_Function ("eq?", 2, Evaluate_Eq'Access);
       Define_Function ("eval", 1, Evaluate_Eval'Access);
-      Define_Function ("if", 3, False, Evaluate_If'Access);
       Define_Function ("load", 1, Evaluate_Load'Access);
       Define_Function ("null?", 1, Evaluate_Null'Access);
       Define_Function ("pair?", 1, Evaluate_Pair'Access);
       Define_Function ("random", 1, Evaluate_Random'Access);
-      Define_Function ("set!", 2, False, Evaluate_Set'Access);
       Define_Function ("write-char", 2, Evaluate_Write_Char'Access);
       Lith.Primitives.ALU.Add_Operators;
    end Add_Primitives;
@@ -133,28 +111,6 @@ package body Lith.Primitives is
    begin
       return Lith.Primitives.ALU.Apply (Op, Args);
    end Evaluate_ALU;
-
-   --------------------
-   -- Evaluate_Begin --
-   --------------------
-
-   function Evaluate_Begin
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects;
-      Environment : Lith.Objects.Object)
-      return Lith.Objects.Object
-   is
-      Result : Lith.Objects.Object;
-   begin
-      for Arg of Arguments loop
-         Result :=
-           Lith.Evaluator.Evaluate
-             (Store => Store,
-              Expr  => Arg,
-              Env   => Environment);
-      end loop;
-      return Result;
-   end Evaluate_Begin;
 
    ------------------
    -- Evaluate_Car --
@@ -221,6 +177,7 @@ package body Lith.Primitives is
       Environment : Lith.Objects.Object)
       return Lith.Objects.Object
    is
+      pragma Unreferenced (Environment);
       use Lith.Objects;
       Head : constant Object :=
                Arguments (Arguments'First);
@@ -239,9 +196,9 @@ package body Lith.Primitives is
 
       if Lith.Objects.Is_Symbol (Head) then
          Lith.Environment.Define
-           (Lith.Objects.To_Symbol (Head),
-            Lith.Evaluator.Evaluate
-              (Store, Value, Environment));
+           (Lith.Objects.To_Symbol (Head), Value);
+--              Lith.Evaluator.Evaluate
+--                (Store, Value, Environment));
          return Head;
       else
          Lith.Environment.Define
@@ -272,31 +229,6 @@ package body Lith.Primitives is
          return Lith.Symbols.False_Atom;
       end if;
    end Evaluate_Eq;
-
-   -----------------
-   -- Evaluate_If --
-   -----------------
-
-   function Evaluate_If
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects;
-      Environment : Lith.Objects.Object)
-      return Lith.Objects.Object
-   is
-      use type Lith.Objects.Object;
-      Test : constant Lith.Objects.Object :=
-               Lith.Evaluator.Evaluate
-                 (Store,
-                  Arguments (Arguments'First),
-                  Environment);
-      Result : constant Lith.Objects.Object :=
-                 (if Test /= Lith.Symbols.False_Atom
-                  then Arguments (Arguments'First + 1)
-                  else Arguments (Arguments'First + 2));
-   begin
-      return Lith.Evaluator.Evaluate
-        (Store, Result, Environment);
-   end Evaluate_If;
 
    -------------------
    -- Evaluate_Load --
@@ -372,26 +304,6 @@ package body Lith.Primitives is
    begin
       return Lith.Objects.To_Object (Result);
    end Evaluate_Random;
-
-   ------------------
-   -- Evaluate_Set --
-   ------------------
-
-   function Evaluate_Set
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects;
-      Environment : Lith.Objects.Object)
-      return Lith.Objects.Object
-   is
-      Value : constant Lith.Objects.Object :=
-                Lith.Evaluator.Evaluate
-                  (Store, Arguments (Arguments'First + 1), Environment);
-   begin
-      Lith.Environment.Replace
-        (Name  => Lith.Objects.To_Symbol (Arguments (Arguments'First)),
-         Value => Value);
-      return Value;
-   end Evaluate_Set;
 
    -------------------------------
    -- Evaluate_Symbol_To_String --

@@ -9,8 +9,8 @@
 
 (define defmacro (macro (name args body) `(define ,name (macro ,args ,body))))
 
-(define __exit nil)
-(define (exit) (set! __exit '#t))
+(define __exit #f)
+(define (exit) (set! __exit #t))
 
 (define (caar x) (car (car x)))
 (define (cadr x) (car (cdr x)))
@@ -151,9 +151,10 @@
 (define (denom x) (cdr x))
 
 (define (print-rat x)
-  (display (numer x))
-  (display "/")
-  (display (denom x))
-  (newline))
+  (begin
+    (display (numer x))
+    (display "/")
+    (display (denom x))
+    (newline)))
 
 (define one-half (make-rat 1 2))
