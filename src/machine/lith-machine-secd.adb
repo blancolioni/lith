@@ -8,7 +8,7 @@ with Lith.Symbols;
 
 package body Lith.Machine.SECD is
 
-   Trace_Eval : constant Boolean := True;
+   Trace_Eval : constant Boolean := False;
 
    procedure Create_Environment
      (Machine      : in out Root_Lith_Machine'Class;
@@ -25,6 +25,13 @@ package body Lith.Machine.SECD is
      (Machine : Root_Lith_Machine'Class;
       Xs      : Lith.Objects.Object)
      return Natural;
+
+   function Is_Macro
+     (Machine : Root_Lith_Machine'Class;
+      F       : Lith.Objects.Object)
+      return Boolean;
+   --  returns True if F ultimately (or immediately) refers to a macro
+   --  in the current machine environment
 
    ------------------------
    -- Create_Environment --
@@ -115,8 +122,7 @@ package body Lith.Machine.SECD is
       use Lith.Symbols;
 
       procedure Push_Control (C : Object);
-      function Pop_Control return Object;
-      pragma Unreferenced (Pop_Control);
+      function Pop_Control return Object with Unreferenced;
       procedure Save_State;
       procedure Restore_State;
 
@@ -160,6 +166,10 @@ package body Lith.Machine.SECD is
 
       procedure Save_State is
       begin
+         if Trace_Eval then
+            Ada.Wide_Wide_Text_IO.Put_Line ("saving context ...");
+            Machine.Report_State;
+         end if;
          Machine.Dump := Machine.Cons (Machine.Control, Machine.Dump);
          Machine.Dump := Machine.Cons (Machine.Environment, Machine.Dump);
          Machine.Dump := Machine.Cons (Machine.Stack, Machine.Dump);
@@ -178,24 +188,23 @@ package body Lith.Machine.SECD is
             if Trace_Eval then
                Ada.Wide_Wide_Text_IO.Put_Line
                  ("Eval: " & Machine.Show (C));
-               Ada.Wide_Wide_Text_IO.Put_Line
-                 (" E: " & Machine.Show (Machine.Environment));
-               Ada.Wide_Wide_Text_IO.Put_Line
-                 (" C: " & Machine.Show (Machine.Control));
-               Ada.Wide_Wide_Text_IO.Put_Line
-                 (" S: " & Machine.Show (Machine.Stack));
+               Machine.Report_State;
             end if;
 
             if C = Nil then
                raise Evaluation_Error with
                  "attempted to evaluate nil";
+            elsif C = Lith.Symbols.False_Atom
+              or else C = Lith.Symbols.True_Atom
+            then
+               Machine.Push (C);
             elsif Is_Integer (C) then
                Machine.Push (C);
             elsif Is_Symbol (C) then
                if C = Choice_Atom then
                   declare
                      Cond : constant Object := Machine.Pop;
-                     T, F : Object;
+                        T, F : Object;
                   begin
                      T := Machine.Pop;
                      F := Machine.Pop;
@@ -204,10 +213,14 @@ package body Lith.Machine.SECD is
                           Machine.Cons (F, Cs);
                      else
                         Machine.Control :=
-                          Machine.Cons (T, Cs);
+                             Machine.Cons (T, Cs);
                      end if;
                      C_Updated := True;
                   end;
+               elsif C = Lith.Symbols.Stack_To_Control then
+                  Machine.Control := Cs;
+                  Push_Control (Machine.Pop);
+                  C_Updated := True;
                else
                   declare
                      Value : Lith.Objects.Object;
@@ -235,9 +248,15 @@ package body Lith.Machine.SECD is
                   Machine.Control := Cs;
                   C_Updated := True;
 
-                  for I in Arguments'Range loop
-                     Arguments (I) := Machine.Pop;
-                  end loop;
+                  if Is_Pair (F) and then Machine.Car (F) = Macro then
+                     for I in reverse Arguments'Range loop
+                        Arguments (I) := Machine.Pop;
+                     end loop;
+                  else
+                     for I in Arguments'Range loop
+                        Arguments (I) := Machine.Pop;
+                     end loop;
+                  end if;
 
                   if Is_Function (F) then
                      Machine.Push
@@ -245,8 +264,16 @@ package body Lith.Machine.SECD is
                           (Machine, To_Function (F),
                            Arguments, Machine.Environment));
                   elsif Is_Pair (F)
-                    and then Machine.Car (F) = Lambda
+                    and then (Machine.Car (F) = Lambda
+                              or else Machine.Car (F) = Macro)
                   then
+                     if Machine.Car (F) = Macro then
+                        if Trace_Eval then
+                           Ada.Wide_Wide_Text_IO.Put_Line
+                             ("macro: pushing post-macro");
+                        end if;
+                        Push_Control (Lith.Symbols.Stack_To_Control);
+                     end if;
                      Save_State;
                      Machine.Stack := Nil;
                      Machine.Control :=
@@ -294,6 +321,21 @@ package body Lith.Machine.SECD is
                            Environment => Machine.Environment));
                   elsif F = Lambda then
                      Machine.Push (C);
+                  elsif F = String_Atom then
+                     Machine.Push (C);
+                  elsif F = Begin_Atom then
+                     Machine.Dump := Machine.Cons (C, Machine.Dump);
+                     Machine.Control := Cs;
+                     C_Updated := True;
+                     declare
+                        Arg_Array : constant Array_Of_Objects :=
+                                      Machine.To_Object_Array (Args);
+                     begin
+                        for Arg of reverse Arg_Array loop
+                           Push_Control (Arg);
+                        end loop;
+                        Machine.Dump := Machine.Cdr (Machine.Dump);
+                     end;
                   else
                      Machine.Dump := Machine.Cons (C, Machine.Dump);
                      Machine.Control := Cs;
@@ -302,9 +344,14 @@ package body Lith.Machine.SECD is
                      Push_Control (F);
                      declare
                         It : Object := Args;
+                        Macro : constant Boolean := Is_Macro (Machine, F);
                      begin
                         while It /= Nil loop
-                           Push_Control (Machine.Car (It));
+                           if Macro then
+                              Machine.Push (Machine.Car (It));
+                           else
+                              Push_Control (Machine.Car (It));
+                           end if;
                            It := Machine.Cdr (It);
                         end loop;
                      end;
@@ -318,11 +365,12 @@ package body Lith.Machine.SECD is
             end if;
          end;
 
-         if Machine.Control = Nil and then
+         while Machine.Control = Nil and then
            Machine.Dump /= Nil
-         then
+         loop
             if Trace_Eval then
                Ada.Wide_Wide_Text_IO.Put_Line ("restoring context ...");
+               Machine.Report_State;
             end if;
 
             declare
@@ -330,8 +378,12 @@ package body Lith.Machine.SECD is
             begin
                Restore_State;
                Machine.Push (S);
+               if Trace_Eval then
+                  Ada.Wide_Wide_Text_IO.Put_Line ("new context:");
+                  Machine.Report_State;
+               end if;
             end;
-         end if;
+         end loop;
 
       end loop;
    end Evaluate;
@@ -371,6 +423,50 @@ package body Lith.Machine.SECD is
 
       Lith.Environment.Get (Symbol, Result, Found);
    end Get;
+
+   --------------
+   -- Is_Macro --
+   --------------
+
+   function Is_Macro
+     (Machine : Root_Lith_Machine'Class;
+      F       : Lith.Objects.Object)
+      return Boolean
+   is
+      use Lith.Objects;
+   begin
+      if Is_Pair (F)
+        and then Machine.Car (F) = Lith.Symbols.Macro
+      then
+         if Trace_Eval then
+            Ada.Wide_Wide_Text_IO.Put_Line
+              ("found direct macro: " & Machine.Show (F));
+         end if;
+         return True;
+      elsif Is_Symbol (F) then
+         declare
+            Value : Object;
+            Found : Boolean;
+         begin
+            Get (Machine, To_Symbol (F), Value, Found);
+            if Found then
+               if Is_Macro (Machine, Value) then
+                  if Trace_Eval then
+                     Ada.Wide_Wide_Text_IO.Put_Line
+                       ("found indirect macro: " & Machine.Show (F));
+                  end if;
+                  return True;
+               else
+                  return False;
+               end if;
+            else
+               return False;
+            end if;
+         end;
+      else
+         return False;
+      end if;
+   end Is_Macro;
 
    ------------
    -- Length --

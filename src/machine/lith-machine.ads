@@ -79,7 +79,10 @@ package Lith.Machine is
       Value   : Lith.Objects.Object)
       return Wide_Wide_String;
 
-   procedure Report
+   procedure Report_Memory
+     (Machine : Root_Lith_Machine'Class);
+
+   procedure Report_State
      (Machine : Root_Lith_Machine'Class);
 
    overriding procedure Mark
