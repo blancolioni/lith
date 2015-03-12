@@ -21,6 +21,9 @@ package Lith.Objects.Numbers is
    procedure Add
      (Store : in out Object_Store'Class);
 
+   procedure Negate
+     (Store : in out Object_Store'Class);
+
    procedure Subtract
      (Store : in out Object_Store'Class);
 
