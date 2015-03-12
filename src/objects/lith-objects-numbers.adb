@@ -1,4 +1,4 @@
-with Ada.Wide_Wide_Text_IO;
+--  with Ada.Wide_Wide_Text_IO;
 
 with Lith.Symbols;
 
@@ -8,7 +8,6 @@ package body Lith.Objects.Numbers is
    Lowest_Small_Integer  : constant := -2 ** (Payload_Bits - 1) + 1;
 
    type Exact_Number_Type is (Small_Integer, Large_Integer, Rational);
-   pragma Unreferenced (Rational);
 
    function Top_Of_Stack_Type
      (Store : Object_Store'Class;
@@ -191,7 +190,6 @@ package body Lith.Objects.Numbers is
          if X_Type < Y_Type then
             Small_Integer_To_Large (Store);
          else
-            Store.Report_State;
             Store.Push (Store.Top (2));
             Small_Integer_To_Large (Store);
             Store.Push (Store.Pop, Secondary);
@@ -200,7 +198,6 @@ package body Lith.Objects.Numbers is
             Store.Push (Store.Top (2, Secondary));
             Store.Push (Store.Pop (Secondary));
             Store.Drop (Stack => Secondary);
-            Store.Report_State;
          end if;
       end if;
    end Merge_Types;
@@ -216,6 +213,46 @@ package body Lith.Objects.Numbers is
    begin
       null;
    end Multiply;
+
+   ------------
+   -- Negate --
+   ------------
+
+   procedure Negate
+     (Store : in out Object_Store'Class)
+   is
+   begin
+      case Top_Of_Stack_Type (Store) is
+         when Small_Integer =>
+            declare
+               X : constant Integer := To_Integer (Store.Pop);
+            begin
+               Store.Push (To_Object (-1 * X));
+            end;
+         when Large_Integer =>
+            declare
+               It : Object := Store.Pop;
+               Count : Natural := 0;
+            begin
+               Store.Push (It, Secondary);
+               Store.Push (Lith.Symbols.Large_Integer_Atom);
+               It := Store.Cdr (It);  --  skip large integer atom
+               while It /= Nil loop
+                  Store.Push
+                    (To_Object (-1 * To_Integer (Store.Car (It))));
+                  Count := Count + 1;
+                  It := Store.Cdr (It);
+               end loop;
+               Store.Push (Nil);
+               for I in 1 .. Count + 1 loop
+                  Store.Cons;
+               end loop;
+               Store.Drop (1, Secondary);
+            end;
+         when Rational =>
+            null;
+      end case;
+   end Negate;
 
    ---------------
    -- Remainder --
@@ -250,9 +287,13 @@ package body Lith.Objects.Numbers is
    procedure Subtract
      (Store : in out Object_Store'Class)
    is
-      pragma Unreferenced (Store);
    begin
-      null;
+      Store.Push (Store.Pop, Secondary);
+      Store.Report_State;
+      Negate (Store);
+      Store.Report_State;
+      Store.Push (Store.Pop (Secondary));
+      Add (Store);
    end Subtract;
 
    -----------------------
@@ -266,9 +307,6 @@ package body Lith.Objects.Numbers is
    is
       Item : constant Object := Store.Top (Index);
    begin
-      Ada.Wide_Wide_Text_IO.Put_Line
-        ("Checking" & Positive'Wide_Wide_Image (Index) & ": "
-         & Store.Show (Item));
       if Is_Integer (Item) then
          return Small_Integer;
       elsif Store.Car (Item) = Lith.Symbols.Large_Integer_Atom then
