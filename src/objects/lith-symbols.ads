@@ -16,11 +16,13 @@ package Lith.Symbols is
    function False_Atom return Lith.Objects.Object;
    function If_Atom return Lith.Objects.Object;
    function Lambda return Lith.Objects.Object;
+   function Large_Integer_Atom return Lith.Objects.Object;
    function Lith_Define_Atom return Lith.Objects.Object;
    function Lith_Set_Atom return Lith.Objects.Object;
    function Macro return Lith.Objects.Object;
    function Quote return Lith.Objects.Object;
    function Quasiquote return Lith.Objects.Object;
+   function Rational_Atom return Lith.Objects.Object;
    function Set_Atom return Lith.Objects.Object;
    function Stack_To_Control return Lith.Objects.Object;
    function String_Atom return Lith.Objects.Object;

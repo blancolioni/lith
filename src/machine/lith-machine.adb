@@ -101,8 +101,8 @@ package body Lith.Machine is
    -- Cons --
    ----------
 
-   procedure Cons
-     (Machine : in out Root_Lith_Machine'Class)
+   overriding procedure Cons
+     (Machine : in out Root_Lith_Machine)
    is
       Cdr : constant Lith.Objects.Object := Machine.Pop;
       Car : constant Lith.Objects.Object := Machine.Pop;
@@ -305,16 +305,28 @@ package body Lith.Machine is
    ---------
 
    overriding function Pop
-     (Machine : in out Root_Lith_Machine)
+     (Machine : in out Root_Lith_Machine;
+      Stack   : Lith.Objects.Stack_Type := Lith.Objects.Primary)
       return Lith.Objects.Object
    is
-      Result : constant Lith.Objects.Object := Machine.Car (Machine.Stack);
+      use Lith.Objects;
+      SP     : constant Lith.Objects.Object :=
+                 (case Stack is
+                     when Primary   => Machine.Stack,
+                     when Secondary => Machine.Dump);
+      Result : constant Lith.Objects.Object :=
+                 Machine.Car (SP);
    begin
       if Trace_Machine then
          Ada.Wide_Wide_Text_IO.Put_Line
            ("machine: pop " & Machine.Show (Result));
       end if;
-      Machine.Stack := Machine.Cdr (Machine.Stack);
+      case Stack is
+         when Primary =>
+            Machine.Stack := Machine.Cdr (Machine.Stack);
+         when Secondary =>
+            Machine.Dump := Machine.Cdr (Machine.Dump);
+      end case;
       return Result;
    end Pop;
 
@@ -324,14 +336,21 @@ package body Lith.Machine is
 
    overriding procedure Push
      (Machine : in out Root_Lith_Machine;
-      Value   : Lith.Objects.Object)
+      Value   : Lith.Objects.Object;
+      Stack   : Lith.Objects.Stack_Type := Lith.Objects.Primary)
    is
+      use all type Lith.Objects.Stack_Type;
    begin
       if Trace_Machine then
          Ada.Wide_Wide_Text_IO.Put_Line
            ("machine: push " & Machine.Show (Value));
       end if;
-      Machine.Stack := Allocate (Machine, Value, Machine.Stack);
+      case Stack is
+         when Primary =>
+            Machine.Stack := Allocate (Machine, Value, Machine.Stack);
+         when Secondary =>
+            Machine.Dump := Allocate (Machine, Value, Machine.Dump);
+      end case;
    end Push;
 
    ----------
@@ -433,8 +452,8 @@ package body Lith.Machine is
    -- Report_State --
    ------------------
 
-   procedure Report_State
-     (Machine : Root_Lith_Machine'Class)
+   overriding procedure Report_State
+     (Machine : Root_Lith_Machine)
    is
    begin
       Ada.Wide_Wide_Text_IO.Put_Line
@@ -561,11 +580,28 @@ package body Lith.Machine is
    ---------
 
    overriding function Top
-     (Machine : in out Root_Lith_Machine)
+     (Machine : Root_Lith_Machine;
+      Index   : Positive := 1;
+      Stack   : Lith.Objects.Stack_Type := Lith.Objects.Primary)
       return Lith.Objects.Object
    is
+      use all type Lith.Objects.Stack_Type;
+
+      SP     : constant Lith.Objects.Object :=
+                 (case Stack is
+                     when Primary   => Machine.Stack,
+                     when Secondary => Machine.Dump);
+
+      function Get_Nth
+        (From : Lith.Objects.Object;
+         N    : Positive)
+         return Lith.Objects.Object
+      is (if N = 1
+          then Machine.Car (From)
+          else Get_Nth (Machine.Cdr (From), N - 1));
+
    begin
-      return Machine.Car (Machine.Stack);
+      return Get_Nth (SP, Index);
    end Top;
 
 end Lith.Machine;

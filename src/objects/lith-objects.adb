@@ -18,6 +18,21 @@ package body Lith.Objects is
       return Natural (Item.Payload);
    end Argument_Count;
 
+   ----------
+   -- Drop --
+   ----------
+
+   procedure Drop (Store : in out Object_Store'Class;
+                   Count : Positive := 1;
+                   Stack : Stack_Type := Primary)
+   is
+      Unused : Object;
+   begin
+      for I in 1 .. Count loop
+         Unused := Store.Pop (Stack);
+      end loop;
+   end Drop;
+
    ---------------
    -- Hex_Image --
    ---------------

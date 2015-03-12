@@ -109,7 +109,7 @@ package body Lith.Primitives is
                Store.To_Object_Array
                  (Arguments (Arguments'First + 1));
    begin
-      return Lith.Primitives.ALU.Apply (Op, Args);
+      return Lith.Primitives.ALU.Apply (Store, Op, Args);
    end Evaluate_ALU;
 
    ------------------

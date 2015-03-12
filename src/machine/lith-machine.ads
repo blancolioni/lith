@@ -15,7 +15,8 @@ package Lith.Machine is
 
    overriding procedure Push
      (Machine : in out Root_Lith_Machine;
-      Value   : Lith.Objects.Object);
+      Value   : Lith.Objects.Object;
+      Stack   : Lith.Objects.Stack_Type := Lith.Objects.Primary);
 
    procedure Push
      (Machine : in out Root_Lith_Machine'Class;
@@ -30,16 +31,18 @@ package Lith.Machine is
       Value   : Integer);
 
    overriding function Pop
-     (Machine : in out Root_Lith_Machine)
+     (Machine : in out Root_Lith_Machine;
+      Stack   : Lith.Objects.Stack_Type := Lith.Objects.Primary)
       return Lith.Objects.Object;
 
    overriding function Top
-     (Machine : in out Root_Lith_Machine)
+     (Machine : Root_Lith_Machine;
+      Index   : Positive := 1;
+      Stack   : Lith.Objects.Stack_Type := Lith.Objects.Primary)
       return Lith.Objects.Object;
 
-   procedure Cons
-     (Machine : in out Root_Lith_Machine'Class);
-   --  Pop cdr then car off the stack.  Push (cons car cdr).
+   overriding procedure Cons
+     (Machine : in out Root_Lith_Machine);
 
    overriding function Cons
      (Machine  : in out Root_Lith_Machine;
@@ -82,8 +85,8 @@ package Lith.Machine is
    procedure Report_Memory
      (Machine : Root_Lith_Machine'Class);
 
-   procedure Report_State
-     (Machine : Root_Lith_Machine'Class);
+   overriding procedure Report_State
+     (Machine : Root_Lith_Machine);
 
    overriding procedure Mark
      (Machine : in out Root_Lith_Machine;
