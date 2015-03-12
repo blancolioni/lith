@@ -1,5 +1,6 @@
 with Ada.Characters.Conversions;
 
+with Lith.Objects.Numbers;
 with Lith.Objects.Symbol_Maps;
 with Lith.Symbols;
 
@@ -15,11 +16,16 @@ package body Lith.Primitives.ALU is
      function (X, Y : Lith.Objects.Object)
                return Lith.Objects.Object;
 
+   type Stack_Operator_Accumulator is access
+     procedure (Store : in out Object_Store'Class);
+
    type Operator_Record is
       record
-         Identity    : Integer;
-         Unit_Fn     : Unit_Operator_Evaluator;
-         Acc_Fn      : Operator_Accumulator;
+         Identity     : Integer;
+         Unit_Fn      : Unit_Operator_Evaluator;
+         Acc_Fn       : Operator_Accumulator;
+         Exact_Proc   : Stack_Operator_Accumulator;
+         Inexact_Proc : Stack_Operator_Accumulator;
       end record;
 
    package Operator_Maps is
@@ -33,11 +39,18 @@ package body Lith.Primitives.ALU is
                        Unit_Fn  : Unit_Operator_Evaluator;
                        Acc_Fn   : Operator_Accumulator);
 
+   procedure Operator (Symbol       : Wide_Wide_String;
+                       Identity     : Integer;
+                       Unit_Fn      : Unit_Operator_Evaluator;
+                       Exact_Proc   : Stack_Operator_Accumulator;
+                       Inexact_Proc : Stack_Operator_Accumulator);
+
    function Identity_Fn (X : Lith.Objects.Object) return Lith.Objects.Object
    is (X);
 
-   function Acc_Fn_Add (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is (To_Object (To_Integer (X) + To_Integer (Y)));
+   --     function Acc_Fn_Add (X, Y : Lith.Objects.Object)
+   --  return Lith.Objects.Object
+--     is (To_Object (To_Integer (X) + To_Integer (Y)));
 
    function Unit_Fn_Sub (X : Lith.Objects.Object) return Lith.Objects.Object
    is (X);
@@ -104,7 +117,9 @@ package body Lith.Primitives.ALU is
 
    procedure Add_Operators is
    begin
-      Operator ("+", 0, Identity_Fn'Access, Acc_Fn_Add'Access);
+      Operator ("+", 0, Identity_Fn'Access,
+                Lith.Objects.Numbers.Add'Access, null);
+
       Operator ("-", 0, Unit_Fn_Sub'Access, Acc_Fn_Sub'Access);
       Operator ("*", 1, Unit_Fn_Mul'Access, Acc_Fn_Mul'Access);
       Operator ("/", 1, Unit_Fn_Div'Access, Acc_Fn_Div'Access);
@@ -122,8 +137,9 @@ package body Lith.Primitives.ALU is
    -----------
 
    function Apply
-     (Op   : Lith.Objects.Symbol_Type;
-      Args : Lith.Objects.Array_Of_Objects)
+     (Store : in out Lith.Objects.Object_Store'Class;
+      Op    : Lith.Objects.Symbol_Type;
+      Args  : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object
    is
    begin
@@ -135,7 +151,7 @@ package body Lith.Primitives.ALU is
                return To_Object (Rec.Identity);
             elsif Args'Length = 1 then
                return Rec.Unit_Fn (Args (Args'First));
-            else
+            elsif Rec.Acc_Fn /= null then
                declare
                   Acc : Object := Args (Args'First);
                begin
@@ -144,6 +160,17 @@ package body Lith.Primitives.ALU is
                   end loop;
                   return Acc;
                end;
+            else
+               for Arg of reverse Args loop
+                  Store.Push (Arg);
+               end loop;
+
+               for I in 1 .. Args'Length - 1 loop
+                  Rec.Exact_Proc (Store);
+                  Store.Report_State;
+               end loop;
+
+               return Store.Pop;
             end if;
          end;
       else
@@ -165,7 +192,22 @@ package body Lith.Primitives.ALU is
    is
    begin
       Ops.Insert (Lith.Symbols.Get_Symbol (Symbol),
-                  (Identity, Unit_Fn, Acc_Fn));
+                  (Identity, Unit_Fn, Acc_Fn, null, null));
+   end Operator;
+
+   --------------
+   -- Operator --
+   --------------
+
+   procedure Operator (Symbol       : Wide_Wide_String;
+                       Identity     : Integer;
+                       Unit_Fn      : Unit_Operator_Evaluator;
+                       Exact_Proc   : Stack_Operator_Accumulator;
+                       Inexact_Proc : Stack_Operator_Accumulator)
+   is
+   begin
+      Ops.Insert (Lith.Symbols.Get_Symbol (Symbol),
+                  (Identity, Unit_Fn, null, Exact_Proc, Inexact_Proc));
    end Operator;
 
 end Lith.Primitives.ALU;

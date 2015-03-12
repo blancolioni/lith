@@ -117,6 +117,15 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("lambda"));
    end Lambda;
 
+   ------------------------
+   -- Large_Integer_Atom --
+   ------------------------
+
+   function Large_Integer_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("<large-integer>"));
+   end Large_Integer_Atom;
+
    ----------------------
    -- Lith_Define_Atom --
    ----------------------
@@ -162,6 +171,15 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("quote"));
    end Quote;
 
+   -------------------
+   -- Rational_Atom --
+   -------------------
+
+   function Rational_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("(rational)"));
+   end Rational_Atom;
+
    --------------
    -- Set_Atom --
    --------------
@@ -186,7 +204,7 @@ package body Lith.Symbols is
 
    function String_Atom return Lith.Objects.Object is
    begin
-      return Lith.Objects.To_Object (Get_Symbol ("#string"));
+      return Lith.Objects.To_Object (Get_Symbol ("(string)"));
    end String_Atom;
 
    ---------------

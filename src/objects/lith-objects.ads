@@ -45,6 +45,8 @@ package Lith.Objects is
 
    function Hex_Image (Item : Object) return String;
 
+   type Stack_Type is (Primary, Secondary);
+
    type Object_Store is limited interface;
 
    function Car (Store : Object_Store;
@@ -92,20 +94,35 @@ package Lith.Objects is
                   Car, Cdr : Object)
                   return Object is abstract;
 
+   procedure Cons (Store : in out Object_Store) is abstract;
+   --  Pop cdr then car off the stack.  Push (cons car cdr).
+
    procedure Mark
      (Store : in out Object_Store;
       Start : in     Lith.Objects.Object)
    is abstract;
 
-   procedure Push (Store : in out Object_Store;
-                   Value : Object)
+   procedure Push (Store     : in out Object_Store;
+                   Value     : Object;
+                   Stack     : Stack_Type := Primary)
    is abstract;
 
-   function Pop (Store : in out Object_Store) return Object
-   is abstract;
+   function Pop (Store : in out Object_Store;
+                 Stack     : Stack_Type := Primary)
+                 return Object
+                 is abstract;
 
-   function Top (Store : in out Object_Store) return Object
-   is abstract;
+   function Top (Store : Object_Store;
+                 Index : Positive := 1;
+                 Stack     : Stack_Type := Primary)
+                 return Object
+                 is abstract;
+
+   procedure Report_State (Store : Object_Store) is abstract;
+
+   procedure Drop (Store : in out Object_Store'Class;
+                   Count : Positive := 1;
+                   Stack : Stack_Type := Primary);
 
    function To_Object_Array
      (Store : in out Object_Store'Class;
@@ -113,6 +130,8 @@ package Lith.Objects is
       return Array_Of_Objects;
 
 private
+
+   Payload_Bits : constant := 29;
 
    type Object_Payload is mod 2 ** 29;
    type Object_Tag is (Integer_Object,
