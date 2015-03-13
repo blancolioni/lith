@@ -49,36 +49,6 @@ package body Lith.Primitives.ALU is
    function Identity_Fn (X : Lith.Objects.Object) return Lith.Objects.Object
    is (X);
 
-   --     function Acc_Fn_Add (X, Y : Lith.Objects.Object)
-   --  return Lith.Objects.Object
---     is (To_Object (To_Integer (X) + To_Integer (Y)));
-
-   --     function Unit_Fn_Sub (X : Lith.Objects.Object)
-   --  return Lith.Objects.Object
---     is (X);
---
---     function Acc_Fn_Sub (X, Y : Lith.Objects.Object)
-   --  return Lith.Objects.Object
---     is (To_Object (To_Integer (X) - To_Integer (Y)));
-
-   function Unit_Fn_Mul (X : Lith.Objects.Object) return Lith.Objects.Object
-   is (X);
-
-   function Acc_Fn_Mul (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is (To_Object (To_Integer (X) * To_Integer (Y)));
-
-   function Unit_Fn_Div (X : Lith.Objects.Object) return Lith.Objects.Object
-   is (X); ---  wrong!
-
-   function Acc_Fn_Div (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is (To_Object (To_Integer (X) / To_Integer (Y)));
-
-   function Unit_Fn_Mod (X : Lith.Objects.Object) return Lith.Objects.Object
-   is (X);
-
-   function Acc_Fn_Mod (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is (To_Object (To_Integer (X) mod To_Integer (Y)));
-
    function Acc_Fn_Leq (X, Y : Lith.Objects.Object) return Lith.Objects.Object
    is ((if X = Lith.Symbols.False_Atom
         then X
@@ -114,6 +84,12 @@ package body Lith.Primitives.ALU is
         then Y
         else Lith.Symbols.False_Atom));
 
+   procedure Divide_Quotient
+     (Store : in out Object_Store'Class);
+
+   procedure Divide_Mod
+     (Store : in out Object_Store'Class);
+
    -------------------
    -- Add_Operators --
    -------------------
@@ -127,10 +103,16 @@ package body Lith.Primitives.ALU is
                 Lith.Objects.Numbers.Subtract'Access,
                 null);
 
-      Operator ("*", 1, Unit_Fn_Mul'Access, Acc_Fn_Mul'Access);
-      Operator ("/", 1, Unit_Fn_Div'Access, Acc_Fn_Div'Access);
-      Operator ("mod", 1, Unit_Fn_Mod'Access, Acc_Fn_Mod'Access);
-      Operator ("remainder", 1, Unit_Fn_Mod'Access, Acc_Fn_Mod'Access);
+      Operator ("*", 0, null,
+                Lith.Objects.Numbers.Multiply'Access,
+                null);
+      Operator ("/", 0, null,
+                Divide_Quotient'Access,
+                null);
+      Operator ("mod", 0, null,
+                Divide_Mod'Access,
+                null);
+
       Operator ("<=", 0, Identity_Fn'Access, Acc_Fn_Leq'Access);
       Operator (">=", 0, Identity_Fn'Access, Acc_Fn_Geq'Access);
       Operator ("<", 0, Identity_Fn'Access, Acc_Fn_Lt'Access);
@@ -191,6 +173,32 @@ package body Lith.Primitives.ALU is
            (Lith.Symbols.Get_Name (Op));
       end if;
    end Apply;
+
+   ----------------
+   -- Divide_Mod --
+   ----------------
+
+   procedure Divide_Mod
+     (Store : in out Object_Store'Class)
+   is
+   begin
+      Lith.Objects.Numbers.Divide (Store);
+      Store.Push (Store.Pop, Lith.Objects.Secondary);
+      Store.Drop;
+      Store.Push (Store.Pop (Lith.Objects.Secondary));
+   end Divide_Mod;
+
+   ---------------------
+   -- Divide_Quotient --
+   ---------------------
+
+   procedure Divide_Quotient
+     (Store : in out Object_Store'Class)
+   is
+   begin
+      Lith.Objects.Numbers.Divide (Store);
+      Store.Drop;
+   end Divide_Quotient;
 
    --------------
    -- Operator --
