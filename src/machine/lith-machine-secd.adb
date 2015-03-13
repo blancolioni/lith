@@ -504,10 +504,6 @@ package body Lith.Machine.SECD is
       if Is_Pair (F)
         and then Machine.Car (F) = Lith.Symbols.Macro
       then
-         if Trace_Eval then
-            Ada.Wide_Wide_Text_IO.Put_Line
-              ("found direct macro: " & Machine.Show (F));
-         end if;
          return True;
       elsif Is_Symbol (F) then
          declare
@@ -517,10 +513,6 @@ package body Lith.Machine.SECD is
             Get (Machine, To_Symbol (F), Value, Found);
             if Found then
                if Is_Macro (Machine, Value) then
-                  if Trace_Eval then
-                     Ada.Wide_Wide_Text_IO.Put_Line
-                       ("found indirect macro: " & Machine.Show (F));
-                  end if;
                   return True;
                else
                   return False;
