@@ -3,7 +3,6 @@ with Ada.Wide_Wide_Text_IO;
 
 with Lith.Environment;
 with Lith.Objects.Interfaces;
-with Lith.Primitives;
 with Lith.Symbols;
 
 package body Lith.Machine.SECD is
@@ -357,12 +356,14 @@ package body Lith.Machine.SECD is
                      Machine.Push (Machine.Car (Args));
                      C_Updated := True;
                   elsif F = Define_Atom then
-                     Machine.Push
-                       (Lith.Primitives.Evaluate_Define
-                          (Store       => Machine,
-                           Arguments   => (Machine.Car (Args),
-                                           Machine.Cadr (Args)),
-                           Environment => Machine.Environment));
+                     declare
+                        Name : constant Symbol_Type :=
+                                 To_Symbol (Machine.Car (Args));
+                        Value : constant Object := Machine.Cadr (Args);
+                     begin
+                        Lith.Environment.Define (Name, Value);
+                        Machine.Push (Machine.Cons (To_Object (Name), Value));
+                     end;
                   elsif F = Lambda then
                      Machine.Push (C);
                   elsif F = String_Atom then

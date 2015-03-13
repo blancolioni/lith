@@ -3,7 +3,6 @@ with Ada.Wide_Wide_Text_IO;
 
 with WL.Random;
 
-with Lith.Environment;
 with Lith.Objects.Interfaces;
 with Lith.Primitives.ALU;
 with Lith.Symbols;
@@ -83,7 +82,6 @@ package body Lith.Primitives is
       Define_Function ("car", 1, Evaluate_Car'Access);
       Define_Function ("cdr", 1, Evaluate_Cdr'Access);
       Define_Function ("cons", 2, Evaluate_Cons'Access);
-      Define_Function ("define", 2, False, Evaluate_Define'Access);
       Define_Function ("eq?", 2, Evaluate_Eq'Access);
       Define_Function ("eval", 1, Evaluate_Eval'Access);
       Define_Function ("load", 1, Evaluate_Load'Access);
@@ -166,50 +164,6 @@ package body Lith.Primitives is
    begin
       return Store.Cons (Car, Cdr);
    end Evaluate_Cons;
-
-   ---------------------
-   -- Evaluate_Define --
-   ---------------------
-
-   function Evaluate_Define
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects;
-      Environment : Lith.Objects.Object)
-      return Lith.Objects.Object
-   is
-      pragma Unreferenced (Environment);
-      use Lith.Objects;
-      Head : constant Object :=
-               Arguments (Arguments'First);
-      Value : Object;
-   begin
-      if Arguments'Length = 2 then
-         Value := Arguments (Arguments'First + 1);
-      else
-         Value := Nil;
-         for I in reverse Arguments'First + 1 .. Arguments'Last loop
-            Value := Store.Cons (Arguments (I), Value);
-         end loop;
-         Value := Store.Cons (Lith.Symbols.Begin_Atom,
-                              Value);
-      end if;
-
-      if Lith.Objects.Is_Symbol (Head) then
-         Lith.Environment.Define
-           (Lith.Objects.To_Symbol (Head), Value);
---              Lith.Evaluator.Evaluate
---                (Store, Value, Environment));
-         return Head;
-      else
-         Lith.Environment.Define
-           (Lith.Objects.To_Symbol (Store.Car (Head)),
-            Store.Cons (Lith.Symbols.Lambda,
-              Store.Cons (Store.Cdr (Head),
-                Store.Cons (Value,
-                  Lith.Objects.Nil))));
-         return Store.Car (Head);
-      end if;
-   end Evaluate_Define;
 
    -----------------
    -- Evaluate_Eq --
