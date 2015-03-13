@@ -6,6 +6,10 @@
           (list 'lith-define (car name-and-args) (list 'lambda (cdr name-and-args) body))
           (list 'lith-define name-and-args ((lambda (x) x) (if pair? body (cons 'begin body) body))))))
           
+(define and (macro (x y) `(if ,x ,y ,x)))
+(define or (macro (x y) `(if ,x ,x ,y)))
+(define (not x) (if x '#f '#t))
+
 (define (+1 x) (+ x 1))
 (define (-1 x) (+ x 1))
 
@@ -14,11 +18,22 @@
         ((and (pair? x) (pair? y)) (and (equal? (car x) (car y)) (equal? (cdr x) (cdr y))))
         (else #f)))
 
-
 (lith-define defmacro (macro (name args body) `(define ,name (macro ,args ,body))))
 
-(define __exit #f)
-(define (exit) (set! __exit #t))
+(define (number? x) (integer? x))  ; the only numbers we have :(
+
+(define (complex? x) #f)
+(define (real? x) #f)
+(define (rational? x) #f)
+
+(define (exact? x) (integer? x))   ; not entirely correct, but we don't have floating point yet, so it will do
+(define (inexact? x) #f)           ; see above
+
+(define (exact-integer? x) (and (exact? x) (integer? x)))
+
+(define (finite? x) (number? x))
+(define (infinite? x) #f)
+(define (nan? x) #f)
 
 (define (caar x) (car (car x)))
 (define (cadr x) (car (cdr x)))
@@ -73,10 +88,6 @@
 
 (define cond (macro clauses (if2cond clauses)))
 
-(define and (macro (x y) `(if ,x ,y ,x)))
-(define or (macro (x y) `(if ,x ,x ,y)))
-(define (not x) (if x '#f '#t))
-
 (define alu (macro (op) `(define ,op (lambda x (#alu (quote ,op) x)))))
                     ;(defun + x (#alu '+ x))
 (alu +)
@@ -95,6 +106,9 @@
 
 (define (even? x) (eq? (mod x 2) 0))
 (define (odd? x) (eq? (mod x 2) 1))
+(define (zero? x) (eq? x 0))
+(define (positive? x) (> x 0))
+(define (negative? x) (< x 0))
 
 (define (string? x) (and (pair? x) (eq? (car x) '#string)))
 
@@ -167,3 +181,7 @@
     (newline)))
 
 (define one-half (make-rat 1 2))
+
+(define __exit #f)
+(define (exit) (set! __exit #t))
+
