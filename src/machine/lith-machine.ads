@@ -78,7 +78,7 @@ package Lith.Machine is
       return Lith.Objects.Object;
 
    overriding function Show
-     (Machine : Root_Lith_Machine;
+     (Machine : in out Root_Lith_Machine;
       Value   : Lith.Objects.Object)
       return Wide_Wide_String;
 
@@ -86,7 +86,7 @@ package Lith.Machine is
      (Machine : Root_Lith_Machine'Class);
 
    overriding procedure Report_State
-     (Machine : Root_Lith_Machine);
+     (Machine : in out Root_Lith_Machine);
 
    overriding procedure Mark
      (Machine : in out Root_Lith_Machine;
