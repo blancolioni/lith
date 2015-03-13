@@ -45,17 +45,22 @@ package body Lith.Primitives is
       return Lith.Objects.Object
    is (Arguments (Arguments'First));
 
+   function Evaluate_Is_Integer
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Is_Null
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Is_Pair
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
    function Evaluate_Load
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object;
-
-   function Evaluate_Null
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object;
-
-   function Evaluate_Pair
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
@@ -85,8 +90,9 @@ package body Lith.Primitives is
       Define_Function ("eq?", 2, Evaluate_Eq'Access);
       Define_Function ("eval", 1, Evaluate_Eval'Access);
       Define_Function ("load", 1, Evaluate_Load'Access);
-      Define_Function ("null?", 1, Evaluate_Null'Access);
-      Define_Function ("pair?", 1, Evaluate_Pair'Access);
+      Define_Function ("null?", 1, Evaluate_Is_Null'Access);
+      Define_Function ("pair?", 1, Evaluate_Is_Pair'Access);
+      Define_Function ("integer?", 1, Evaluate_Is_Integer'Access);
       Define_Function ("random", 1, Evaluate_Random'Access);
       Define_Function ("write-char", 2, Evaluate_Write_Char'Access);
       Lith.Primitives.ALU.Add_Operators;
@@ -184,6 +190,66 @@ package body Lith.Primitives is
       end if;
    end Evaluate_Eq;
 
+   -------------------------
+   -- Evaluate_Is_Integer --
+   -------------------------
+
+   function Evaluate_Is_Integer
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects;
+      A : constant Object := Arguments (Arguments'First);
+   begin
+      if Is_Integer (A)
+        or else (Is_Pair (A)
+                 and then Store.Car (A) = Lith.Symbols.Large_Integer_Atom)
+      then
+         return Lith.Symbols.True_Atom;
+      else
+         return Lith.Symbols.False_Atom;
+      end if;
+   end Evaluate_Is_Integer;
+
+   ----------------------
+   -- Evaluate_Is_Null --
+   ----------------------
+
+   function Evaluate_Is_Null
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      pragma Unreferenced (Store);
+      use Lith.Objects;
+   begin
+      if Arguments (Arguments'First) = Nil then
+         return Lith.Symbols.True_Atom;
+      else
+         return Lith.Symbols.False_Atom;
+      end if;
+   end Evaluate_Is_Null;
+
+   ----------------------
+   -- Evaluate_Is_Pair --
+   ----------------------
+
+   function Evaluate_Is_Pair
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      pragma Unreferenced (Store);
+      use Lith.Objects;
+   begin
+      if Is_Pair (Arguments (Arguments'First)) then
+         return Lith.Symbols.True_Atom;
+      else
+         return Lith.Symbols.False_Atom;
+      end if;
+   end Evaluate_Is_Pair;
+
    -------------------
    -- Evaluate_Load --
    -------------------
@@ -202,44 +268,6 @@ package body Lith.Primitives is
          return Lith.Symbols.False_Atom;
       end if;
    end Evaluate_Load;
-
-   -------------------
-   -- Evaluate_Null --
-   -------------------
-
-   function Evaluate_Null
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object
-   is
-      pragma Unreferenced (Store);
-      use Lith.Objects;
-   begin
-      if Arguments (Arguments'First) = Nil then
-         return Lith.Symbols.True_Atom;
-      else
-         return Lith.Symbols.False_Atom;
-      end if;
-   end Evaluate_Null;
-
-   -------------------
-   -- Evaluate_Pair --
-   -------------------
-
-   function Evaluate_Pair
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object
-   is
-      pragma Unreferenced (Store);
-      use Lith.Objects;
-   begin
-      if Is_Pair (Arguments (Arguments'First)) then
-         return Lith.Symbols.True_Atom;
-      else
-         return Lith.Symbols.False_Atom;
-      end if;
-   end Evaluate_Pair;
 
    ---------------------
    -- Evaluate_Random --
