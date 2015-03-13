@@ -37,9 +37,13 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("(choice)"));
    end Choice_Atom;
 
+   -----------------
+   -- Define_Atom --
+   -----------------
+
    function Define_Atom return Lith.Objects.Object is
    begin
-      return Lith.Objects.To_Object (Get_Symbol ("define"));
+      return Lith.Objects.To_Object (Get_Symbol ("lith-define"));
    end Define_Atom;
 
    ---------
@@ -204,7 +208,7 @@ package body Lith.Symbols is
 
    function String_Atom return Lith.Objects.Object is
    begin
-      return Lith.Objects.To_Object (Get_Symbol ("(string)"));
+      return Lith.Objects.To_Object (Get_Symbol ("#string"));
    end String_Atom;
 
    ---------------

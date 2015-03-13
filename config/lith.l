@@ -1,5 +1,13 @@
-(define nil '())
-(define list (lambda x x))
+(lith-define nil '())
+(lith-define list (lambda x x))
+(lith-define define 
+   (macro (name-and-args body)
+      (if (pair? name-and-args)
+          (list 'lith-define (car name-and-args) (list 'lambda (cdr name-and-args) body))
+          (list 'lith-define name-and-args ((lambda (x) x) (if pair? body (cons 'begin body) body))))))
+          
+(define (+1 x) (+ x 1))
+(define (-1 x) (+ x 1))
 
 (define (equal? x y)
   (cond ((eq? x y) #t)
@@ -7,7 +15,7 @@
         (else #f)))
 
 
-(define defmacro (macro (name args body) `(define ,name (macro ,args ,body))))
+(lith-define defmacro (macro (name args body) `(define ,name (macro ,args ,body))))
 
 (define __exit #f)
 (define (exit) (set! __exit #t))
@@ -91,8 +99,9 @@
 (define (string? x) (and (pair? x) (eq? (car x) '#string)))
 
 (define (write-list xs)
-  (write-string "(")
-  (write-rest-of-list xs))
+  (begin
+    (write-string "(")
+    (write-rest-of-list xs)))
 
 (define (write-rest-of-list xs)
   (cond ((null? xs) (write-string ")"))
