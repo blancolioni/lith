@@ -45,10 +45,12 @@ package body Lith.Objects.Numbers is
                   Store.Push (Store.Pop (Secondary));
                   Add (Store);
                else
+                  Store.Drop (2);
                   Store.Push (To_Object (X + Y));
                end if;
             end;
          when Large_Integer =>
+
             declare
                Xs : constant Array_Of_Objects :=
                      Store.To_Object_Array (Store.Cdr (Store.Top (1)));
@@ -85,6 +87,8 @@ package body Lith.Objects.Numbers is
                   elsif Z < Lowest_Small_Integer then
                      C := -1;
                      Z := Z + Lowest_Small_Integer;
+                  else
+                     C := 0;
                   end if;
 
                   if Z /= 0 then
@@ -107,10 +111,16 @@ package body Lith.Objects.Numbers is
                   end;
 
                else
+
+                  for I in 1 .. Max_Length - Length loop
+                     Store.Drop;
+                  end loop;
                   Store.Push (Nil);
-                  for I in 1 .. Max_Length + 1 loop
+
+                  for I in 1 .. Length + 1 loop
                      Store.Cons;
                   end loop;
+
                end if;
 
                Store.Drop (Count => 2,
@@ -209,9 +219,78 @@ package body Lith.Objects.Numbers is
    procedure Multiply
      (Store : in out Object_Store'Class)
    is
-      pragma Unreferenced (Store);
+      X_Type : constant Exact_Number_Type := Top_Of_Stack_Type (Store, 1);
+      Y_Type : constant Exact_Number_Type := Top_Of_Stack_Type (Store, 2);
+      Multiplier : Integer;
+      Negative   : Boolean;
    begin
-      null;
+      if X_Type /= Small_Integer and then Y_Type /= Small_Integer then
+         raise Constraint_Error with
+           "when multiplying, one of the values must be a small integer. "
+           & " we are so sorry about that.";
+      end if;
+
+      if X_Type = Small_Integer and then Y_Type = Small_Integer then
+         declare
+            X : constant Integer := To_Integer (Store.Pop);
+            Y : constant Integer := To_Integer (Store.Pop);
+         begin
+            if Highest_Small_Integer / abs X >= abs Y then
+               Store.Push (To_Object (X * Y));
+               return;
+            elsif X < Y then
+               Store.Push (To_Object (Y));
+               Multiplier := X;
+            else
+               Store.Push (To_Object (X));
+               Multiplier := Y;
+            end if;
+         end;
+      elsif X_Type /= Small_Integer then
+         Store.Push (Store.Pop, Secondary);
+         Multiplier := To_Integer (Store.Pop);
+         Store.Push (Store.Pop (Secondary));
+      else
+         Multiplier := To_Integer (Store.Pop);
+      end if;
+
+      Negative := False;
+      if Multiplier = 0 then
+         Store.Drop;
+         Store.Push (To_Object (Integer'(0)));
+         return;
+      elsif Multiplier = 1 then
+         return;
+      elsif Multiplier < 0 then
+         Negative := True;
+         Multiplier := -Multiplier;
+      end if;
+
+      declare
+         Extra_Adds : Natural := 0;
+      begin
+         while Multiplier > 1 loop
+            Store.Push (Store.Top);
+            if Multiplier mod 2 = 0 then
+               Add (Store);
+               Multiplier := Multiplier / 2;
+            else
+               Multiplier := Multiplier - 1;
+               Extra_Adds := Extra_Adds + 1;
+            end if;
+         end loop;
+
+         if Extra_Adds > 0 then
+            for I in 1 .. Extra_Adds loop
+               Add (Store);
+            end loop;
+         end if;
+      end;
+
+      if Negative then
+         Negate (Store);
+      end if;
+
    end Multiply;
 
    ------------
@@ -289,9 +368,7 @@ package body Lith.Objects.Numbers is
    is
    begin
       Store.Push (Store.Pop, Secondary);
-      Store.Report_State;
       Negate (Store);
-      Store.Report_State;
       Store.Push (Store.Pop (Secondary));
       Add (Store);
    end Subtract;
