@@ -137,6 +137,19 @@ package body Lith.Objects is
       return Item.Tag = Symbol_Object;
    end Is_Symbol;
 
+   ----------
+   -- Swap --
+   ----------
+
+   procedure Swap (Store : in out Object_Store'Class) is
+   begin
+      Store.Push (Store.Top (2), Secondary);
+      Store.Push (Store.Pop, Secondary);
+      Store.Drop;
+      Store.Push (Store.Pop (Secondary));
+      Store.Push (Store.Pop (Secondary));
+   end Swap;
+
    ----------------
    -- To_Address --
    ----------------

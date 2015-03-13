@@ -61,6 +61,16 @@ package Lith.Objects is
    is abstract
      with Pre'Class => Is_Pair (Item);
 
+--     procedure Set_Car (Store   : in out Object_Store;
+--                        Pair    : in     Object;
+--                        New_Car : in Object)
+--     is abstract;
+--
+--     procedure Set_Cdr (Store   : in out Object_Store;
+--                        Pair    : in     Object;
+--                        New_Cdr : in Object)
+--     is abstract;
+--
    function Caar (Store : Object_Store'Class;
                   Item  : Object)
                   return Object
@@ -76,7 +86,7 @@ package Lith.Objects is
                   return Object
      is (Store.Cdr (Store.Car (Item)));
 
-   function Show (Store    : Object_Store;
+   function Show (Store    : in out Object_Store;
                   Item     : Object)
                   return Wide_Wide_String
                   is abstract;
@@ -118,11 +128,13 @@ package Lith.Objects is
                  return Object
                  is abstract;
 
-   procedure Report_State (Store : Object_Store) is abstract;
+   procedure Report_State (Store : in out Object_Store) is abstract;
 
    procedure Drop (Store : in out Object_Store'Class;
                    Count : Positive := 1;
                    Stack : Stack_Type := Primary);
+
+   procedure Swap (Store : in out Object_Store'Class);
 
    function To_Object_Array
      (Store : in out Object_Store'Class;
