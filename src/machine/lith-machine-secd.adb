@@ -367,6 +367,8 @@ package body Lith.Machine.SECD is
                      Machine.Push (C);
                   elsif F = String_Atom then
                      Machine.Push (C);
+                  elsif F = Large_Integer_Atom then
+                     Machine.Push (C);
                   elsif F = Begin_Atom then
                      Machine.Dump := Machine.Cons (C, Machine.Dump);
                      Machine.Control := Cs;
