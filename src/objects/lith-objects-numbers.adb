@@ -1,4 +1,4 @@
---  with Ada.Wide_Wide_Text_IO;
+with Ada.Wide_Wide_Text_IO;
 
 with Lith.Symbols;
 
@@ -139,9 +139,136 @@ package body Lith.Objects.Numbers is
    procedure Divide
      (Store : in out Object_Store'Class)
    is
-      pragma Unreferenced (Store);
+      X_Type   : constant Exact_Number_Type := Top_Of_Stack_Type (Store, 1);
+      Y_Type   : constant Exact_Number_Type := Top_Of_Stack_Type (Store, 2);
+      Divisor  : Integer;
+      Negative : Boolean;
    begin
-      null;
+      if Y_Type /= Small_Integer then
+         raise Constraint_Error with
+           "when dividing, the divisor must be a small integer. "
+           & " we are so sorry about that.";
+      end if;
+
+      if X_Type = Small_Integer then
+         declare
+            X : constant Integer := To_Integer (Store.Pop);
+            Y : constant Integer := To_Integer (Store.Pop);
+         begin
+            Store.Push (To_Object (X / Y));
+            Store.Push (To_Object (X mod Y));
+            return;
+         end;
+      end if;
+
+      Store.Swap;
+      Divisor := To_Integer (Store.Pop);
+
+      Negative := False;
+      if Divisor = 0 then
+         raise Constraint_Error with "division by zero";
+      elsif Divisor = 1 then
+         return;
+      elsif Divisor < 0 then
+         Negative := True;
+         Divisor := -Divisor;
+      end if;
+
+      if False then
+         Ada.Wide_Wide_Text_IO.Put_Line
+           ("dividing by" & Integer'Wide_Wide_Image (Divisor));
+         Store.Report_State;
+      end if;
+
+      declare
+         Half : constant Integer := 2 ** (Payload_Bits / 2);
+         It : constant Array_Of_Objects :=
+                Store.To_Object_Array (Store.Cdr (Store.Top));
+         R  : Integer := 0;
+         Count : Natural := 0;
+      begin
+         Store.Push (Store.Pop, Secondary);
+         Store.Push (Lith.Symbols.Large_Integer_Atom); -- quotient
+
+         for Elem of reverse It loop
+            if True then
+               declare
+                  X : constant Integer := To_Integer (Elem);
+                  D : constant Long_Long_Integer :=
+                        Long_Long_Integer (R) * Highest_Small_Integer
+                        + Long_Long_Integer (X);
+                  Q : constant Long_Long_Integer :=
+                        D / Long_Long_Integer (Divisor);
+               begin
+                  Store.Push (To_Object (Integer (Q)), Secondary);
+                  R := Integer (D mod Long_Long_Integer (Divisor));
+                  Count := Count + 1;
+               end;
+            else
+               declare
+                  X    : constant Integer := To_Integer (Elem);
+                  X1   : constant Integer := X / Half;
+                  X2   : constant Integer := X mod Half;
+                  D1   : constant Integer := R * Half + X1;
+                  Q1   : constant Integer := D1 / Divisor;
+                  R1   : constant Integer := D1 mod Divisor;
+                  D2   : constant Integer := R1 * Half + X2;
+                  Q2   : constant Integer := D2 / Divisor;
+                  R2   : constant Integer := D2 mod Divisor;
+               begin
+                  Store.Push (To_Object (Q1 * Half + Q2), Secondary);
+                  R := R2;
+                  Count := Count + 1;
+               end;
+            end if;
+
+         end loop;
+
+         for I in 1 .. Count loop
+            Store.Push (Store.Pop (Secondary));
+         end loop;
+
+         while Store.Top = To_Object (Integer'(0)) loop
+            Store.Drop;
+            Count := Count - 1;
+         end loop;
+
+         if Count = 0 then
+            Store.Drop;
+            Store.Push (To_Object (Integer'(0)));
+         elsif Count = 1 then
+            Store.Swap;
+            Store.Drop;
+            if Negative then
+               declare
+                  X : constant Integer := To_Integer (Store.Pop);
+               begin
+                  Store.Push (To_Object (-X));
+               end;
+            end if;
+         else
+            Store.Push (Nil);
+
+            for I in 1 .. Count + 1 loop
+               Store.Cons;
+            end loop;
+
+            if Negative then
+               Negate (Store);
+            end if;
+         end if;
+
+         Store.Push (To_Object (R));
+         Store.Drop (1, Secondary);
+
+         if False then
+            Ada.Wide_Wide_Text_IO.Put_Line
+              ("finished dividing by" & Integer'Wide_Wide_Image (Divisor));
+            Store.Report_State;
+         end if;
+
+      end;
+
    end Divide;
 
    ---------------------
@@ -332,18 +459,6 @@ package body Lith.Objects.Numbers is
             null;
       end case;
    end Negate;
-
-   ---------------
-   -- Remainder --
-   ---------------
-
-   procedure Remainder
-     (Store : in out Object_Store'Class)
-   is
-      pragma Unreferenced (Store);
-   begin
-      null;
-   end Remainder;
 
    ----------------------------
    -- Small_Integer_To_Large --
