@@ -206,6 +206,8 @@ package body Lith.Machine.SECD is
                Machine.Push (C);
             elsif Is_Integer (C) then
                Machine.Push (C);
+            elsif Is_Character (C) then
+               Machine.Push (C);
             elsif Is_Symbol (C) then
                if C = Choice_Atom then
                   declare

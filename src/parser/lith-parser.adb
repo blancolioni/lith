@@ -118,7 +118,7 @@ package body Lith.Parser is
          when Tok_Character =>
             Machine.Push
               (Lith.Objects.To_Object
-                 (Integer'(Wide_Wide_Character'Pos (Tok_Character_Value))));
+                 (Tok_Character_Value));
             Scan;
          when Tok_String =>
             Machine.Push (Lith.Symbols.String_Atom);

@@ -47,7 +47,7 @@ package body Lith.Objects is
                       when Primitive_Object => 'f',
                       when Symbol_Object    => 's',
                       when Apply_Object     => 'a',
-                      when Unused_Tag_5     => '5',
+                      when Character_Object => 'c',
                       when Unused_Tag_6     => '6',
                       when Unused_Tag_7     => '7');
 
@@ -100,6 +100,11 @@ package body Lith.Objects is
    begin
       return Item.Tag /= Pair_Object;
    end Is_Atom;
+
+   function Is_Character (Item : Object) return Boolean is
+   begin
+      return Item.Tag = Character_Object;
+   end Is_Character;
 
    -----------------
    -- Is_Function --
@@ -161,6 +166,15 @@ package body Lith.Objects is
    begin
       return Cell_Address (Item.Payload);
    end To_Address;
+
+   ------------------
+   -- To_Character --
+   ------------------
+
+   function To_Character (Item : Object) return Wide_Wide_Character is
+   begin
+      return Wide_Wide_Character'Val (Item.Payload);
+   end To_Character;
 
    -----------------
    -- To_Function --
@@ -228,6 +242,13 @@ package body Lith.Objects is
    function To_Object (Symbol : Symbol_Type) return Object is
    begin
       return (Object_Payload (Symbol), Symbol_Object);
+   end To_Object;
+
+   function To_Object (Ch : Wide_Wide_Character) return Object is
+   begin
+      return (Object_Payload
+              (Wide_Wide_Character'Pos (Ch)),
+              Character_Object);
    end To_Object;
 
    ---------------------
