@@ -5,7 +5,6 @@ source_dir = src/evaluator
 source_dir = src/machine
 source_dir = src/objects
 source_dir = src/parser
-depend = { project = Gcs version = any }
 depend = { project = WLib version = any }
 main_unit = lith-driver
 exec_name = lith
