@@ -85,10 +85,12 @@ package body Lith.Primitives.ALU is
         else Lith.Symbols.False_Atom));
 
    procedure Divide_Quotient
-     (Store : in out Object_Store'Class);
+     (Store : in out Object_Store'Class)
+     with Unreferenced;
 
    procedure Divide_Mod
-     (Store : in out Object_Store'Class);
+     (Store : in out Object_Store'Class)
+     with Unreferenced;
 
    -------------------
    -- Add_Operators --
@@ -106,13 +108,9 @@ package body Lith.Primitives.ALU is
       Operator ("*", 0, null,
                 Lith.Objects.Numbers.Multiply'Access,
                 null);
-      Operator ("/", 0, null,
-                Divide_Quotient'Access,
+      Operator ("floor/", 0, null,
+                Lith.Objects.Numbers.Divide'Access,
                 null);
-      Operator ("mod", 0, null,
-                Divide_Mod'Access,
-                null);
-
       Operator ("<=", 0, Identity_Fn'Access, Acc_Fn_Leq'Access);
       Operator (">=", 0, Identity_Fn'Access, Acc_Fn_Geq'Access);
       Operator ("<", 0, Identity_Fn'Access, Acc_Fn_Lt'Access);
