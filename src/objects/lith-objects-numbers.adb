@@ -157,6 +157,9 @@ package body Lith.Objects.Numbers is
          begin
             Store.Push (To_Object (X / Y));
             Store.Push (To_Object (X mod Y));
+            Store.Push (Nil);
+            Store.Cons;
+            Store.Cons;
             return;
          end;
       end if;
@@ -168,6 +171,10 @@ package body Lith.Objects.Numbers is
       if Divisor = 0 then
          raise Constraint_Error with "division by zero";
       elsif Divisor = 1 then
+         Store.Push (To_Object (Integer'(0)));
+         Store.Push (Nil);
+         Store.Cons;
+         Store.Cons;
          return;
       elsif Divisor < 0 then
          Negative := True;
@@ -259,6 +266,10 @@ package body Lith.Objects.Numbers is
          end if;
 
          Store.Push (To_Object (R));
+         Store.Push (Nil);
+         Store.Cons;
+         Store.Cons;
+
          Store.Drop (1, Secondary);
 
          if False then
