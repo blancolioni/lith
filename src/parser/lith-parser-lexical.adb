@@ -55,6 +55,8 @@ package body Lith.Parser.Lexical is
 
    function Is_White_Space return Boolean;
    function End_Of_Stream return Boolean;
+   function End_Of_Line return Boolean;
+   function Hex_Digit (Ch : Wide_Wide_Character) return Natural;
 
    -----------
    -- Close --
@@ -79,6 +81,16 @@ package body Lith.Parser.Lexical is
          Current_Stream := null;
       end if;
    end Close_Stream;
+
+   -----------------
+   -- End_Of_Line --
+   -----------------
+
+   function End_Of_Line return Boolean is
+   begin
+      return Current_Stream.Column =
+        Current_Stream.Lines.Element (Current_Stream.Line)'Length;
+   end End_Of_Line;
 
    -------------------
    -- End_Of_Stream --
@@ -107,6 +119,29 @@ package body Lith.Parser.Lexical is
          & ": "
          & Message);
    end Error;
+
+   ---------------
+   -- Hex_Digit --
+   ---------------
+
+   function Hex_Digit (Ch : Wide_Wide_Character) return Natural is
+   begin
+      if Ch in '0' .. '9' then
+         return Wide_Wide_Character'Pos (Ch)
+           - Wide_Wide_Character'Pos ('0');
+      elsif Ch in 'A' .. 'F' then
+         return Wide_Wide_Character'Pos (Ch)
+           - Wide_Wide_Character'Pos ('A')
+           + 10;
+      elsif Ch in 'a' .. 'f' then
+         return Wide_Wide_Character'Pos (Ch)
+           - Wide_Wide_Character'Pos ('a')
+           + 10;
+      else
+         raise Constraint_Error with
+           "expected a hex digit";
+      end if;
+   end Hex_Digit;
 
    --------------------
    -- Is_White_Space --
@@ -252,16 +287,87 @@ package body Lith.Parser.Lexical is
          when '"' =>
             Next_Character;
             Start_Token;
-            while not End_Of_Stream
-              and then Current_Stream.Ch /= '"'
-            loop
-               Next_Character;
-            end loop;
 
+            declare
+               Result : Unbounded_Wide_Wide_String :=
+                          Null_Unbounded_Wide_Wide_String;
+            begin
+               while not End_Of_Stream
+                 and then Current_Stream.Ch /= '"'
+               loop
+                  if Current_Stream.Ch = '\' then
+                     Next_Character;
+                     declare
+                        V : Integer := -1;
+                     begin
+                        case Current_Stream.Ch is
+                           when 't' =>
+                              V := 9;
+                           when 'n' =>
+                              V := 10;
+                           when 'r' =>
+                              V := 13;
+                           when '"' =>
+                              V := 34;
+                           when '\' =>
+                              V := 16#5C#;
+                           when '|' =>
+                              V := 16#7C#;
+                           when 'x' =>
+                              Next_Character;
+                              V := 0;
+                              declare
+                                 Count : Natural := 0;
+                              begin
+                                 while Current_Stream.Ch in '0' .. '9'
+                                   or else Current_Stream.Ch in 'a' .. 'z'
+                                   or else Current_Stream.Ch in 'A' .. 'Z'
+                                 loop
+                                    V := V * 16
+                                      + Hex_Digit (Current_Stream.Ch);
+                                    Next_Character;
+                                    Count := Count + 1;
+                                    if Count = 2 then
+                                       Result := Result
+                                         & Wide_Wide_Character'Val (V);
+                                       V := 0;
+                                       Count := 0;
+                                    end if;
+                                 end loop;
+                              end;
+
+                              V := -1;
+
+                              if Current_Stream.Ch = ';' then
+                                 null;
+                              else
+                                 Error ("missing ';'");
+                              end if;
+                           when others =>
+                              Error ("bad escape");
+                              raise Program_Error;
+                        end case;
+                        Next_Character;
+                        if V >= 0 then
+                           Result := Result
+                             & Wide_Wide_Character'Val (V);
+                        end if;
+                     end;
+                  elsif End_Of_Line then
+                     Error ("unterminated string constant");
+                     exit;
+                  else
+                     Result := Result & Current_Stream.Ch;
+                     Next_Character;
+                  end if;
+               end loop;
+
+               Current_Stream.Tok_Text := Result;
+
+            end;
             if End_Of_Stream then
                Error ("unterminated string constant");
             else
-               Stop_Token;
                Next_Character;
             end if;
 
