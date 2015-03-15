@@ -38,6 +38,11 @@ package Lith.Objects is
    function Argument_Count (Item : Object) return Natural
      with Pre => Is_Apply (Item);
 
+   function Is_Character (Item : Object) return Boolean;
+   function To_Object (Ch : Wide_Wide_Character) return Object;
+   function To_Character (Item : Object) return Wide_Wide_Character
+     with Pre => Is_Character (Item);
+
    function Is_Atom (Item : Object) return Boolean;
    function Is_Pair (Item : Object) return Boolean;
 
@@ -151,7 +156,7 @@ private
                        Primitive_Object,
                        Symbol_Object,
                        Apply_Object,
-                       Unused_Tag_5,
+                       Character_Object,
                        Unused_Tag_6,
                        Unused_Tag_7);
 

@@ -5,6 +5,8 @@ with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Wide_Wide_Characters.Handling;
 with Ada.Wide_Wide_Text_IO;
 
+with Lith.Parser.Lexical.Characters;
+
 package body Lith.Parser.Lexical is
 
    package Line_Vectors is
@@ -53,10 +55,18 @@ package body Lith.Parser.Lexical is
    procedure Start_Token;
    procedure Stop_Token;
 
+   function Peek return Wide_Wide_Character;
+
    function Is_White_Space return Boolean;
    function End_Of_Stream return Boolean;
    function End_Of_Line return Boolean;
    function Hex_Digit (Ch : Wide_Wide_Character) return Natural;
+
+   function Hex_To_Character
+     (Hex : Wide_Wide_String)
+      return Wide_Wide_Character;
+
+   function Read_Character (Long_Names : Boolean) return Wide_Wide_Character;
 
    -----------
    -- Close --
@@ -143,6 +153,22 @@ package body Lith.Parser.Lexical is
       end if;
    end Hex_Digit;
 
+   ----------------------
+   -- Hex_To_Character --
+   ----------------------
+
+   function Hex_To_Character
+     (Hex : Wide_Wide_String)
+      return Wide_Wide_Character
+   is
+      V : Natural := 0;
+   begin
+      for D of Hex loop
+         V := V * 16 + Hex_Digit (D);
+      end loop;
+      return Wide_Wide_Character'Val (V);
+   end Hex_To_Character;
+
    --------------------
    -- Is_White_Space --
    --------------------
@@ -228,6 +254,99 @@ package body Lith.Parser.Lexical is
    end Open_String;
 
    ----------
+   -- Peek --
+   ----------
+
+   function Peek return Wide_Wide_Character is
+   begin
+      if Current_Stream.Line > Current_Stream.Lines.Last_Index then
+         return ' ';
+      elsif Current_Stream.Column
+        >= Current_Stream.Lines.Element (Current_Stream.Line)'Length
+      then
+         return ' ';
+      else
+         return
+           Current_Stream.Lines.Element (Current_Stream.Line)
+           (Current_Stream.Column + 1);
+      end if;
+   end Peek;
+
+   --------------------
+   -- Read_Character --
+   --------------------
+
+   function Read_Character (Long_Names : Boolean) return Wide_Wide_Character is
+      Buffer : Wide_Wide_String (1 .. 20);
+      Count  : Natural := 0;
+   begin
+      if Current_Stream.Ch = 'x' then
+         Next_Character;
+         while Current_Stream.Ch in '0' .. '9'
+           or else Current_Stream.Ch in 'a' .. 'z'
+           or else Current_Stream.Ch in 'A' .. 'Z'
+         loop
+            Count := Count + 1;
+            Buffer (Count) := Current_Stream.Ch;
+            Next_Character;
+         end loop;
+
+         if not Long_Names then
+            if Current_Stream.Ch = ';' then
+               Next_Character;
+            else
+               Error ("missing ';'");
+            end if;
+         end if;
+
+         return Hex_To_Character (Buffer (1 .. Count));
+
+      elsif Long_Names then
+         if Is_White_Space then
+            Next_Character;
+            return ' ';
+         else
+            while Count + 1 in Buffer'Range
+              and then not Is_White_Space
+            loop
+               Count := Count + 1;
+               Buffer (Count) := Current_Stream.Ch;
+               Next_Character;
+            end loop;
+
+            return Lith.Parser.Lexical.Characters.Name_To_Character
+              (Buffer (1 .. Count));
+
+         end if;
+      else
+         declare
+            V : Integer := -1;
+         begin
+
+            case Current_Stream.Ch is
+               when 't' =>
+                  V := 9;
+               when 'n' =>
+                  V := 10;
+               when 'r' =>
+                  V := 13;
+               when '"' =>
+                  V := 34;
+               when '\' =>
+                  V := 16#5C#;
+               when '|' =>
+                  V := 16#7C#;
+               when others =>
+                  Error ("bad escape");
+                  raise Program_Error;
+            end case;
+            Next_Character;
+            return Wide_Wide_Character'Val (V);
+         end;
+      end if;
+   end Read_Character;
+
+   ----------
    -- Scan --
    ----------
 
@@ -297,62 +416,8 @@ package body Lith.Parser.Lexical is
                loop
                   if Current_Stream.Ch = '\' then
                      Next_Character;
-                     declare
-                        V : Integer := -1;
-                     begin
-                        case Current_Stream.Ch is
-                           when 't' =>
-                              V := 9;
-                           when 'n' =>
-                              V := 10;
-                           when 'r' =>
-                              V := 13;
-                           when '"' =>
-                              V := 34;
-                           when '\' =>
-                              V := 16#5C#;
-                           when '|' =>
-                              V := 16#7C#;
-                           when 'x' =>
-                              Next_Character;
-                              V := 0;
-                              declare
-                                 Count : Natural := 0;
-                              begin
-                                 while Current_Stream.Ch in '0' .. '9'
-                                   or else Current_Stream.Ch in 'a' .. 'z'
-                                   or else Current_Stream.Ch in 'A' .. 'Z'
-                                 loop
-                                    V := V * 16
-                                      + Hex_Digit (Current_Stream.Ch);
-                                    Next_Character;
-                                    Count := Count + 1;
-                                    if Count = 2 then
-                                       Result := Result
-                                         & Wide_Wide_Character'Val (V);
-                                       V := 0;
-                                       Count := 0;
-                                    end if;
-                                 end loop;
-                              end;
-
-                              V := -1;
-
-                              if Current_Stream.Ch = ';' then
-                                 null;
-                              else
-                                 Error ("missing ';'");
-                              end if;
-                           when others =>
-                              Error ("bad escape");
-                              raise Program_Error;
-                        end case;
-                        Next_Character;
-                        if V >= 0 then
-                           Result := Result
-                             & Wide_Wide_Character'Val (V);
-                        end if;
-                     end;
+                     Result := Result
+                       & Read_Character (Long_Names => False);
                   elsif End_Of_Line then
                      Error ("unterminated string constant");
                      exit;
@@ -386,7 +451,16 @@ package body Lith.Parser.Lexical is
                              or else Index ("!$%&*+-./:<=>?@^_~#",
                                             (1 => Current_Stream.Ch)) > 0));
             begin
-               if Is_Id then
+               if Current_Stream.Ch = '#'
+                 and then Peek = '\'
+               then
+                  Next_Character;
+                  Next_Character;
+                  Current_Stream.Tok_Char :=
+                    Read_Character (Long_Names => True);
+                  Stop_Token;
+                  Tok := Tok_Character;
+               elsif Is_Id then
                   while Is_Id loop
                      if not Is_Digit (Current_Stream.Ch) then
                         Non_Numeric := True;
