@@ -89,18 +89,28 @@
 (define cond (macro clauses (if2cond clauses)))
 
 (define alu (macro (op) `(define ,op (lambda x (#alu (quote ,op) x)))))
-                    ;(defun + x (#alu '+ x))
+(define alu2 (macro (op) `(define ,op (lambda (x y) (#alu (quote ,op) (list x y))))))
+
 (alu +)
 (alu -)
 (alu *)
-(alu /)
 (alu mod)
 (alu <)
 (alu >)
 (alu <=)
 (alu >=)
 (alu =)
-(alu remainder)
+(alu2 floor/)
+
+(define (floor-quotient x y) (car (floor/ x y)))
+(define (floor-remainder x y) (cadr (floor/ x y)))
+
+(define (gcd x y)
+  (if (eq? y 0)
+      x
+      (gcd y (floor-remainder x y))))
+
+(define (lcm x y) (floor-quotient (* x y) (gcd x y)))
 
 (define (square x) (* x x))
 
@@ -109,6 +119,13 @@
 (define (zero? x) (eq? x 0))
 (define (positive? x) (> x 0))
 (define (negative? x) (< x 0))
+
+(define max (lambda x (minmax (car x) (cdr x) >)))
+(define min (lambda x (minmax (car x) (cdr x) <)))
+
+(define (minmax curr rest compare)
+   (if (null? rest) curr
+       (minmax (if (compare (car rest) curr) (car rest) curr) (cdr rest))))
 
 (define (string? x) (and (pair? x) (eq? (car x) '#string)))
 
@@ -149,39 +166,5 @@
 
 (define string-append (lambda xs (do-string-append xs)))
 
-(define (add-rat x y)
-  (make-rat (+ (* (numer x) (denom y))
-               (* (numer y) (denom x)))
-            (* (denom x) (denom y))))
-(define (sub-rat x y)
-  (make-rat (- (* (numer x) (denom y))
-               (* (numer y) (denom x)))
-            (* (denom x) (denom y))))
-(define (mul-rat x y)
-  (make-rat (* (numer x) (numer y))
-            (* (denom x) (denom y))))
-(define (div-rat x y)
-  (make-rat (* (numer x) (denom y))
-            (* (denom x) (numer y))))
-(define (equal-rat? x y)
-  (= (* (numer x) (denom y))
-     (* (numer y) (denom x))))
-
-(define (make-rat n d) (cons n d))
-
-(define (numer x) (car x))
-
-(define (denom x) (cdr x))
-
-(define (print-rat x)
-  (begin
-    (display (numer x))
-    (display "/")
-    (display (denom x))
-    (newline)))
-
-(define one-half (make-rat 1 2))
-
 (define __exit #f)
 (define (exit) (set! __exit #t))
-
