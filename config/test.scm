@@ -42,5 +42,6 @@
       (test (eqv? (gcd) 0))
       (test (eqv? (lcm 32 36) 288))
       (test (eqv? (lcm) 1))
+      (test (eqv? (square 42) 1764))
       ))
       
