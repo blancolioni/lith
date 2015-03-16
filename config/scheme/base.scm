@@ -204,7 +204,7 @@
 (define (write-string x)
   (wchars (cdr x)))
   
-(define (newline) (write-char 10))
+(define (newline) (write-char #\newline))
 (define (write x) (begin (display x) (newline)))
 
 (define (do-string-append xs)
