@@ -388,10 +388,14 @@ package body Lith.Machine.SECD is
                               & " = "
                               & Machine.Show (Value));
                         end if;
-                        Machine.Control :=
-                          Machine.Cons (Internal_Define_Atom, Cs);
-                        Machine.Control :=
-                          Machine.Cons (Value, Machine.Control);
+
+                        Machine.Push (Value);
+                        Machine.Push (Internal_Define_Atom);
+                        Machine.Push (Cs);
+                        Machine.Cons;
+                        Machine.Cons;
+                        Machine.Control := Machine.Pop;
+
                         Machine.Push (Name);
                         C_Updated := True;
                      end;
