@@ -91,6 +91,11 @@ package Lith.Objects is
                   return Object
      is (Store.Cdr (Store.Car (Item)));
 
+   function Cddr (Store : Object_Store'Class;
+                  Item  : Object)
+                  return Object
+     is (Store.Cdr (Store.Cdr (Item)));
+
    function Show (Store    : in out Object_Store;
                   Item     : Object)
                   return Wide_Wide_String
