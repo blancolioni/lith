@@ -58,6 +58,7 @@ package body Lith.Parser.Lexical is
    function Peek return Wide_Wide_Character;
 
    function Is_White_Space return Boolean;
+   function Is_Alphanumeric return Boolean;
    function End_Of_Stream return Boolean;
    function End_Of_Line return Boolean;
    function Hex_Digit (Ch : Wide_Wide_Character) return Natural;
@@ -169,6 +170,16 @@ package body Lith.Parser.Lexical is
       return Wide_Wide_Character'Val (V);
    end Hex_To_Character;
 
+   ---------------------
+   -- Is_Alphanumeric --
+   ---------------------
+
+   function Is_Alphanumeric return Boolean is
+   begin
+      return Ada.Wide_Wide_Characters.Handling.Is_Alphanumeric
+        (Current_Stream.Ch);
+   end Is_Alphanumeric;
+
    --------------------
    -- Is_White_Space --
    --------------------
@@ -209,12 +220,13 @@ package body Lith.Parser.Lexical is
    -- Open --
    ----------
 
-   procedure Open (File_Name : Wide_Wide_String) is
+   procedure Open (File_Name : String) is
       use Ada.Wide_Wide_Text_IO;
       File : File_Type;
    begin
-      Open_Stream (File_Name);
-      Open (File, In_File, Ada.Characters.Conversions.To_String (File_Name));
+      Open_Stream
+        (Ada.Characters.Conversions.To_Wide_Wide_String (File_Name));
+      Open (File, In_File, File_Name);
       while not End_Of_File (File) loop
          declare
             Line : constant Wide_Wide_String := Get_Line (File);
@@ -291,6 +303,10 @@ package body Lith.Parser.Lexical is
             Next_Character;
          end loop;
 
+         if Count = 0 then
+            return 'x';
+         end if;
+
          if not Long_Names then
             if Current_Stream.Ch = ';' then
                Next_Character;
@@ -307,7 +323,7 @@ package body Lith.Parser.Lexical is
             return ' ';
          else
             while Count + 1 in Buffer'Range
-              and then not Is_White_Space
+              and then Is_Alphanumeric
             loop
                Count := Count + 1;
                Buffer (Count) := Current_Stream.Ch;
@@ -460,6 +476,12 @@ package body Lith.Parser.Lexical is
                     Read_Character (Long_Names => True);
                   Stop_Token;
                   Tok := Tok_Character;
+               elsif Current_Stream.Ch = '.'
+                 and then Ada.Wide_Wide_Characters.Handling.Is_Space (Peek)
+               then
+                  Next_Character;
+                  Stop_Token;
+                  Tok := Tok_Dot;
                elsif Is_Id then
                   while Is_Id loop
                      if not Is_Digit (Current_Stream.Ch) then

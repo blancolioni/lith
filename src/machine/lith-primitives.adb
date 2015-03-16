@@ -60,12 +60,27 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
+   function Evaluate_Is_Symbol
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
    function Evaluate_Load
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
    function Evaluate_Random
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Set_Car
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Set_Cdr
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
@@ -92,8 +107,11 @@ package body Lith.Primitives is
       Define_Function ("load", 1, Evaluate_Load'Access);
       Define_Function ("null?", 1, Evaluate_Is_Null'Access);
       Define_Function ("pair?", 1, Evaluate_Is_Pair'Access);
+      Define_Function ("symbol?", 1, Evaluate_Is_Symbol'Access);
       Define_Function ("integer?", 1, Evaluate_Is_Integer'Access);
       Define_Function ("random", 1, Evaluate_Random'Access);
+      Define_Function ("set-car!", 2, Evaluate_Set_Car'Access);
+      Define_Function ("set-cdr!", 2, Evaluate_Set_Cdr'Access);
       Define_Function ("write-char", 2, Evaluate_Write_Char'Access);
       Lith.Primitives.ALU.Add_Operators;
    end Add_Primitives;
@@ -250,6 +268,25 @@ package body Lith.Primitives is
       end if;
    end Evaluate_Is_Pair;
 
+   ------------------------
+   -- Evaluate_Is_Symbol --
+   ------------------------
+
+   function Evaluate_Is_Symbol
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      pragma Unreferenced (Store);
+      use Lith.Objects;
+   begin
+      if Is_Symbol (Arguments (Arguments'First)) then
+         return Lith.Symbols.True_Atom;
+      else
+         return Lith.Symbols.False_Atom;
+      end if;
+   end Evaluate_Is_Symbol;
+
    -------------------
    -- Evaluate_Load --
    -------------------
@@ -287,6 +324,36 @@ package body Lith.Primitives is
       return Lith.Objects.To_Object (Result);
    end Evaluate_Random;
 
+   ----------------------
+   -- Evaluate_Set_Car --
+   ----------------------
+
+   function Evaluate_Set_Car
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+   begin
+      Store.Set_Car (Arguments (Arguments'First),
+                     Arguments (Arguments'First + 1));
+      return Arguments (Arguments'First);
+   end Evaluate_Set_Car;
+
+   ----------------------
+   -- Evaluate_Set_Cdr --
+   ----------------------
+
+   function Evaluate_Set_Cdr
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+   begin
+      Store.Set_Cdr (Arguments (Arguments'First),
+                     Arguments (Arguments'First + 1));
+      return Arguments (Arguments'First);
+   end Evaluate_Set_Cdr;
+
    -------------------------------
    -- Evaluate_Symbol_To_String --
    -------------------------------
@@ -302,9 +369,7 @@ package body Lith.Primitives is
       Result : Object := Nil;
    begin
       for Ch of reverse Text loop
-         Result :=
-           Store.Cons ((To_Object (Integer'(Wide_Wide_Character'Pos (Ch)))),
-                       Result);
+         Result := Store.Cons (To_Object (Ch), Result);
       end loop;
       Result := Store.Cons (Lith.Symbols.String_Atom, Result);
       return Result;
@@ -320,13 +385,19 @@ package body Lith.Primitives is
       return Lith.Objects.Object
    is
       pragma Unreferenced (Store);
-      Code : constant Integer :=
-               Lith.Objects.To_Integer (Arguments (Arguments'First));
+      use Ada.Wide_Wide_Text_IO;
+      Char : constant Wide_Wide_Character :=
+               Lith.Objects.To_Character (Arguments (Arguments'First));
+      Code : constant Natural :=
+               Wide_Wide_Character'Pos (Char);
    begin
       if Code = 10 then
          Ada.Wide_Wide_Text_IO.New_Line;
+      elsif Code in 256 .. 65535 then
+         Put (Wide_Wide_Character'Val (Code / 256));
+         Put (Wide_Wide_Character'Val (Code mod 256));
       else
-         Ada.Wide_Wide_Text_IO.Put (Wide_Wide_Character'Val (Code));
+         Put (Char);
       end if;
       return Arguments (Arguments'First);
    end Evaluate_Write_Char;
