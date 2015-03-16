@@ -471,6 +471,36 @@ package body Lith.Machine is
         (" D: " & Machine.Show (Machine.Dump));
    end Report_State;
 
+   -------------
+   -- Set_Car --
+   -------------
+
+   overriding procedure Set_Car
+     (Machine : in out Root_Lith_Machine;
+      Pair    : in     Lith.Objects.Object;
+      New_Car : in Lith.Objects.Object)
+   is
+      Address : constant Lith.Objects.Cell_Address :=
+                  Lith.Objects.To_Address (Pair);
+   begin
+      Machine.Core (Address).Car := New_Car;
+   end Set_Car;
+
+   -------------
+   -- Set_Cdr --
+   -------------
+
+   overriding procedure Set_Cdr
+     (Machine : in out Root_Lith_Machine;
+      Pair    : in     Lith.Objects.Object;
+      New_Cdr : in Lith.Objects.Object)
+   is
+      Address : constant Lith.Objects.Cell_Address :=
+                  Lith.Objects.To_Address (Pair);
+   begin
+      Machine.Core (Address).Cdr := New_Cdr;
+   end Set_Cdr;
+
    ----------
    -- Show --
    ----------
