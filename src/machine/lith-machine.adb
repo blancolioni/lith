@@ -247,7 +247,9 @@ package body Lith.Machine is
                              return Boolean
    is
    begin
-      Lith.Parser.Parse_File (Machine'Unchecked_Access, Path);
+      Lith.Parser.Parse_File
+        (Machine'Unchecked_Access,
+         Ada.Characters.Conversions.To_String (Path));
       return True;
    exception
       when E : others =>

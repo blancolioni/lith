@@ -1,4 +1,3 @@
-with Ada.Characters.Conversions;
 with Ada.Directories;
 with Ada.Text_IO;
 
@@ -19,14 +18,12 @@ begin
 
    Lith.Parser.Parse_File
      (Machine,
-      Ada.Characters.Conversions.To_Wide_Wide_String
-        (Lith.Paths.Config_Path)
-      & "/lith.l");
+      Lith.Paths.Config_Path & "/lith.l");
 
    if True then
       if Ada.Directories.Exists ("auto.l") then
          Lith.Parser.Parse_File
-           (Machine, "auto.l");
+           (Machine, String'("auto.l"));
       end if;
    end if;
 

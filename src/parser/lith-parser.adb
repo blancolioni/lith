@@ -36,7 +36,7 @@ package body Lith.Parser is
 
    procedure Parse_File
      (Machine : Lith.Machine.Lith_Machine;
-      Path    : Wide_Wide_String)
+      Path    : String)
    is
    begin
       Open (Path);

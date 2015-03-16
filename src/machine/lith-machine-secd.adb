@@ -1,13 +1,22 @@
 with Ada.Characters.Conversions;
+with Ada.Exceptions;
 with Ada.Wide_Wide_Text_IO;
 
 with Lith.Environment;
 with Lith.Objects.Interfaces;
+with Lith.Parser;
 with Lith.Symbols;
+
+with Lith.Paths;
 
 package body Lith.Machine.SECD is
 
    Trace_Eval : constant Boolean := False;
+
+   function Import_Libraries
+     (Machine    : in out Root_Lith_Machine'Class;
+      Import_Set : Lith.Objects.Object)
+      return Boolean;
 
    procedure Create_Environment
      (Machine      : in out Root_Lith_Machine'Class;
@@ -212,7 +221,7 @@ package body Lith.Machine.SECD is
                if C = Choice_Atom then
                   declare
                      Cond : constant Object := Machine.Pop;
-                        T, F : Object;
+                     T, F : Object;
                   begin
                      T := Machine.Pop;
                      F := Machine.Pop;
@@ -372,6 +381,12 @@ package body Lith.Machine.SECD is
                      Machine.Push (C);
                   elsif F = Large_Integer_Atom then
                      Machine.Push (C);
+                  elsif F = Import_Atom then
+                     if Import_Libraries (Machine, Args) then
+                        Machine.Push (True_Atom);
+                     else
+                        Machine.Push (False_Atom);
+                     end if;
                   elsif F = Begin_Atom then
                      Machine.Dump := Machine.Cons (C, Machine.Dump);
                      Machine.Control := Cs;
@@ -492,6 +507,65 @@ package body Lith.Machine.SECD is
       Global := Found;
 
    end Get;
+
+   ----------------------
+   -- Import_Libraries --
+   ----------------------
+
+   function Import_Libraries
+     (Machine    : in out Root_Lith_Machine'Class;
+      Import_Set : Lith.Objects.Object)
+      return Boolean
+   is
+      use Ada.Characters.Conversions;
+      use Lith.Objects;
+
+      function Get_Library_Path (Library_Name : Object) return String;
+
+      ----------------------
+      -- Get_Library_Path --
+      ----------------------
+
+      function Get_Library_Path (Library_Name : Object) return String is
+      begin
+         if Library_Name = Nil then
+            return ".scm";
+         else
+            declare
+               Symbol : constant Symbol_Type :=
+                          To_Symbol (Machine.Car (Library_Name));
+               Name   : constant String :=
+                          To_String (Lith.Symbols.Get_Name (Symbol));
+            begin
+               return "/" & Name
+                 & Get_Library_Path (Machine.Cdr (Library_Name));
+            end;
+         end if;
+      end Get_Library_Path;
+
+      It : Object := Import_Set;
+   begin
+      while It /= Nil loop
+         declare
+            Path : constant String :=
+                     Get_Library_Path (Machine.Car (It));
+         begin
+            Lith.Parser.Parse_File
+              (Machine'Unchecked_Access,
+               Lith.Paths.Config_Path & Path);
+         end;
+         It := Machine.Cdr (It);
+      end loop;
+      return True;
+   exception
+      when E : others =>
+         Ada.Wide_Wide_Text_IO.Put_Line
+           (Ada.Wide_Wide_Text_IO.Standard_Error,
+            "error opening library: "
+            & To_Wide_Wide_String
+              (Ada.Exceptions.Exception_Message (E)));
+         return False;
+   end Import_Libraries;
 
    --------------
    -- Is_Macro --

@@ -209,12 +209,13 @@ package body Lith.Parser.Lexical is
    -- Open --
    ----------
 
-   procedure Open (File_Name : Wide_Wide_String) is
+   procedure Open (File_Name : String) is
       use Ada.Wide_Wide_Text_IO;
       File : File_Type;
    begin
-      Open_Stream (File_Name);
-      Open (File, In_File, Ada.Characters.Conversions.To_String (File_Name));
+      Open_Stream
+        (Ada.Characters.Conversions.To_Wide_Wide_String (File_Name));
+      Open (File, In_File, File_Name);
       while not End_Of_File (File) loop
          declare
             Line : constant Wide_Wide_String := Get_Line (File);
