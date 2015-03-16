@@ -1,13 +1,22 @@
 with Ada.Characters.Conversions;
+with Ada.Exceptions;
 with Ada.Wide_Wide_Text_IO;
 
 with Lith.Environment;
 with Lith.Objects.Interfaces;
+with Lith.Parser;
 with Lith.Symbols;
+
+with Lith.Paths;
 
 package body Lith.Machine.SECD is
 
    Trace_Eval : constant Boolean := False;
+
+   function Import_Libraries
+     (Machine    : in out Root_Lith_Machine'Class;
+      Import_Set : Lith.Objects.Object)
+      return Boolean;
 
    procedure Create_Environment
      (Machine      : in out Root_Lith_Machine'Class;
@@ -212,7 +221,7 @@ package body Lith.Machine.SECD is
                if C = Choice_Atom then
                   declare
                      Cond : constant Object := Machine.Pop;
-                        T, F : Object;
+                     T, F : Object;
                   begin
                      T := Machine.Pop;
                      F := Machine.Pop;
@@ -229,6 +238,14 @@ package body Lith.Machine.SECD is
                   Machine.Control := Cs;
                   Push_Control (Machine.Pop);
                   C_Updated := True;
+               elsif C = Internal_Define_Atom then
+                  declare
+                     Value : constant Object := Machine.Pop;
+                     Name  : constant Object := Machine.Pop;
+                  begin
+                     Lith.Environment.Define (To_Symbol (Name), Value);
+                     Machine.Push (Value);
+                  end;
                elsif C = Lith_Set_Atom then
                   declare
                      Value : constant Object := Machine.Pop;
@@ -359,19 +376,41 @@ package body Lith.Machine.SECD is
                      C_Updated := True;
                   elsif F = Define_Atom then
                      declare
-                        Name : constant Symbol_Type :=
-                                 To_Symbol (Machine.Car (Args));
-                        Value : constant Object := Machine.Cadr (Args);
+                        Name : constant Object :=
+                                 Machine.Car (Args);
+                        Value : constant Object :=
+                                  Machine.Cadr (Args);
                      begin
-                        Lith.Environment.Define (Name, Value);
-                        Machine.Push (Machine.Cons (To_Object (Name), Value));
+                        if Trace_Eval then
+                           Ada.Wide_Wide_Text_IO.Put_Line
+                             ("define: "
+                              & Machine.Show (Name)
+                              & " = "
+                              & Machine.Show (Value));
+                        end if;
+
+                        Machine.Push (Value);
+                        Machine.Push (Internal_Define_Atom);
+                        Machine.Push (Cs);
+                        Machine.Cons;
+                        Machine.Cons;
+                        Machine.Control := Machine.Pop;
+
+                        Machine.Push (Name);
+                        C_Updated := True;
                      end;
-                  elsif F = Lambda then
+                  elsif F = Lambda or else F = Macro then
                      Machine.Push (C);
                   elsif F = String_Atom then
                      Machine.Push (C);
                   elsif F = Large_Integer_Atom then
                      Machine.Push (C);
+                  elsif F = Import_Atom then
+                     if Import_Libraries (Machine, Args) then
+                        Machine.Push (True_Atom);
+                     else
+                        Machine.Push (False_Atom);
+                     end if;
                   elsif F = Begin_Atom then
                      Machine.Dump := Machine.Cons (C, Machine.Dump);
                      Machine.Control := Cs;
@@ -395,6 +434,13 @@ package body Lith.Machine.SECD is
                         It : Object := Args;
                         Macro : constant Boolean := Is_Macro (Machine, F);
                      begin
+                        if Trace_Eval then
+                           Ada.Wide_Wide_Text_IO.Put_Line
+                             ("Is_Macro: " & Machine.Show (F)
+                              & " = "
+                              & (if Macro then "yes" else "no"));
+                        end if;
+
                         while It /= Nil loop
                            if Macro then
                               Machine.Push (Machine.Car (It));
@@ -492,6 +538,65 @@ package body Lith.Machine.SECD is
       Global := Found;
 
    end Get;
+
+   ----------------------
+   -- Import_Libraries --
+   ----------------------
+
+   function Import_Libraries
+     (Machine    : in out Root_Lith_Machine'Class;
+      Import_Set : Lith.Objects.Object)
+      return Boolean
+   is
+      use Ada.Characters.Conversions;
+      use Lith.Objects;
+
+      function Get_Library_Path (Library_Name : Object) return String;
+
+      ----------------------
+      -- Get_Library_Path --
+      ----------------------
+
+      function Get_Library_Path (Library_Name : Object) return String is
+      begin
+         if Library_Name = Nil then
+            return ".scm";
+         else
+            declare
+               Symbol : constant Symbol_Type :=
+                          To_Symbol (Machine.Car (Library_Name));
+               Name   : constant String :=
+                          To_String (Lith.Symbols.Get_Name (Symbol));
+            begin
+               return "/" & Name
+                 & Get_Library_Path (Machine.Cdr (Library_Name));
+            end;
+         end if;
+      end Get_Library_Path;
+
+      It : Object := Import_Set;
+   begin
+      while It /= Nil loop
+         declare
+            Path : constant String :=
+                     Get_Library_Path (Machine.Car (It));
+         begin
+            Lith.Parser.Parse_File
+              (Machine'Unchecked_Access,
+               Lith.Paths.Config_Path & Path);
+         end;
+         It := Machine.Cdr (It);
+      end loop;
+      return True;
+   exception
+      when E : others =>
+         Ada.Wide_Wide_Text_IO.Put_Line
+           (Ada.Wide_Wide_Text_IO.Standard_Error,
+            "error opening library: "
+            & To_Wide_Wide_String
+              (Ada.Exceptions.Exception_Message (E)));
+         return False;
+   end Import_Libraries;
 
    --------------
    -- Is_Macro --

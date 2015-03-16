@@ -15,6 +15,8 @@ package Lith.Symbols is
    function Eval_Atom return Lith.Objects.Object;
    function False_Atom return Lith.Objects.Object;
    function If_Atom return Lith.Objects.Object;
+   function Import_Atom return Lith.Objects.Object;
+   function Internal_Define_Atom return Lith.Objects.Object;
    function Lambda return Lith.Objects.Object;
    function Large_Integer_Atom return Lith.Objects.Object;
    function Lith_Define_Atom return Lith.Objects.Object;

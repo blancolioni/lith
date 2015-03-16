@@ -247,7 +247,9 @@ package body Lith.Machine is
                              return Boolean
    is
    begin
-      Lith.Parser.Parse_File (Machine'Unchecked_Access, Path);
+      Lith.Parser.Parse_File
+        (Machine'Unchecked_Access,
+         Ada.Characters.Conversions.To_String (Path));
       return True;
    exception
       when E : others =>
@@ -469,6 +471,36 @@ package body Lith.Machine is
         (" D: " & Machine.Show (Machine.Dump));
    end Report_State;
 
+   -------------
+   -- Set_Car --
+   -------------
+
+   overriding procedure Set_Car
+     (Machine : in out Root_Lith_Machine;
+      Pair    : in     Lith.Objects.Object;
+      New_Car : in Lith.Objects.Object)
+   is
+      Address : constant Lith.Objects.Cell_Address :=
+                  Lith.Objects.To_Address (Pair);
+   begin
+      Machine.Core (Address).Car := New_Car;
+   end Set_Car;
+
+   -------------
+   -- Set_Cdr --
+   -------------
+
+   overriding procedure Set_Cdr
+     (Machine : in out Root_Lith_Machine;
+      Pair    : in     Lith.Objects.Object;
+      New_Cdr : in Lith.Objects.Object)
+   is
+      Address : constant Lith.Objects.Cell_Address :=
+                  Lith.Objects.To_Address (Pair);
+   begin
+      Machine.Core (Address).Cdr := New_Cdr;
+   end Set_Cdr;
+
    ----------
    -- Show --
    ----------
@@ -564,10 +596,12 @@ package body Lith.Machine is
       begin
          if Start = Nil then
             return "";
-         else
-            return
-              Wide_Wide_Character'Val (To_Integer (Machine.Car (Start)))
+         elsif Is_Character (Machine.Car (Start)) then
+            return To_Character (Machine.Car (Start))
               & String_Image (Machine.Cdr (Start));
+         else
+            raise Constraint_Error
+              with "String contains non-character";
          end if;
       end String_Image;
 

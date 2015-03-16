@@ -36,7 +36,7 @@ package body Lith.Parser is
 
    procedure Parse_File
      (Machine : Lith.Machine.Lith_Machine;
-      Path    : Wide_Wide_String)
+      Path    : String)
    is
    begin
       Open (Path);
@@ -76,7 +76,15 @@ package body Lith.Parser is
       begin
          Parse_S_Expression (Machine, Quasiquote);
 
-         if Tok = Tok_Right_Paren then
+         if Tok = Tok_Dot then
+            Scan;
+            Parse_S_Expression (Machine, Quasiquote);
+            if Tok = Tok_Right_Paren then
+               Scan;
+            else
+               Error ("missing ')'");
+            end if;
+         elsif Tok = Tok_Right_Paren then
             Machine.Push (Lith.Objects.Nil);
             Scan;
          elsif Tok = Tok_End_Of_File then
@@ -123,7 +131,7 @@ package body Lith.Parser is
          when Tok_String =>
             Machine.Push (Lith.Symbols.String_Atom);
             for Ch of Tok_Text loop
-               Machine.Push (Wide_Wide_Character'Pos (Ch));
+               Machine.Push (Lith.Objects.To_Object (Ch));
             end loop;
             Machine.Push (Lith.Objects.Nil);
             for I in 1 .. Tok_Text'Length + 1 loop

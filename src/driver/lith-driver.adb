@@ -1,5 +1,3 @@
-with Ada.Characters.Conversions;
-with Ada.Directories;
 with Ada.Text_IO;
 
 with Lith.Machine;
@@ -10,7 +8,7 @@ with Lith.Primitives;
 with Lith.Repl;
 
 procedure Lith.Driver is
-   Core_Size : constant := 20_000;
+   Core_Size : constant := 32_768;
    Machine   : constant Lith.Machine.Lith_Machine :=
                  Lith.Machine.Create (Core_Size);
 begin
@@ -19,16 +17,7 @@ begin
 
    Lith.Parser.Parse_File
      (Machine,
-      Ada.Characters.Conversions.To_Wide_Wide_String
-        (Lith.Paths.Config_Path)
-      & "/lith.l");
-
-   if True then
-      if Ada.Directories.Exists ("auto.l") then
-         Lith.Parser.Parse_File
-           (Machine, "auto.l");
-      end if;
-   end if;
+      Lith.Paths.Config_Path & "/lith.l");
 
    if True then
       Lith.Repl.Execute (Machine);

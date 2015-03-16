@@ -66,16 +66,18 @@ package Lith.Objects is
    is abstract
      with Pre'Class => Is_Pair (Item);
 
---     procedure Set_Car (Store   : in out Object_Store;
---                        Pair    : in     Object;
---                        New_Car : in Object)
---     is abstract;
---
---     procedure Set_Cdr (Store   : in out Object_Store;
---                        Pair    : in     Object;
---                        New_Cdr : in Object)
---     is abstract;
---
+   procedure Set_Car (Store   : in out Object_Store;
+                      Pair    : in     Object;
+                      New_Car : in Object)
+   is abstract
+     with Pre'Class => Is_Pair (Pair);
+
+   procedure Set_Cdr (Store   : in out Object_Store;
+                      Pair    : in     Object;
+                      New_Cdr : in Object)
+   is abstract
+     with Pre'Class => Is_Pair (Pair);
+
    function Caar (Store : Object_Store'Class;
                   Item  : Object)
                   return Object
@@ -106,7 +108,7 @@ package Lith.Objects is
                   return Boolean
                   is abstract;
 
-   function To_String (Store    : Object_Store'Class;
+   function To_String (Store    : in out Object_Store'Class;
                        Item     : Object)
                        return Wide_Wide_String;
 
