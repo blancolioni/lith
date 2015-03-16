@@ -70,6 +70,16 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
+   function Evaluate_Set_Car
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Set_Cdr
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
    function Evaluate_Write_Char
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -94,6 +104,8 @@ package body Lith.Primitives is
       Define_Function ("pair?", 1, Evaluate_Is_Pair'Access);
       Define_Function ("integer?", 1, Evaluate_Is_Integer'Access);
       Define_Function ("random", 1, Evaluate_Random'Access);
+      Define_Function ("set-car!", 2, Evaluate_Set_Car'Access);
+      Define_Function ("set-cdr!", 2, Evaluate_Set_Cdr'Access);
       Define_Function ("write-char", 2, Evaluate_Write_Char'Access);
       Lith.Primitives.ALU.Add_Operators;
    end Add_Primitives;
@@ -286,6 +298,36 @@ package body Lith.Primitives is
    begin
       return Lith.Objects.To_Object (Result);
    end Evaluate_Random;
+
+   ----------------------
+   -- Evaluate_Set_Car --
+   ----------------------
+
+   function Evaluate_Set_Car
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+   begin
+      Store.Set_Car (Arguments (Arguments'First),
+                     Arguments (Arguments'First + 1));
+      return Arguments (Arguments'First);
+   end Evaluate_Set_Car;
+
+   ----------------------
+   -- Evaluate_Set_Cdr --
+   ----------------------
+
+   function Evaluate_Set_Cdr
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+   begin
+      Store.Set_Cdr (Arguments (Arguments'First),
+                     Arguments (Arguments'First + 1));
+      return Arguments (Arguments'First);
+   end Evaluate_Set_Cdr;
 
    -------------------------------
    -- Evaluate_Symbol_To_String --

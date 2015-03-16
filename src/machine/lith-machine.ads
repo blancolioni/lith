@@ -71,6 +71,16 @@ package Lith.Machine is
       return Lith.Objects.Object
      with Pre => Lith.Objects.Is_Pair (Value);
 
+   overriding procedure Set_Car
+     (Machine : in out Root_Lith_Machine;
+      Pair    : in     Lith.Objects.Object;
+      New_Car : in Lith.Objects.Object);
+
+   overriding procedure Set_Cdr
+     (Machine : in out Root_Lith_Machine;
+      Pair    : in     Lith.Objects.Object;
+      New_Cdr : in Lith.Objects.Object);
+
    function Evaluate
      (Machine     : in out Root_Lith_Machine'Class;
       Expression  : Lith.Objects.Object;
