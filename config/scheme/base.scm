@@ -10,6 +10,8 @@
         ((and (pair? x) (pair? y)) (and (equal? (car x) (car y)) (equal? (cdr x) (cdr y))))
         (else #f)))
 
+(define (eqv? x y) (eq? x y))    ; so wrong
+
 (define (boolean? x) (or (eq? x #f) (eq? x #t)))
 
 (define (number? x) (integer? x))  ; the only numbers we have :(
@@ -58,17 +60,62 @@
 
 (define (list? xs)
    (or (null? xs) (and (pair? xs) (list? (cdr xs)))))
-   
+
+(define (make-list . xs) (do-make-list (car xs) (if (null? (cdr xs)) #f (cadr xs))))
+(define (do-make-list n fill) (if (eq? n 0) '() (cons fill (do-make-list (- n 1) fill))))
+(define (length xs) (if (null? xs) 0 (+ 1 (length (cdr xs)))))
+
 (define (map f xs) (if (null? xs) '() (cons (f (car xs)) (map f (cdr xs)))))
 (define (filter f xs) (cond ((null? xs) '())
                             ((f (car xs)) (cons (car xs) (filter f (cdr xs))))
                             (else (filter f (cdr xs)))))
                             
-(define (append xs ys)
-  (if (null? xs) ys (cons (car xs) (append (cdr xs) ys))))
+(define (append . lists) (do-append lists))
+(define (do-append lists)
+  (cond ((null? lists) '())
+        ((null? (cdr lists)) (car lists))
+        (else (append-2 (car lists) (do-append (cdr lists))))))
+(define (append-2 xs ys)
+  (if (null? xs) ys (cons (car xs) (append-2 (cdr xs) ys))))
+
+(define (reverse xs) (reverse-acc xs '()))
+(define (reverse-acc xs acc) (if (null? xs) acc (reverse-acc (cdr xs) (cons (car xs) acc))))
+(define (list-tail x k) (if (zero? k) x (list-tail (cdr x) (- k 1))))
+(define (list-ref x k) (car (list-tail x k)))
+(define (memq obj xs)
+   (cond ((null? xs) #f)
+         ((eq? (car xs) obj) xs)
+         (else (memq obj (cdr xs)))))
+
+(define (memv obj xs) (member obj xs eqv?))
+
+(define (assq obj alist) (assoc obj alist eq?))
+(define (assv obj alist) (assoc obj alist eqv?))
 
 (define let (macro (bindings expr)
   (cons (list 'lambda (map car bindings) expr) (map cadr bindings))))
+
+(define (member . args)
+   (let ((obj (car args))
+         (xs (cadr args))
+         (compare (if (null? (cddr args)) equal? (caddr args))))
+        (member-3 obj xs compare)))
+
+(define (member-3 obj xs compare)
+   (cond ((null? xs) #f)
+         ((compare (car xs) obj) xs)
+         (else (member-3 obj (cdr xs) compare))))
+         
+(define (assoc . args)
+   (let ((obj (car args))
+         (alist (cadr args))
+         (compare (if (null? (cddr args)) equal? (caddr args))))
+        (assoc-3 obj alist compare)))
+
+(define (assoc-3 obj alist compare)
+   (cond ((null? alist) #f)
+         ((compare (caar alist) obj) (car alist))
+         (else (assoc-3 obj (cdr alist) compare))))
 
 (define (let*2let bindings expr)
   (if (null? bindings) expr
