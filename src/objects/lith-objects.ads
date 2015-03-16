@@ -101,7 +101,7 @@ package Lith.Objects is
                   return Boolean
                   is abstract;
 
-   function To_String (Store    : Object_Store'Class;
+   function To_String (Store    : in out Object_Store'Class;
                        Item     : Object)
                        return Wide_Wide_String;
 

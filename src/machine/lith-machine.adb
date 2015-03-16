@@ -564,10 +564,12 @@ package body Lith.Machine is
       begin
          if Start = Nil then
             return "";
-         else
-            return
-              Wide_Wide_Character'Val (To_Integer (Machine.Car (Start)))
+         elsif Is_Character (Machine.Car (Start)) then
+            return To_Character (Machine.Car (Start))
               & String_Image (Machine.Cdr (Start));
+         else
+            raise Constraint_Error
+              with "String contains non-character";
          end if;
       end String_Image;
 
