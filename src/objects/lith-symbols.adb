@@ -121,6 +121,15 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("import"));
    end Import_Atom;
 
+   --------------------------
+   -- Internal_Define_Atom --
+   --------------------------
+
+   function Internal_Define_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("<internal-define>"));
+   end Internal_Define_Atom;
+
    ------------
    -- Lambda --
    ------------

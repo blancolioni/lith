@@ -238,6 +238,14 @@ package body Lith.Machine.SECD is
                   Machine.Control := Cs;
                   Push_Control (Machine.Pop);
                   C_Updated := True;
+               elsif C = Internal_Define_Atom then
+                  declare
+                     Value : constant Object := Machine.Pop;
+                     Name  : constant Object := Machine.Pop;
+                  begin
+                     Lith.Environment.Define (To_Symbol (Name), Value);
+                     Machine.Push (Value);
+                  end;
                elsif C = Lith_Set_Atom then
                   declare
                      Value : constant Object := Machine.Pop;
@@ -368,14 +376,26 @@ package body Lith.Machine.SECD is
                      C_Updated := True;
                   elsif F = Define_Atom then
                      declare
-                        Name : constant Symbol_Type :=
-                                 To_Symbol (Machine.Car (Args));
-                        Value : constant Object := Machine.Cadr (Args);
+                        Name : constant Object :=
+                                 Machine.Car (Args);
+                        Value : constant Object :=
+                                  Machine.Cadr (Args);
                      begin
-                        Lith.Environment.Define (Name, Value);
-                        Machine.Push (Machine.Cons (To_Object (Name), Value));
+                        if Trace_Eval then
+                           Ada.Wide_Wide_Text_IO.Put_Line
+                             ("define: "
+                              & Machine.Show (Name)
+                              & " = "
+                              & Machine.Show (Value));
+                        end if;
+                        Machine.Control :=
+                          Machine.Cons (Internal_Define_Atom, Cs);
+                        Machine.Control :=
+                          Machine.Cons (Value, Machine.Control);
+                        Machine.Push (Name);
+                        C_Updated := True;
                      end;
-                  elsif F = Lambda then
+                  elsif F = Lambda or else F = Macro then
                      Machine.Push (C);
                   elsif F = String_Atom then
                      Machine.Push (C);
@@ -410,6 +430,13 @@ package body Lith.Machine.SECD is
                         It : Object := Args;
                         Macro : constant Boolean := Is_Macro (Machine, F);
                      begin
+                        if Trace_Eval then
+                           Ada.Wide_Wide_Text_IO.Put_Line
+                             ("Is_Macro: " & Machine.Show (F)
+                              & " = "
+                              & (if Macro then "yes" else "no"));
+                        end if;
+
                         while It /= Nil loop
                            if Macro then
                               Machine.Push (Machine.Car (It));
