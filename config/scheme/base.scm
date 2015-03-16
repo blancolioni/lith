@@ -5,6 +5,10 @@
 (define (+1 x) (+ x 1))
 (define (-1 x) (+ x 1))
 
+; (define (set-car! xs x) (list-set! xs 0 (cons x (cdr xs))))
+(define (list-set! xs k x) (if (zero? k) (set-car! xs x)
+                               (list-set! (cdr xs) (- k 1) x)))
+
 (define (equal? x y)
   (cond ((eq? x y) #t)
         ((and (pair? x) (pair? y)) (and (equal? (car x) (car y)) (equal? (cdr x) (cdr y))))
@@ -116,6 +120,8 @@
    (cond ((null? alist) #f)
          ((compare (caar alist) obj) (car alist))
          (else (assoc-3 obj (cdr alist) compare))))
+
+(define (list-copy xs) (if (pair? xs) (cons (car xs) (list-copy (cdr xs))) xs))
 
 (define (let*2let bindings expr)
   (if (null? bindings) expr
