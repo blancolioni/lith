@@ -58,6 +58,7 @@ package body Lith.Parser.Lexical is
    function Peek return Wide_Wide_Character;
 
    function Is_White_Space return Boolean;
+   function Is_Alphanumeric return Boolean;
    function End_Of_Stream return Boolean;
    function End_Of_Line return Boolean;
    function Hex_Digit (Ch : Wide_Wide_Character) return Natural;
@@ -168,6 +169,16 @@ package body Lith.Parser.Lexical is
       end loop;
       return Wide_Wide_Character'Val (V);
    end Hex_To_Character;
+
+   ---------------------
+   -- Is_Alphanumeric --
+   ---------------------
+
+   function Is_Alphanumeric return Boolean is
+   begin
+      return Ada.Wide_Wide_Characters.Handling.Is_Alphanumeric
+        (Current_Stream.Ch);
+   end Is_Alphanumeric;
 
    --------------------
    -- Is_White_Space --
@@ -292,6 +303,10 @@ package body Lith.Parser.Lexical is
             Next_Character;
          end loop;
 
+         if Count = 0 then
+            return 'x';
+         end if;
+
          if not Long_Names then
             if Current_Stream.Ch = ';' then
                Next_Character;
@@ -308,7 +323,7 @@ package body Lith.Parser.Lexical is
             return ' ';
          else
             while Count + 1 in Buffer'Range
-              and then not Is_White_Space
+              and then Is_Alphanumeric
             loop
                Count := Count + 1;
                Buffer (Count) := Current_Stream.Ch;
