@@ -153,12 +153,21 @@
 (define (floor-quotient x y) (car (floor/ x y)))
 (define (floor-remainder x y) (cadr (floor/ x y)))
 
-(define (gcd x y)
+(define (gcd . xs) (run-gcd xs 0))
+(define (run-gcd xs acc)
+  (if (null? xs) acc
+       (run-gcd (cdr xs) (gcd-2 (car xs) acc))))
+(define (gcd-2 x y)       
   (if (eq? y 0)
       x
-      (gcd y (floor-remainder x y))))
+      (gcd-2 y (floor-remainder x y))))
 
-(define (lcm x y) (floor-quotient (* x y) (gcd x y)))
+(define (lcm . xs) (run-lcm xs 1))
+(define (run-lcm xs acc)
+  (if (null? xs) acc
+      (run-lcm (cdr xs) (lcm-2 (car xs) acc))))
+      
+(define (lcm-2 x y) (floor-quotient (* x y) (gcd x y)))
 
 (define (square x) (* x x))
 
@@ -167,6 +176,8 @@
 (define (zero? x) (eq? x 0))
 (define (positive? x) (> x 0))
 (define (negative? x) (< x 0))
+
+(define (abs x) (if (negative? x) (- x) x))
 
 (define max (lambda x (minmax (car x) (cdr x) >)))
 (define min (lambda x (minmax (car x) (cdr x) <)))
