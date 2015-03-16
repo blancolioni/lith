@@ -10,6 +10,8 @@
         ((and (pair? x) (pair? y)) (and (equal? (car x) (car y)) (equal? (cdr x) (cdr y))))
         (else #f)))
 
+(define (boolean? x) (or (eq? x #f) (eq? x #t)))
+
 (define (number? x) (integer? x))  ; the only numbers we have :(
 
 (define (complex? x) #f)
@@ -54,6 +56,9 @@
 (define (cdddar x) (cdr (cdr (cdr (car x)))))
 (define (cddddr x) (cdr (cdr (cdr (cdr x)))))
 
+(define (list? xs)
+   (or (null? xs) (and (pair? xs) (list? (cdr xs)))))
+   
 (define (map f xs) (if (null? xs) '() (cons (f (car xs)) (map f (cdr xs)))))
 (define (filter f xs) (cond ((null? xs) '())
                             ((f (car xs)) (cons (car xs) (filter f (cdr xs))))
