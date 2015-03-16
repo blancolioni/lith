@@ -76,7 +76,15 @@ package body Lith.Parser is
       begin
          Parse_S_Expression (Machine, Quasiquote);
 
-         if Tok = Tok_Right_Paren then
+         if Tok = Tok_Dot then
+            Scan;
+            Parse_S_Expression (Machine, Quasiquote);
+            if Tok = Tok_Right_Paren then
+               Scan;
+            else
+               Error ("missing ')'");
+            end if;
+         elsif Tok = Tok_Right_Paren then
             Machine.Push (Lith.Objects.Nil);
             Scan;
          elsif Tok = Tok_End_Of_File then
