@@ -123,7 +123,7 @@ package body Lith.Parser is
          when Tok_String =>
             Machine.Push (Lith.Symbols.String_Atom);
             for Ch of Tok_Text loop
-               Machine.Push (Wide_Wide_Character'Pos (Ch));
+               Machine.Push (Lith.Objects.To_Object (Ch));
             end loop;
             Machine.Push (Lith.Objects.Nil);
             for I in 1 .. Tok_Text'Length + 1 loop

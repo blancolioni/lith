@@ -1,3 +1,5 @@
+with Ada.Characters.Conversions;
+
 package body Lith.Objects is
 
    ------------------
@@ -294,7 +296,7 @@ package body Lith.Objects is
    -- To_String --
    ---------------
 
-   function To_String (Store    : Object_Store'Class;
+   function To_String (Store    : in out Object_Store'Class;
                        Item     : Object)
                        return Wide_Wide_String
    is
@@ -304,8 +306,14 @@ package body Lith.Objects is
    begin
       while It /= Nil loop
          Count := Count + 1;
-         Result (Count) :=
-           Wide_Wide_Character'Val (To_Integer (Store.Car (It)));
+         if Is_Character (Store.Car (It)) then
+            Result (Count) := To_Character (Store.Car (It));
+         else
+            raise Constraint_Error with
+              "String contains non-character: "
+              & Ada.Characters.Conversions.To_String
+              (Store.Show (Store.Car (It)));
+         end if;
          It := Store.Cdr (It);
       end loop;
       return Result (1 .. Count);
