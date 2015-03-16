@@ -7,6 +7,8 @@ with Lith.Objects;
 with Lith.Parser;
 with Lith.Symbols;
 
+with Lith.Paths;
+
 package body Lith.Repl is
 
    -------------
@@ -17,6 +19,11 @@ package body Lith.Repl is
       use Ada.Wide_Wide_Text_IO;
       use Lith.Objects;
    begin
+
+      Lith.Parser.Parse_File
+        (Machine,
+         Lith.Paths.Config_Path & "/interaction-environment.scm");
+
       while Lith.Environment.Get
         (Lith.Symbols.Get_Symbol ("__exit")) = Lith.Symbols.False_Atom
       loop

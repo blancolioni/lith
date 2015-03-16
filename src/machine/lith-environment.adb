@@ -1,4 +1,7 @@
+with Ada.Characters.Conversions;
 with Lith.Objects.Symbol_Maps;
+
+with Lith.Symbols;
 
 package body Lith.Environment is
 
@@ -18,6 +21,12 @@ package body Lith.Environment is
    is
    begin
       Top.Insert (Name, Value);
+   exception
+      when Constraint_Error =>
+         raise Constraint_Error with
+         Ada.Characters.Conversions.To_String (Lith.Symbols.Get_Name (Name))
+           & ": already defined";
+
    end Define;
 
    ---------

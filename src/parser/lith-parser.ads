@@ -10,6 +10,6 @@ package Lith.Parser is
 
    procedure Parse_File
      (Machine : Lith.Machine.Lith_Machine;
-      Path    : Wide_Wide_String);
+      Path    : String);
 
 end Lith.Parser;

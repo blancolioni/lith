@@ -2,7 +2,7 @@ with Lith.Parser.Tokens;             use Lith.Parser.Tokens;
 
 private package Lith.Parser.Lexical is
 
-   procedure Open (File_Name : Wide_Wide_String);
+   procedure Open (File_Name : String);
    procedure Open_String (Expr_String : Wide_Wide_String);
 
    procedure Close;

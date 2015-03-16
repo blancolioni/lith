@@ -112,6 +112,15 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("if"));
    end If_Atom;
 
+   -----------------
+   -- Import_Atom --
+   -----------------
+
+   function Import_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("import"));
+   end Import_Atom;
+
    ------------
    -- Lambda --
    ------------
