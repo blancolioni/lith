@@ -1,5 +1,7 @@
 package Lith.Objects is
 
+   Evaluation_Error : exception;
+
    Word_Size : constant := 32;
 
    type Object is private;
@@ -143,7 +145,7 @@ package Lith.Objects is
    procedure Report_State (Store : in out Object_Store) is abstract;
 
    procedure Drop (Store : in out Object_Store'Class;
-                   Count : Positive := 1;
+                   Count : Natural := 1;
                    Stack : Stack_Type := Primary);
 
    procedure Swap (Store : in out Object_Store'Class);

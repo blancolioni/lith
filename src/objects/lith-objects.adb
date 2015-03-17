@@ -25,7 +25,7 @@ package body Lith.Objects is
    ----------
 
    procedure Drop (Store : in out Object_Store'Class;
-                   Count : Positive := 1;
+                   Count : Natural := 1;
                    Stack : Stack_Type := Primary)
    is
       Unused : Object;
