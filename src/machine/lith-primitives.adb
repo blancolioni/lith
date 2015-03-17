@@ -29,6 +29,11 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
+   function Evaluate_Char_To_Integer
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
    function Evaluate_Cons
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -49,6 +54,11 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object
    is (Arguments (Arguments'First));
+
+   function Evaluate_Integer_To_Char
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
 
    function Evaluate_Is_Integer
      (Store       : in out Lith.Objects.Object_Store'Class;
@@ -106,10 +116,12 @@ package body Lith.Primitives is
       Define_Function ("symbol->string", 1, Evaluate_Symbol_To_String'Access);
       Define_Function ("car", 1, Evaluate_Car'Access);
       Define_Function ("cdr", 1, Evaluate_Cdr'Access);
+      Define_Function ("char->integer", 1, Evaluate_Char_To_Integer'Access);
       Define_Function ("cons", 2, Evaluate_Cons'Access);
       Define_Function ("eq?", 2, Evaluate_Eq'Access);
       Define_Function ("error", 1, Evaluate_Error'Access);
       Define_Function ("eval", 1, Evaluate_Eval'Access);
+      Define_Function ("integer->char", 1, Evaluate_Integer_To_Char'Access);
       Define_Function ("load", 1, Evaluate_Load'Access);
       Define_Function ("null?", 1, Evaluate_Is_Null'Access);
       Define_Function ("pair?", 1, Evaluate_Is_Pair'Access);
@@ -180,6 +192,24 @@ package body Lith.Primitives is
       end if;
    end Evaluate_Cdr;
 
+   ------------------------------
+   -- Evaluate_Char_To_Integer --
+   ------------------------------
+
+   function Evaluate_Char_To_Integer
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      pragma Unreferenced (Store);
+      use Lith.Objects;
+   begin
+      return To_Object
+        (Integer'
+           (Wide_Wide_Character'Pos
+                (To_Character (Arguments (Arguments'First)))));
+   end Evaluate_Char_To_Integer;
+
    -------------------
    -- Evaluate_Cons --
    -------------------
@@ -208,9 +238,9 @@ package body Lith.Primitives is
       use Lith.Objects;
    begin
       if Arguments (Arguments'First) = Arguments (Arguments'Last) then
-         return Lith.Symbols.True_Atom;
+         return True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return False_Value;
       end if;
    end Evaluate_Eq;
 
@@ -232,6 +262,23 @@ package body Lith.Primitives is
               & Ada.Characters.Conversions.To_String (Message));
    end Evaluate_Error;
 
+   ------------------------------
+   -- Evaluate_Integer_To_Char --
+   ------------------------------
+
+   function Evaluate_Integer_To_Char
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      pragma Unreferenced (Store);
+      use Lith.Objects;
+   begin
+      return To_Object
+        (Wide_Wide_Character'Val
+                (To_Integer (Arguments (Arguments'First))));
+   end Evaluate_Integer_To_Char;
+
    -------------------------
    -- Evaluate_Is_Integer --
    -------------------------
@@ -248,9 +295,9 @@ package body Lith.Primitives is
         or else (Is_Pair (A)
                  and then Store.Car (A) = Lith.Symbols.Large_Integer_Atom)
       then
-         return Lith.Symbols.True_Atom;
+         return True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return False_Value;
       end if;
    end Evaluate_Is_Integer;
 
@@ -267,9 +314,9 @@ package body Lith.Primitives is
       use Lith.Objects;
    begin
       if Arguments (Arguments'First) = Nil then
-         return Lith.Symbols.True_Atom;
+         return True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return False_Value;
       end if;
    end Evaluate_Is_Null;
 
@@ -286,9 +333,9 @@ package body Lith.Primitives is
       use Lith.Objects;
    begin
       if Is_Pair (Arguments (Arguments'First)) then
-         return Lith.Symbols.True_Atom;
+         return True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return False_Value;
       end if;
    end Evaluate_Is_Pair;
 
@@ -305,9 +352,9 @@ package body Lith.Primitives is
       use Lith.Objects;
    begin
       if Is_Symbol (Arguments (Arguments'First)) then
-         return Lith.Symbols.True_Atom;
+         return True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return False_Value;
       end if;
    end Evaluate_Is_Symbol;
 
@@ -324,9 +371,9 @@ package body Lith.Primitives is
                Store.To_String (Arguments (Arguments'First));
    begin
       if Store.Load (Path) then
-         return Lith.Symbols.True_Atom;
+         return Lith.Objects.True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return Lith.Objects.False_Value;
       end if;
    end Evaluate_Load;
 

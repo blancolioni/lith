@@ -15,7 +15,7 @@ package Lith.Symbols is
    function Dot return Lith.Objects.Object;
    function Ellipsis_Atom return Lith.Objects.Object;
    function Eval_Atom return Lith.Objects.Object;
-   function False_Atom return Lith.Objects.Object;
+   function Floating_Point_Atom return Lith.Objects.Object;
    function If_Atom return Lith.Objects.Object;
    function Import_Atom return Lith.Objects.Object;
    function Internal_Define_Atom return Lith.Objects.Object;
@@ -30,7 +30,6 @@ package Lith.Symbols is
    function Set_Atom return Lith.Objects.Object;
    function Stack_To_Control return Lith.Objects.Object;
    function String_Atom return Lith.Objects.Object;
-   function True_Atom return Lith.Objects.Object;
    function Unquote return Lith.Objects.Object;
    function Unquote_Splicing return Lith.Objects.Object;
    function Wildcard_Atom return Lith.Objects.Object;

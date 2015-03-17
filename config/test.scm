@@ -18,6 +18,8 @@
   (begin (reset-counts)
          (unit-test-symbol)
          (unit-test-numbers)
+         (unit-test-large-numbers)
+         (unit-test-strings)
          (set! *total-count* (+ *pass-count* *fail-count*))
          (display *fail-count*) (write-string "/") (display *total-count*) (write-string " tests failed\n")))
   
@@ -43,5 +45,23 @@
       (test (eqv? (lcm 32 36) 288))
       (test (eqv? (lcm) 1))
       (test (eqv? (square 42) 1764))
+      (test (eqv? (square (- 42)) 1764))
       ))
-      
+
+(define (unit-test-large-numbers)
+   (begin
+      (test (exact? (fac 100)))
+      (test (eqv? 123123123123123 123123123123123))
+      (test (eqv? (fac 100) (* 100 (fac 99))))
+      (test (eqv? (floor-quotient 123123123123123 10000000) 12312312))
+      (test (equal? (number->string 1234567890987654321) "1234567890987654321"))
+      ))
+
+(define (unit-test-strings)
+   (begin
+      (test (string? "hello"))
+      (test (not (string? 'hello)))
+      (test (equal? (make-string 5 #\X) "XXXXX"))
+   ))
+   
+(define (fac n) (if (zero? n) 1 (* n (fac (- n 1)))))

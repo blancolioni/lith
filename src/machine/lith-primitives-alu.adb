@@ -1,6 +1,6 @@
 with Ada.Characters.Conversions;
 
-with Lith.Objects.Numbers;
+with Lith.Objects.Numbers.Exact;
 with Lith.Objects.Symbol_Maps;
 with Lith.Symbols;
 
@@ -50,39 +50,39 @@ package body Lith.Primitives.ALU is
    is (X);
 
    function Acc_Fn_Leq (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is ((if X = Lith.Symbols.False_Atom
+   is ((if X = False_Value
         then X
         elsif To_Integer (X) <= To_Integer (Y)
         then Y
-        else Lith.Symbols.False_Atom));
+        else False_Value));
 
    function Acc_Fn_Geq (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is ((if X = Lith.Symbols.False_Atom
+   is ((if X = False_Value
         then X
         elsif To_Integer (X) >= To_Integer (Y)
         then Y
-        else Lith.Symbols.False_Atom));
+        else False_Value));
 
    function Acc_Fn_Lt (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is ((if X = Lith.Symbols.False_Atom
+   is ((if X = False_Value
         then X
         elsif To_Integer (X) < To_Integer (Y)
         then Y
-        else Lith.Symbols.False_Atom));
+        else False_Value));
 
    function Acc_Fn_Gt (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is ((if X = Lith.Symbols.False_Atom
+   is ((if X = False_Value
         then X
         elsif To_Integer (X) > To_Integer (Y)
         then Y
-        else Lith.Symbols.False_Atom));
+        else False_Value));
 
    function Acc_Fn_Eq (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is ((if X = Lith.Symbols.False_Atom
+   is ((if X = False_Value
         then X
         elsif To_Integer (X) = To_Integer (Y)
         then Y
-        else Lith.Symbols.False_Atom));
+        else False_Value));
 
    procedure Divide_Quotient
      (Store : in out Object_Store'Class)
@@ -99,17 +99,17 @@ package body Lith.Primitives.ALU is
    procedure Add_Operators is
    begin
       Operator ("+", 0, null,
-                Lith.Objects.Numbers.Add'Access, null);
+                Lith.Objects.Numbers.Exact.Add'Access, null);
       Operator ("-", 0,
-                Lith.Objects.Numbers.Negate'Access,
-                Lith.Objects.Numbers.Subtract'Access,
+                Lith.Objects.Numbers.Exact.Negate'Access,
+                Lith.Objects.Numbers.Exact.Subtract'Access,
                 null);
 
       Operator ("*", 0, null,
-                Lith.Objects.Numbers.Multiply'Access,
+                Lith.Objects.Numbers.Exact.Multiply'Access,
                 null);
       Operator ("floor/", 0, null,
-                Lith.Objects.Numbers.Divide'Access,
+                Lith.Objects.Numbers.Exact.Divide'Access,
                 null);
       Operator ("<=", 0, Identity_Fn'Access, Acc_Fn_Leq'Access);
       Operator (">=", 0, Identity_Fn'Access, Acc_Fn_Geq'Access);
@@ -158,7 +158,17 @@ package body Lith.Primitives.ALU is
                end loop;
 
                for I in 1 .. Args'Length - 1 loop
-                  Rec.Exact_Proc (Store);
+                  declare
+                     use Lith.Objects.Numbers.Exact;
+                  begin
+                     if Is_Exact_Number (Store, Store.Top (1))
+                       and then Is_Exact_Number (Store, Store.Top (2))
+                     then
+                        Rec.Exact_Proc (Store);
+                     else
+                        Rec.Inexact_Proc (Store);
+                     end if;
+                  end;
                end loop;
 
                return Store.Pop;
@@ -180,7 +190,7 @@ package body Lith.Primitives.ALU is
      (Store : in out Object_Store'Class)
    is
    begin
-      Lith.Objects.Numbers.Divide (Store);
+      Lith.Objects.Numbers.Exact.Divide (Store);
       Store.Push (Store.Pop, Lith.Objects.Secondary);
       Store.Drop;
       Store.Push (Store.Pop (Lith.Objects.Secondary));
@@ -194,7 +204,7 @@ package body Lith.Primitives.ALU is
      (Store : in out Object_Store'Class)
    is
    begin
-      Lith.Objects.Numbers.Divide (Store);
+      Lith.Objects.Numbers.Exact.Divide (Store);
       Store.Drop;
    end Divide_Quotient;
 

@@ -251,6 +251,15 @@ package body Lith.Machine.SECD is
                   & Machine.Show (Actual));
             end if;
 
+            if Formal_It = Nil then
+               raise Evaluation_Error with
+                 "too many arguments: "
+                 & Ada.Characters.Conversions.To_String
+                 (Machine.Show (Formals))
+                 & " at actual: "
+                 & Ada.Characters.Conversions.To_String
+                 (Machine.Show (Actual));
+            end if;
             Machine.Push (Machine.Cons (Machine.Car (Formal_It), Actual));
             Machine.Push (Machine.Cons (Machine.Pop, Result));
             Result := Machine.Pop;
@@ -387,9 +396,7 @@ package body Lith.Machine.SECD is
             if C = Nil then
                raise Evaluation_Error with
                  "attempted to evaluate nil";
-            elsif C = Lith.Symbols.False_Atom
-              or else C = Lith.Symbols.True_Atom
-            then
+            elsif C = True_Value or else C = False_Value then
                Machine.Push (C);
             elsif Is_Integer (C) then
                Machine.Push (C);
@@ -399,16 +406,15 @@ package body Lith.Machine.SECD is
                if C = Choice_Atom then
                   declare
                      Cond : constant Object := Machine.Pop;
-                     T, F : Object;
                   begin
-                     T := Machine.Pop;
-                     F := Machine.Pop;
-                     if Cond = False_Atom then
+                     if Cond = False_Value then
+                        Machine.Drop;
                         Machine.Control :=
-                          Machine.Cons (F, Cs);
+                          Machine.Cons (Machine.Pop, Cs);
                      else
                         Machine.Control :=
-                             Machine.Cons (T, Cs);
+                          Machine.Cons (Machine.Pop, Cs);
+                        Machine.Drop;
                      end if;
                      C_Updated := True;
                   end;
@@ -426,8 +432,8 @@ package body Lith.Machine.SECD is
                   end;
                elsif C = Lith_Set_Atom then
                   declare
-                     Value : constant Object := Machine.Pop;
-                     Name  : constant Object := Machine.Pop;
+                     Value : constant Object := Machine.Top (1);
+                     Name  : constant Object := Machine.Top (2);
                      Old_Value : Object;
                      Found     : Boolean;
                      Global    : Boolean;
@@ -445,9 +451,10 @@ package body Lith.Machine.SECD is
                            Lith.Environment.Define
                              (To_Symbol (Name), Value);
                         end if;
+                        Machine.Drop (2);
                      else
-                        Machine.Push (Name);
-                        Machine.Push (Value);
+                        --  name and value are still on the stack,
+                        --  in the right order.
                         Machine.Cons;
                         Machine.Push (Nil);
                         Machine.Cons;
@@ -510,7 +517,6 @@ package body Lith.Machine.SECD is
                         Push_Control (Lith.Symbols.Stack_To_Control);
                      end if;
                      Save_State;
-                     Machine.Stack := Nil;
                      Machine.Control :=
                        Machine.Cdr
                          (Machine.Cdr (F));
@@ -518,6 +524,7 @@ package body Lith.Machine.SECD is
                        (Machine      => Machine,
                         Formals      => Machine.Cadr (F),
                         Actuals      => Arguments);
+                     Machine.Stack := Nil;
                   else
                      raise Evaluation_Error with
                        "bad application: "
@@ -611,11 +618,18 @@ package body Lith.Machine.SECD is
                   elsif F = Large_Integer_Atom then
                      Machine.Push (C);
                   elsif F = Import_Atom then
-                     if Import_Libraries (Machine, Args) then
-                        Machine.Push (True_Atom);
-                     else
-                        Machine.Push (False_Atom);
-                     end if;
+
+                     Machine.Push (Args);
+
+                     declare
+                        Result : constant Boolean :=
+                                   Import_Libraries (Machine, Args);
+                     begin
+                        Machine.Drop;
+
+                        Machine.Push
+                          ((if Result then True_Value else False_Value));
+                     end;
                   elsif F = Begin_Atom then
                      Machine.Dump := Machine.Cons (C, Machine.Dump);
                      Machine.Control := Cs;
@@ -684,6 +698,8 @@ package body Lith.Machine.SECD is
                end if;
             end;
          end loop;
+
+         Machine.GC;
 
       end loop;
    end Evaluate;
@@ -789,18 +805,21 @@ package body Lith.Machine.SECD is
             Lith.Parser.Parse_File
               (Machine'Unchecked_Access,
                Lith.Paths.Config_Path & Path);
+         exception
+            when E : others =>
+               Ada.Wide_Wide_Text_IO.Put_Line
+                 (Ada.Wide_Wide_Text_IO.Standard_Error,
+                  "error opening library "
+                  & Machine.Show (Machine.Car (It)));
+               Ada.Wide_Wide_Text_IO.Put_Line
+                 (Ada.Wide_Wide_Text_IO.Standard_Error,
+                  To_Wide_Wide_String
+                    (Ada.Exceptions.Exception_Message (E)));
+               return False;
          end;
          It := Machine.Cdr (It);
       end loop;
       return True;
-   exception
-      when E : others =>
-         Ada.Wide_Wide_Text_IO.Put_Line
-           (Ada.Wide_Wide_Text_IO.Standard_Error,
-            "error opening library: "
-            & To_Wide_Wide_String
-              (Ada.Exceptions.Exception_Message (E)));
-         return False;
    end Import_Libraries;
 
    --------------

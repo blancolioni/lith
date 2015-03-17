@@ -1,4 +1,3 @@
-with Ada.Calendar;
 with Ada.Characters.Conversions;
 with Ada.Exceptions;
 with Ada.Strings.Wide_Wide_Fixed;
@@ -11,11 +10,12 @@ with Lith.Symbols;
 
 with Lith.Machine.SECD;
 
-with Lith.Objects.Numbers;
+with Lith.Objects.Numbers.Exact;
 
 package body Lith.Machine is
 
    Trace_Machine : constant Boolean := False;
+   Trace_GC      : constant Boolean := False;
 
    function Get
      (Machine : Root_Lith_Machine'Class;
@@ -35,19 +35,23 @@ package body Lith.Machine is
    is
       use type Lith.Objects.Object;
       Result : constant Lith.Objects.Object := Machine.Free_List;
-      Address : constant Lith.Objects.Cell_Address :=
-                  Lith.Objects.To_Address (Result);
    begin
-      pragma Assert (Machine.Free (Address));
-      Machine.Free_List := Machine.Core (Address).Cdr;
-      Machine.Core (Address) := (Car, Cdr);
-      Machine.Free (Address) := False;
-      Machine.Alloc_Count := Machine.Alloc_Count + 1;
-      if Machine.Alloc_Count > Machine.Alloc_Limit then
-         Machine.Mark (Result);
-         Machine.GC;
+      if Result = Lith.Objects.Nil then
+         raise Constraint_Error with "out of memory";
       end if;
-      return Result;
+
+      declare
+         Address : constant Lith.Objects.Cell_Address :=
+                     Lith.Objects.To_Address (Result);
+      begin
+         pragma Assert (Machine.Free (Address));
+         Machine.Free_List := Machine.Core (Address).Cdr;
+         Machine.Core (Address) := (Car, Cdr);
+         Machine.Free (Address) := False;
+         Machine.Alloc_Count := Machine.Alloc_Count + 1;
+         Machine.Allocations := Machine.Allocations + 1;
+         return Result;
+      end;
    end Allocate;
 
    ---------
@@ -159,7 +163,7 @@ package body Lith.Machine is
       Machine.Control := Nil;
       Machine.Dump := Nil;
       Machine.Alloc_Count := 0;
-      Machine.Alloc_Limit := Natural (Machine.Core'Length) - 100;
+      Machine.Alloc_Limit := Natural (Machine.Core'Length) - 2000;
       return Machine;
    end Create;
 
@@ -173,10 +177,22 @@ package body Lith.Machine is
       Environment : Lith.Objects.Object)
       return Lith.Objects.Object
    is
+      use Ada.Calendar;
+      Top : constant Boolean := not Machine.Evaluating;
    begin
+      if not Machine.Evaluating then
+         Machine.Evaluating := True;
+         Machine.Start_Eval := Ada.Calendar.Clock;
+      end if;
+
       Machine.Environment := Environment;
       Machine.Control := Machine.Cons (Expression, Lith.Objects.Nil);
       Lith.Machine.SECD.Evaluate (Machine);
+
+      if Top then
+         Machine.Eval_Time := Machine.Eval_Time + (Clock - Machine.Start_Eval);
+         Machine.Evaluating := False;
+      end if;
       return Machine.Pop;
    end Evaluate;
 
@@ -188,7 +204,14 @@ package body Lith.Machine is
      (Machine : in out Root_Lith_Machine'Class)
    is
    begin
-      Ada.Wide_Wide_Text_IO.Put_Line ("Garbage collecting ...");
+
+      if Machine.Alloc_Count < Machine.Alloc_Limit then
+         return;
+      end if;
+
+      if Trace_GC then
+         Ada.Wide_Wide_Text_IO.Put_Line ("Garbage collecting ...");
+      end if;
       declare
          use Ada.Calendar;
          Start : constant Time := Clock;
@@ -216,12 +239,20 @@ package body Lith.Machine is
 
          Machine.Marked.all := (others => False);
 
-         Ada.Wide_Wide_Text_IO.Put_Line
-           ("GC freed"
-            & Integer'Wide_Wide_Image (Old_Alloc_Count - Machine.Alloc_Count)
-            & " cells in"
-            & Duration'Wide_Wide_Image ((Clock - Start) * 1000.0)
-            & "ms");
+         if Trace_GC then
+            Ada.Wide_Wide_Text_IO.Put_Line
+              ("GC freed"
+               & Integer'Wide_Wide_Image
+                 (Old_Alloc_Count - Machine.Alloc_Count)
+               & " cells in"
+               & Duration'Wide_Wide_Image ((Clock - Start) * 1000.0)
+               & "ms");
+         end if;
+
+         Machine.Collections := Machine.Collections +
+           (Old_Alloc_Count - Machine.Alloc_Count);
+         Machine.GC_Time := Machine.GC_Time + (Clock - Start);
+
       end;
    end GC;
 
@@ -469,6 +500,21 @@ package body Lith.Machine is
         (" C: " & Machine.Show (Machine.Control));
       Ada.Wide_Wide_Text_IO.Put_Line
         (" D: " & Machine.Show (Machine.Dump));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("GC:"
+         & Natural'Wide_Wide_Image (Natural (Machine.GC_Time * 1000.0))
+         & "ms");
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Eval:"
+         & Natural'Wide_Wide_Image (Natural (Machine.Eval_Time * 1000.0))
+         & "ms");
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Allocated cells:"
+         & Natural'Wide_Wide_Image (Machine.Allocations));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Reclaimed cells:"
+         & Natural'Wide_Wide_Image (Machine.Collections));
+
    end Report_State;
 
    -------------
@@ -539,6 +585,10 @@ package body Lith.Machine is
          return It = Nil;
       end Is_List;
 
+      -------------------------
+      -- Large_Integer_Image --
+      -------------------------
+
       function Large_Integer_Image
         (Value : Object)
          return Wide_Wide_String
@@ -552,11 +602,24 @@ package body Lith.Machine is
          while Machine.Top /= Stop loop
             Machine.Push (Base);
             Machine.Swap;
-            Lith.Objects.Numbers.Divide (Machine);
+            Lith.Objects.Numbers.Exact.Divide (Machine);
+            if not Is_Integer (Machine.Cadr (Machine.Top)) then
+               raise Evaluation_Error with
+                 "bad large integer: " &
+                 Ada.Characters.Conversions.To_String
+                 (List_Image (Value))
+                 & "; expected an integer element but found "
+                 & Ada.Characters.Conversions.To_String
+                 (List_Image (Machine.Top));
+
+            end if;
             declare
-               Ch_Pos : constant Natural := To_Integer (Machine.Pop);
+               Partial : constant Object := Machine.Pop;
+               Ch_Pos : constant Natural :=
+                          To_Integer (Machine.Cadr (Partial));
             begin
                Acc := Wide_Wide_Character'Val (Ch_Pos + 48) & Acc;
+               Machine.Push (Machine.Car (Partial));
             end;
          end loop;
 
@@ -608,6 +671,10 @@ package body Lith.Machine is
    begin
       if Value = Nil then
          return "()";
+      elsif Value = True_Value then
+         return "#t";
+      elsif Value = False_Value then
+         return "#f";
       elsif Is_Integer (Value) then
          return Ada.Strings.Wide_Wide_Fixed.Trim
            (Integer'Wide_Wide_Image (To_Integer (Value)),
