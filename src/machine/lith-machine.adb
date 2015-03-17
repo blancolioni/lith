@@ -502,11 +502,11 @@ package body Lith.Machine is
         (" D: " & Machine.Show (Machine.Dump));
       Ada.Wide_Wide_Text_IO.Put_Line
         ("GC:"
-         & Duration'Wide_Wide_Image (Machine.GC_Time * 1000.0)
+         & Natural'Wide_Wide_Image (Natural (Machine.GC_Time * 1000.0))
          & "ms");
       Ada.Wide_Wide_Text_IO.Put_Line
         ("Eval:"
-         & Duration'Wide_Wide_Image (Machine.Eval_Time * 1000.0)
+         & Natural'Wide_Wide_Image (Natural (Machine.Eval_Time * 1000.0))
          & "ms");
       Ada.Wide_Wide_Text_IO.Put_Line
         ("Allocated cells:"
