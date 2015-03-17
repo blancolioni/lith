@@ -11,11 +11,12 @@ with Lith.Symbols;
 
 with Lith.Machine.SECD;
 
-with Lith.Objects.Numbers;
+with Lith.Objects.Numbers.Exact;
 
 package body Lith.Machine is
 
    Trace_Machine : constant Boolean := False;
+   Trace_GC      : constant Boolean := False;
 
    function Get
      (Machine : Root_Lith_Machine'Class;
@@ -188,7 +189,9 @@ package body Lith.Machine is
      (Machine : in out Root_Lith_Machine'Class)
    is
    begin
-      Ada.Wide_Wide_Text_IO.Put_Line ("Garbage collecting ...");
+      if Trace_GC then
+         Ada.Wide_Wide_Text_IO.Put_Line ("Garbage collecting ...");
+      end if;
       declare
          use Ada.Calendar;
          Start : constant Time := Clock;
@@ -216,12 +219,18 @@ package body Lith.Machine is
 
          Machine.Marked.all := (others => False);
 
-         Ada.Wide_Wide_Text_IO.Put_Line
-           ("GC freed"
-            & Integer'Wide_Wide_Image (Old_Alloc_Count - Machine.Alloc_Count)
-            & " cells in"
-            & Duration'Wide_Wide_Image ((Clock - Start) * 1000.0)
-            & "ms");
+         if Trace_GC then
+            Ada.Wide_Wide_Text_IO.Put_Line
+              ("GC freed"
+               & Integer'Wide_Wide_Image
+                 (Old_Alloc_Count - Machine.Alloc_Count)
+               & " cells in"
+               & Duration'Wide_Wide_Image ((Clock - Start) * 1000.0)
+               & "ms");
+         end if;
+
+         Machine.GC_Time := Machine.GC_Time + (Clock - Start);
+
       end;
    end GC;
 
@@ -469,6 +478,10 @@ package body Lith.Machine is
         (" C: " & Machine.Show (Machine.Control));
       Ada.Wide_Wide_Text_IO.Put_Line
         (" D: " & Machine.Show (Machine.Dump));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("GC:"
+         & Duration'Wide_Wide_Image (Machine.GC_Time * 1000.0)
+         & "ms");
    end Report_State;
 
    -------------
@@ -539,6 +552,10 @@ package body Lith.Machine is
          return It = Nil;
       end Is_List;
 
+      -------------------------
+      -- Large_Integer_Image --
+      -------------------------
+
       function Large_Integer_Image
         (Value : Object)
          return Wide_Wide_String
@@ -552,7 +569,7 @@ package body Lith.Machine is
          while Machine.Top /= Stop loop
             Machine.Push (Base);
             Machine.Swap;
-            Lith.Objects.Numbers.Divide (Machine);
+            Lith.Objects.Numbers.Exact.Divide (Machine);
             declare
                Ch_Pos : constant Natural := To_Integer (Machine.Pop);
             begin

@@ -2,7 +2,7 @@ with Ada.Wide_Wide_Text_IO;
 
 with Lith.Symbols;
 
-package body Lith.Objects.Numbers is
+package body Lith.Objects.Numbers.Exact is
 
    Highest_Small_Integer : constant := 2 ** (Payload_Bits - 1) - 1;
    Lowest_Small_Integer  : constant := -2 ** (Payload_Bits - 1) + 1;
@@ -520,4 +520,4 @@ package body Lith.Objects.Numbers is
       end if;
    end Top_Of_Stack_Type;
 
-end Lith.Objects.Numbers;
+end Lith.Objects.Numbers.Exact;
