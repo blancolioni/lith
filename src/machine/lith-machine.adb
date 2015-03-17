@@ -1,4 +1,3 @@
-with Ada.Calendar;
 with Ada.Characters.Conversions;
 with Ada.Exceptions;
 with Ada.Strings.Wide_Wide_Fixed;
@@ -174,10 +173,21 @@ package body Lith.Machine is
       Environment : Lith.Objects.Object)
       return Lith.Objects.Object
    is
+      use Ada.Calendar;
+      Top : constant Boolean := not Machine.Evaluating;
    begin
+      if not Machine.Evaluating then
+         Machine.Evaluating := True;
+         Machine.Start_Eval := Ada.Calendar.Clock;
+      end if;
+
       Machine.Environment := Environment;
       Machine.Control := Machine.Cons (Expression, Lith.Objects.Nil);
       Lith.Machine.SECD.Evaluate (Machine);
+
+      if Top then
+         Machine.Eval_Time := Machine.Eval_Time + (Clock - Machine.Start_Eval);
+      end if;
       return Machine.Pop;
    end Evaluate;
 
@@ -482,6 +492,10 @@ package body Lith.Machine is
         ("GC:"
          & Duration'Wide_Wide_Image (Machine.GC_Time * 1000.0)
          & "ms");
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Eval:"
+         & Duration'Wide_Wide_Image (Machine.Eval_Time * 1000.0)
+         & "ms");
    end Report_State;
 
    -------------
@@ -570,10 +584,23 @@ package body Lith.Machine is
             Machine.Push (Base);
             Machine.Swap;
             Lith.Objects.Numbers.Exact.Divide (Machine);
+            if not Is_Integer (Machine.Cadr (Machine.Top)) then
+               raise Evaluation_Error with
+                 "bad large integer: " &
+                 Ada.Characters.Conversions.To_String
+                 (List_Image (Value))
+                 & "; expected an integer element but found "
+                 & Ada.Characters.Conversions.To_String
+                 (List_Image (Machine.Top));
+
+            end if;
             declare
-               Ch_Pos : constant Natural := To_Integer (Machine.Pop);
+               Partial : constant Object := Machine.Pop;
+               Ch_Pos : constant Natural :=
+                          To_Integer (Machine.Cadr (Partial));
             begin
                Acc := Wide_Wide_Character'Val (Ch_Pos + 48) & Acc;
+               Machine.Push (Machine.Car (Partial));
             end;
          end loop;
 
