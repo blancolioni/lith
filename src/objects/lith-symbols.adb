@@ -19,6 +19,15 @@ package body Lith.Symbols is
    Symbol_To_Name_Map : Symbol_Names.Vector;
    Name_To_Symbol_Map : Symbol_Maps.Map;
 
+   -----------------------
+   -- Apply_Syntax_Atom --
+   -----------------------
+
+   function Apply_Syntax_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("apply-syntax"));
+   end Apply_Syntax_Atom;
+
    ----------------
    -- Begin_Atom --
    ----------------
@@ -54,6 +63,15 @@ package body Lith.Symbols is
    begin
       return Lith.Objects.To_Object (Get_Symbol ("."));
    end Dot;
+
+   -------------------
+   -- Ellipsis_Atom --
+   -------------------
+
+   function Ellipsis_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("..."));
+   end Ellipsis_Atom;
 
    ---------------
    -- Eval_Atom --
@@ -255,5 +273,14 @@ package body Lith.Symbols is
    begin
       return Lith.Objects.To_Object (Get_Symbol ("unquote-splicing"));
    end Unquote_Splicing;
+
+   -------------------
+   -- Wildcard_Atom --
+   -------------------
+
+   function Wildcard_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("_"));
+   end Wildcard_Atom;
 
 end Lith.Symbols;

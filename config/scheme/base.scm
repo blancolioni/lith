@@ -1,3 +1,51 @@
+(define (caar x) (car (car x)))
+(define (cadr x) (car (cdr x)))
+(define (cdar x) (cdr (car x)))
+(define (cddr x) (cdr (cdr x)))
+
+(define define-syntax (macro (name rules) 
+    (list 'define name (list 'macro 'xs (list 'apply-syntax 'xs rules))))) ; (list 'macro 'xs (list 'apply-syntax 'xs rules)))))
+    
+; `(define ,name (macro xs (apply-syntax (xs ,rules))))))
+
+(define-syntax lith-and
+  (syntax-rules () ((lith-and) #t) ((lith-and test) test) ((lith-and test1 test2 ...) (if test1 (lith-and test2 ...) #f))))
+               
+; (define (match-syntax-rules call rules)
+  ; (let ((keywords (cadr rules))
+        ; (patterns (cddr rules)))
+      ; (match-patterns call keywords patterns)))
+      
+; (define (match-patterns call keywords patterns)
+  ; (if (null? patterns) (error "no matching patterns")
+      ; (let ((env (match-pat call keywords (caar patterns) '())))
+           ; (if env (apply-pat keywords (car (cdar patterns)) env)
+               ; (match-patterns call keywords (cdr patterns))))))
+               
+; (define (match-pat call keywords pat env)
+  ; (if (and (null? call) (null? pat)) 
+      ; env
+      ; (if (null? pat) 
+          ; #f
+          ; (if (eq? (car pat) '...) 
+              ; (cons (list '&rest call) env)
+              ; (if (null? call)
+                  ; #f
+                  ; (match-pat (cdr call) keywords (cdr pat) (cons (list (car pat) (car call)) env)))))))
+               
+; (define (apply-pat keywords body env)
+   ; (if (pair? body) (cons (apply-pat (car body)) (apply-pat (cdr body)))
+       ; (if (eq? body '...) (apply-pat-rest env)
+           ; (if (symbol? body)
+               ; (apply-pat-sub body env)
+               ; body))))
+           
+; (define (apply-pat-sub sym env)
+   ; (if (null? env) sym
+       ; (if (eq? (caar env) sym) (car (cdar env))
+           ; (apply-pat-sub sym (cdr env)))))
+           
+
 (define and (macro (x y) `(if ,x ,y ,x)))
 (define or (macro (x y) `(if ,x ,x ,y)))
 (define (not x) (if x #f #t))
@@ -33,37 +81,8 @@
 (define (infinite? x) #f)
 (define (nan? x) #f)
 
-(define (caar x) (car (car x)))
-(define (cadr x) (car (cdr x)))
-(define (cdar x) (cdr (car x)))
-(define (cddr x) (cdr (cdr x)))
-(define (caaar x) (car (car (car x))))
-(define (caadr x) (car (car (cdr x))))
-(define (cadar x) (car (cdr (car x))))
-(define (caddr x) (car (cdr (cdr x))))
-(define (cdaar x) (cdr (car (car x))))
-(define (cdadr x) (cdr (car (cdr x))))
-(define (cddar x) (cdr (cdr (car x))))
-(define (cdddr x) (cdr (cdr (cdr x))))
-(define (caaaar x) (car (car (car (car x)))))
-(define (caaadr x) (car (car (car (cdr x)))))
-(define (caadar x) (car (car (cdr (car x)))))
-(define (caaddr x) (car (car (cdr (cdr x)))))
-(define (cadaar x) (car (cdr (car (car x)))))
-(define (cadadr x) (car (cdr (car (cdr x)))))
-(define (caddar x) (car (cdr (cdr (car x)))))
-(define (cadddr x) (car (cdr (cdr (cdr x)))))
-(define (cdaaar x) (cdr (car (car (car x)))))
-(define (cdaadr x) (cdr (car (car (cdr x)))))
-(define (cdadar x) (cdr (car (cdr (car x)))))
-(define (cdaddr x) (cdr (car (cdr (cdr x)))))
-(define (cddaar x) (cdr (cdr (car (car x)))))
-(define (cddadr x) (cdr (cdr (car (cdr x)))))
-(define (cdddar x) (cdr (cdr (cdr (car x)))))
-(define (cddddr x) (cdr (cdr (cdr (cdr x)))))
-
 (define (list? xs)
-   (or (null? xs) (and (pair? xs) (list? (cdr xs)))))
+   (or (null? xs) (lith-and (pair? xs) (list? (cdr xs)))))
 
 (define (make-list . xs) (do-make-list (car xs) (if (null? (cdr xs)) #f (cadr xs))))
 (define (do-make-list n fill) (if (eq? n 0) '() (cons fill (do-make-list (- n 1) fill))))
@@ -131,8 +150,8 @@
   
 (define (if2cond clauses)
   (if (null? clauses) nil
-    (if (eq? (caar clauses) 'else) (cadar clauses)
-      (list 'if (caar clauses) (cadar clauses) (if2cond (cdr clauses))))))
+    (if (eq? (caar clauses) 'else) (car (cdar clauses))
+      (list 'if (caar clauses) (car (cdar clauses)) (if2cond (cdr clauses))))))
 
 (define cond (macro clauses (if2cond clauses)))
 
