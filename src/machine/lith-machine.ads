@@ -1,3 +1,5 @@
+private with Ada.Calendar;
+
 with Lith.Objects;
 
 package Lith.Machine is
@@ -135,6 +137,8 @@ private
          Alloc_Limit  : Natural;
          GC_Time      : Duration := 0.0;
          Eval_Time    : Duration := 0.0;
+         Start_Eval   : Ada.Calendar.Time;
+         Evaluating   : Boolean := False;
       end record;
 
    function Allocate
