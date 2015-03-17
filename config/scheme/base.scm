@@ -188,15 +188,25 @@
    (if (null? rest) curr
        (minmax (if (compare (car rest) curr) (car rest) curr) (cdr rest))))
 
-;(define (number->string . z-and-radix)
-;   (let ((z (car z-and-radix))
-;         (radix (if (null? (cdr z-and-radix)) 10 (cadr z-and-radix))))
-;         (number->string-with-radix z radix)))
-;(define (number->string-with-radix z radix)
-;  (cond ((eqv? z 0) "0")
-        
+(define (number->string . z-and-radix)
+   (let ((z (car z-and-radix))
+         (radix (if (null? (cdr z-and-radix)) 10 (cadr z-and-radix))))
+        (if (zero? z) "0"
+         (number->string-with-radix z radix))))
+         
+(define (number->string-with-radix z radix)
+  (if (zero? z) ""
+      (let ((q-r (floor/ z radix)))
+         (string-append (number->string-with-radix (car q-r) radix)
+                        (string (radix-digit (cadr q-r) radix))))))
+(define (radix-digit z radix)
+   (if (< z 10) (integer->char (+ z 48)) (integer->char (+ (char->integer #\A) (- z 10)))))
+   
 (define (string? x) (and (pair? x) (eq? (car x) '#string)))
-
+(define (string . chars) (cons '#string chars))
+(define (make-string . args)
+   (cons '#string (make-list (car args) (if (null? (cdr args)) #\x00 (cadr args)))))
+   
 (define (write-list xs)
   (begin
     (write-string "(")
