@@ -62,7 +62,9 @@
         ((and (pair? x) (pair? y)) (and (equal? (car x) (car y)) (equal? (cdr x) (cdr y))))
         (else #f)))
 
-(define (eqv? x y) (eq? x y))    ; so wrong
+(define (eqv? x y)
+  (cond ((eq? x y) #t)
+        ((and (exact? x) (exact? y)) (equal? x y))))   ; works because exact numbers have the same list representation
 
 (define (boolean? x) (or (eq? x #f) (eq? x #t)))
 
@@ -205,7 +207,28 @@
    (if (null? rest) curr
        (minmax (if (compare (car rest) curr) (car rest) curr) (cdr rest))))
 
+(define (number->string . z-and-radix)
+   (let ((z (car z-and-radix))
+         (radix (if (null? (cdr z-and-radix)) 10 (cadr z-and-radix))))
+        (if (zero? z) "0"
+         (number->string-with-radix z radix))))
+         
+(define (number->string-with-radix z radix)
+  (if (zero? z) ""
+      (let ((q-r (floor/ z radix)))
+         (string-append (number->string-with-radix (car q-r) radix)
+                        (string (radix-digit (cadr q-r) radix))))))
+(define (radix-digit z radix)
+   (if (< z 10) (integer->char (+ z 48)) (integer->char (+ (char->integer #\A) (- z 10)))))
+   
 (define (string? x) (and (pair? x) (eq? (car x) '#string)))
+(define (string . chars) (cons '#string chars))
+(define (make-string . args)
+   (cons '#string (make-list (car args) (if (null? (cdr args)) #\x00 (cadr args)))))
+(define (string-length s) (length (cdr s)))
+(define (string-ref s k) (list-ref (cdr s) k))
+(define (string-set! s k char) (list-set! (cdr s) k char))
+(define string=? equal?)
 
 (define (write-list xs)
   (begin

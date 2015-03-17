@@ -1,3 +1,5 @@
+private with Ada.Calendar;
+
 with Lith.Objects;
 
 package Lith.Machine is
@@ -131,6 +133,12 @@ private
          Free_List    : Lith.Objects.Object;
          Alloc_Count  : Natural;
          Alloc_Limit  : Natural;
+         GC_Time      : Duration := 0.0;
+         Eval_Time    : Duration := 0.0;
+         Start_Eval   : Ada.Calendar.Time;
+         Evaluating   : Boolean := False;
+         Allocations  : Natural := 0;
+         Collections  : Natural := 0;
       end record;
 
    function Allocate
