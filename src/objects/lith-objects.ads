@@ -4,7 +4,9 @@ package Lith.Objects is
 
    type Object is private;
 
-   Nil : constant Object;
+   Nil         : constant Object;
+   True_Value  : constant Object;
+   False_Value : constant Object;
 
    type Cell_Address is mod 2 ** 32
      with Size => 32;
@@ -159,7 +161,7 @@ private
                        Symbol_Object,
                        Apply_Object,
                        Character_Object,
-                       Unused_Tag_6,
+                       Internal_Object,
                        Unused_Tag_7);
 
    type Object is
@@ -169,9 +171,17 @@ private
       end record
      with Pack, Size => 32;
 
-   Nil : constant Object :=
+   False_Value : constant Object :=
            (Payload => 0,
-            Tag     => Primitive_Object);
+            Tag     => Internal_Object);
+
+   Nil : constant Object :=
+           (Payload => 1,
+            Tag     => Internal_Object);
+
+   True_Value : constant Object :=
+                  (Payload => 2,
+                   Tag     => Internal_Object);
 
    type Symbol_Type is new Object_Payload;
 

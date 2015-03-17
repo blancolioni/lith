@@ -64,14 +64,14 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("eval"));
    end Eval_Atom;
 
-   ----------------
-   -- False_Atom --
-   ----------------
+   -------------------------
+   -- Floating_Point_Atom --
+   -------------------------
 
-   function False_Atom return Lith.Objects.Object is
+   function Floating_Point_Atom return Lith.Objects.Object is
    begin
-      return Lith.Objects.To_Object (Get_Symbol ("#f"));
-   end False_Atom;
+      return Lith.Objects.To_Object (Get_Symbol ("<floating-point>"));
+   end Floating_Point_Atom;
 
    --------------
    -- Get_Name --
@@ -228,15 +228,6 @@ package body Lith.Symbols is
    begin
       return Lith.Objects.To_Object (Get_Symbol ("#string"));
    end String_Atom;
-
-   ---------------
-   -- True_Atom --
-   ---------------
-
-   function True_Atom return Lith.Objects.Object is
-   begin
-      return Lith.Objects.To_Object (Get_Symbol ("#t"));
-   end True_Atom;
 
    -------------
    -- Unquote --

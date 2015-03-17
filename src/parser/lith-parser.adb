@@ -113,7 +113,11 @@ package body Lith.Parser is
                Machine.Cons;
             end if;
          when Tok_Identifier =>
-            if Quasiquote then
+            if Tok_Text = "#t" then
+               Machine.Push (Lith.Objects.True_Value);
+            elsif Tok_Text = "#f" then
+               Machine.Push (Lith.Objects.False_Value);
+            elsif Quasiquote then
                Machine.Push ("quote");
                Machine.Push (Tok_Text);
                Machine.Push (Lith.Objects.Nil);

@@ -49,6 +49,7 @@
 
 (define (unit-test-large-numbers)
    (begin
+      (test (exact? (fac 100)))
       (test (eqv? 123123123123123 123123123123123))
       (test (eqv? (fac 100) (* 100 (fac 99))))
       (test (eqv? (floor-quotient 123123123123123 10000000) 12312312))
