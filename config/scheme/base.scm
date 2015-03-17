@@ -14,7 +14,9 @@
         ((and (pair? x) (pair? y)) (and (equal? (car x) (car y)) (equal? (cdr x) (cdr y))))
         (else #f)))
 
-(define (eqv? x y) (eq? x y))    ; so wrong
+(define (eqv? x y)
+  (cond ((eq? x y) #t)
+        ((and (exact? x) (exact? y)) (equal? x y))))   ; works because exact numbers have the same list representation
 
 (define (boolean? x) (or (eq? x #f) (eq? x #t)))
 
@@ -186,6 +188,13 @@
    (if (null? rest) curr
        (minmax (if (compare (car rest) curr) (car rest) curr) (cdr rest))))
 
+;(define (number->string . z-and-radix)
+;   (let ((z (car z-and-radix))
+;         (radix (if (null? (cdr z-and-radix)) 10 (cadr z-and-radix))))
+;         (number->string-with-radix z radix)))
+;(define (number->string-with-radix z radix)
+;  (cond ((eqv? z 0) "0")
+        
 (define (string? x) (and (pair? x) (eq? (car x) '#string)))
 
 (define (write-list xs)
