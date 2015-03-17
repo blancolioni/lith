@@ -11,7 +11,8 @@ with Lith.Paths;
 
 package body Lith.Machine.SECD is
 
-   Trace_Eval : constant Boolean := False;
+   Trace_Eval : Boolean := False;
+   Trace_Patterns : constant Boolean := False;
 
    function Import_Libraries
      (Machine    : in out Root_Lith_Machine'Class;
@@ -47,6 +48,170 @@ package body Lith.Machine.SECD is
       return Boolean;
    --  returns True if F ultimately (or immediately) refers to a macro
    --  in the current machine environment
+
+   procedure Apply_Syntax
+     (Machine      : in out Root_Lith_Machine'Class;
+      Call         : Lith.Objects.Object;
+      Syntax_Rules : Lith.Objects.Object);
+
+   ------------------
+   -- Apply_Syntax --
+   ------------------
+
+   procedure Apply_Syntax
+     (Machine      : in out Root_Lith_Machine'Class;
+      Call         : Lith.Objects.Object;
+      Syntax_Rules : Lith.Objects.Object)
+   is
+      use Lith.Objects;
+
+      function Match (Pat : Object) return Boolean;
+      procedure Apply (Env  : Object;
+                       Code : Object);
+      function Binding (Env  : Object;
+                        Name : Object;
+                        Default : Object)
+                        return Object;
+
+      -----------
+      -- Apply --
+      -----------
+
+      procedure Apply (Env  : Object;
+                       Code : Object)
+      is
+      begin
+         if Is_Pair (Code) then
+            if Is_Pair (Machine.Cdr (Code))
+              and then Machine.Cadr (Code) = Lith.Symbols.Ellipsis_Atom
+            then
+               Machine.Push
+                 (Binding (Env, Lith.Symbols.Ellipsis_Atom, Nil));
+            else
+               Apply (Env, Machine.Cdr (Code));
+            end if;
+            Apply (Env, Machine.Car (Code));
+            Machine.Swap;
+            Machine.Cons;
+         elsif Is_Symbol (Code) then
+            Machine.Push (Binding (Env, Code, Code));
+         else
+            Machine.Push (Code);
+         end if;
+      end Apply;
+
+      -------------
+      -- Binding --
+      -------------
+
+      function Binding (Env  : Object;
+                        Name : Object;
+                        Default : Object)
+                        return Object
+      is
+         It : Object := Env;
+      begin
+         while It /= Nil loop
+            if Machine.Caar (It) = Name then
+               return Machine.Car (Machine.Cdar (It));
+            end if;
+            It := Machine.Cdr (It);
+         end loop;
+         return Default;
+      end Binding;
+
+      -----------
+      -- Match --
+      -----------
+
+      function Match (Pat : Object) return Boolean is
+         Pat_It  : Object := Pat;
+         Call_It : Object := Call;
+         Count   : Natural := 0;
+      begin
+         if Trace_Patterns then
+            Ada.Wide_Wide_Text_IO.Put_Line
+              ("Match: pattern = " & Machine.Show (Pat));
+            Ada.Wide_Wide_Text_IO.Put_Line
+              ("          call = " & Machine.Show (Call));
+         end if;
+
+         while Pat_It /= Nil loop
+            if Machine.Car (Pat_It) = Lith.Symbols.Ellipsis_Atom then
+               Machine.Push (Lith.Symbols.Ellipsis_Atom);
+               Machine.Push (Call_It);
+               Machine.Push (Nil);
+               Machine.Cons;
+               Machine.Cons;
+               Machine.Push (Nil);
+               for I in 1 .. Count + 1 loop
+                  Machine.Cons;
+               end loop;
+               return True;
+            elsif Call_It = Nil then
+               exit;
+            elsif Machine.Car (Pat_It) = Lith.Symbols.Wildcard_Atom then
+               Pat_It := Machine.Cdr (Pat_It);
+               Call_It := Machine.Cdr (Call_It);
+            else
+               Machine.Push (Machine.Car (Pat_It));
+               Machine.Push (Machine.Car (Call_It));
+               Machine.Push (Nil);
+               Machine.Cons;
+               Machine.Cons;
+               Count := Count + 1;
+               Pat_It := Machine.Cdr (Pat_It);
+               Call_It := Machine.Cdr (Call_It);
+            end if;
+
+         end loop;
+
+         if Pat_It = Nil and then Call_It = Nil then
+            Machine.Push (Nil);
+            for I in 1 .. Count loop
+               Machine.Cons;
+            end loop;
+            return True;
+         else
+            Machine.Drop (Count);
+            return False;
+         end if;
+      end Match;
+
+      Keywords : constant Object := Machine.Cadr (Syntax_Rules);
+      pragma Unreferenced (Keywords);
+
+      Pats : Object := Machine.Cddr (Syntax_Rules);
+   begin
+      while Pats /= Nil loop
+         declare
+            Pat  : constant Object := Machine.Caar (Pats);
+            Code : constant Object := Machine.Car (Machine.Cdar (Pats));
+         begin
+            if Match (Machine.Cdr (Pat)) then
+               if Trace_Patterns then
+                  Ada.Wide_Wide_Text_IO.Put_Line
+                    ("found match: "
+                     & Machine.Show (Machine.Cdr (Pat))
+                     & " --> "
+                     & Machine.Show (Code));
+               end if;
+               Apply (Machine.Top, Code);
+               Machine.Swap;
+               Machine.Drop;
+               if Trace_Patterns then
+                  Ada.Wide_Wide_Text_IO.Put_Line
+                    ("result: "
+                     & Machine.Show (Machine.Top));
+               end if;
+               return;
+            end if;
+         end;
+         Pats := Machine.Cdr (Pats);
+      end loop;
+      raise Evaluation_Error with
+        "no matching pattern in syntax rules";
+   end Apply_Syntax;
 
    ------------------------
    -- Create_Environment --
@@ -191,6 +356,7 @@ package body Lith.Machine.SECD is
       end Save_State;
 
    begin
+
       while Machine.Control /= Nil loop
          declare
             C : constant Lith.Objects.Object :=
@@ -199,6 +365,18 @@ package body Lith.Machine.SECD is
                    Machine.Cdr (Machine.Control);
             C_Updated : Boolean := False;
          begin
+
+            declare
+               Trace : Object;
+               Found : Boolean;
+            begin
+               Environment.Get (Lith.Symbols.Get_Symbol ("*trace-eval*"),
+                                Trace, Found);
+
+               if Found and then Trace /= False_Atom then
+                  Trace_Eval := True;
+               end if;
+            end;
 
             if Trace_Eval then
                Ada.Wide_Wide_Text_IO.Put_Line
@@ -270,6 +448,8 @@ package body Lith.Machine.SECD is
                      else
                         Machine.Push (Name);
                         Machine.Push (Value);
+                        Machine.Cons;
+                        Machine.Push (Nil);
                         Machine.Cons;
                         Machine.Environment :=
                           Machine.Cons (Machine.Pop, Machine.Environment);
@@ -358,6 +538,7 @@ package body Lith.Machine.SECD is
                      end if;
                      Machine.Push (Machine.Car (Args));
                   elsif F = If_Atom then
+                     Machine.Push (Args, Secondary);
                      Machine.Control :=
                        Machine.Cons (Choice_Atom, Cs);
                      Machine.Control :=
@@ -366,6 +547,7 @@ package body Lith.Machine.SECD is
                      Machine.Push
                        (Machine.Car (Machine.Cdr (Machine.Cdr (Args))));
                      Machine.Push (Machine.Cadr (Args));
+                     Machine.Drop (1, Secondary);
                      C_Updated := True;
                   elsif F = Set_Atom then
                      Machine.Control :=
@@ -397,6 +579,29 @@ package body Lith.Machine.SECD is
                         Machine.Control := Machine.Pop;
 
                         Machine.Push (Name);
+                        C_Updated := True;
+                     end;
+                  elsif F = Apply_Syntax_Atom then
+                     declare
+                        Syntax : constant Object := Machine.Cadr (Args);
+                        Call   : Object;
+                        Found  : Boolean;
+                     begin
+                        Get (Machine, To_Symbol (Machine.Car (Args)),
+                             Call, Found);
+                        if not Found then
+                           raise Evaluation_Error with
+                             "syntax arguments not found";
+                        end if;
+
+                        if Trace_Patterns then
+                           Ada.Wide_Wide_Text_IO.Put_Line
+                             ("applying syntax: "
+                              & Machine.Show (Syntax));
+                        end if;
+                        Apply_Syntax (Machine, Call, Syntax);
+                        Machine.Control :=
+                          Machine.Cons (Machine.Pop, Cs);
                         C_Updated := True;
                      end;
                   elsif F = Lambda or else F = Macro then
@@ -613,6 +818,15 @@ package body Lith.Machine.SECD is
         and then Machine.Car (F) = Lith.Symbols.Macro
       then
          return True;
+--        elsif Is_Pair (F)
+--          and then Machine.Car (F) = Lith.Symbols.Lambda
+--          and then Is_Pair (Machine.Cdr (F))
+--          and then Is_Pair (Machine.Cddr (F))
+--          and then Is_Pair (Machine.Car (Machine.Cddr (F)))
+--          and then Machine.Car (Machine.Car (Machine.Cddr (F)))
+--          = Lith.Symbols.Apply_Syntax_Atom
+--        then
+--           return True;
       elsif Is_Symbol (F) then
          declare
             Value : Object;

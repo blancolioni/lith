@@ -8,10 +8,12 @@ package Lith.Symbols is
    function Get_Name (Symbol : Lith.Objects.Symbol_Type)
                       return Wide_Wide_String;
 
+   function Apply_Syntax_Atom return Lith.Objects.Object;
    function Begin_Atom return Lith.Objects.Object;
    function Choice_Atom return Lith.Objects.Object;
    function Define_Atom return Lith.Objects.Object;
    function Dot return Lith.Objects.Object;
+   function Ellipsis_Atom return Lith.Objects.Object;
    function Eval_Atom return Lith.Objects.Object;
    function False_Atom return Lith.Objects.Object;
    function If_Atom return Lith.Objects.Object;
@@ -31,5 +33,6 @@ package Lith.Symbols is
    function True_Atom return Lith.Objects.Object;
    function Unquote return Lith.Objects.Object;
    function Unquote_Splicing return Lith.Objects.Object;
+   function Wildcard_Atom return Lith.Objects.Object;
 
 end Lith.Symbols;
