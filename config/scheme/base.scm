@@ -206,7 +206,11 @@
 (define (string . chars) (cons '#string chars))
 (define (make-string . args)
    (cons '#string (make-list (car args) (if (null? (cdr args)) #\x00 (cadr args)))))
-   
+(define (string-length s) (length (cdr s)))
+(define (string-ref s k) (list-ref (cdr s) k))
+(define (string-set! s k char) (list-set! (cdr s) k char))
+(define string=? equal?)
+
 (define (write-list xs)
   (begin
     (write-string "(")
