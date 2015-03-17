@@ -18,6 +18,7 @@
   (begin (reset-counts)
          (unit-test-symbol)
          (unit-test-numbers)
+         (unit-test-large-numbers)
          (set! *total-count* (+ *pass-count* *fail-count*))
          (display *fail-count*) (write-string "/") (display *total-count*) (write-string " tests failed\n")))
   
@@ -45,4 +46,10 @@
       (test (eqv? (square 42) 1764))
       (test (eqv? (square (- 42)) 1764))
       ))
+
+(define (unit-test-large-numbers)
+   (begin
+      (test (eqv? (floor-quotient 123123123123123 10000000) 12312312))
+      ))
+
       
