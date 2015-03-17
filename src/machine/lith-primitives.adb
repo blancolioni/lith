@@ -39,6 +39,11 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
+   function Evaluate_Error
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
    function Evaluate_Eval
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -103,6 +108,7 @@ package body Lith.Primitives is
       Define_Function ("cdr", 1, Evaluate_Cdr'Access);
       Define_Function ("cons", 2, Evaluate_Cons'Access);
       Define_Function ("eq?", 2, Evaluate_Eq'Access);
+      Define_Function ("error", 1, Evaluate_Error'Access);
       Define_Function ("eval", 1, Evaluate_Eval'Access);
       Define_Function ("load", 1, Evaluate_Load'Access);
       Define_Function ("null?", 1, Evaluate_Is_Null'Access);
@@ -207,6 +213,24 @@ package body Lith.Primitives is
          return Lith.Symbols.False_Atom;
       end if;
    end Evaluate_Eq;
+
+   --------------------
+   -- Evaluate_Error --
+   --------------------
+
+   function Evaluate_Error
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects;
+      Message : constant Wide_Wide_String :=
+                  Store.To_String (Arguments (Arguments'First));
+   begin
+      return (raise Evaluation_Error with
+                "Error: "
+              & Ada.Characters.Conversions.To_String (Message));
+   end Evaluate_Error;
 
    -------------------------
    -- Evaluate_Is_Integer --
