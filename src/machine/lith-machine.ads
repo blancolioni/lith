@@ -133,6 +133,8 @@ private
          Free_List    : Lith.Objects.Object;
          Alloc_Count  : Natural;
          Alloc_Limit  : Natural;
+         GC_Time      : Duration := 0.0;
+         Eval_Time    : Duration := 0.0;
       end record;
 
    function Allocate

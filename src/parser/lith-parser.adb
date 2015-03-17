@@ -5,7 +5,7 @@ with Lith.Parser.Tokens;             use Lith.Parser.Tokens;
 with Lith.Parser.Lexical;            use Lith.Parser.Lexical;
 
 with Lith.Symbols;
-with Lith.Objects.Numbers;
+with Lith.Objects.Numbers.Exact;
 
 package body Lith.Parser is
 
@@ -171,9 +171,9 @@ package body Lith.Parser is
                            Character'Pos (Text (I)) - Character'Pos ('0');
                   begin
                      Machine.Push (10);
-                     Lith.Objects.Numbers.Multiply (Machine.all);
+                     Lith.Objects.Numbers.Exact.Multiply (Machine.all);
                      Machine.Push (X);
-                     Lith.Objects.Numbers.Add (Machine.all);
+                     Lith.Objects.Numbers.Exact.Add (Machine.all);
                   end;
                end loop;
             end;
