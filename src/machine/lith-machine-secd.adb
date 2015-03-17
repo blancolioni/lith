@@ -406,11 +406,18 @@ package body Lith.Machine.SECD is
                   elsif F = Large_Integer_Atom then
                      Machine.Push (C);
                   elsif F = Import_Atom then
-                     if Import_Libraries (Machine, Args) then
-                        Machine.Push (True_Atom);
-                     else
-                        Machine.Push (False_Atom);
-                     end if;
+
+                     Machine.Push (Args);
+
+                     declare
+                        Result : constant Boolean :=
+                                   Import_Libraries (Machine, Args);
+                     begin
+                        Machine.Drop;
+
+                        Machine.Push
+                          ((if Result then True_Atom else False_Atom));
+                     end;
                   elsif F = Begin_Atom then
                      Machine.Dump := Machine.Cons (C, Machine.Dump);
                      Machine.Control := Cs;
@@ -584,18 +591,21 @@ package body Lith.Machine.SECD is
             Lith.Parser.Parse_File
               (Machine'Unchecked_Access,
                Lith.Paths.Config_Path & Path);
+         exception
+            when E : others =>
+               Ada.Wide_Wide_Text_IO.Put_Line
+                 (Ada.Wide_Wide_Text_IO.Standard_Error,
+                  "error opening library "
+                  & Machine.Show (Machine.Car (It)));
+               Ada.Wide_Wide_Text_IO.Put_Line
+                 (Ada.Wide_Wide_Text_IO.Standard_Error,
+                  To_Wide_Wide_String
+                    (Ada.Exceptions.Exception_Message (E)));
+               return False;
          end;
          It := Machine.Cdr (It);
       end loop;
       return True;
-   exception
-      when E : others =>
-         Ada.Wide_Wide_Text_IO.Put_Line
-           (Ada.Wide_Wide_Text_IO.Standard_Error,
-            "error opening library: "
-            & To_Wide_Wide_String
-              (Ada.Exceptions.Exception_Message (E)));
-         return False;
    end Import_Libraries;
 
    --------------
