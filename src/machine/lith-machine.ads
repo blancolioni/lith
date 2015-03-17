@@ -2,8 +2,6 @@ with Lith.Objects;
 
 package Lith.Machine is
 
-   Evaluation_Error : exception;
-
    type Root_Lith_Machine is limited new Lith.Objects.Object_Store
    with private;
 
