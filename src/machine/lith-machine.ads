@@ -139,6 +139,8 @@ private
          Eval_Time    : Duration := 0.0;
          Start_Eval   : Ada.Calendar.Time;
          Evaluating   : Boolean := False;
+         Allocations  : Natural := 0;
+         Collections  : Natural := 0;
       end record;
 
    function Allocate

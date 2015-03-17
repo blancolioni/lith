@@ -35,19 +35,23 @@ package body Lith.Machine is
    is
       use type Lith.Objects.Object;
       Result : constant Lith.Objects.Object := Machine.Free_List;
-      Address : constant Lith.Objects.Cell_Address :=
-                  Lith.Objects.To_Address (Result);
    begin
-      pragma Assert (Machine.Free (Address));
-      Machine.Free_List := Machine.Core (Address).Cdr;
-      Machine.Core (Address) := (Car, Cdr);
-      Machine.Free (Address) := False;
-      Machine.Alloc_Count := Machine.Alloc_Count + 1;
-      if Machine.Alloc_Count > Machine.Alloc_Limit then
-         Machine.Mark (Result);
-         Machine.GC;
+      if Result = Lith.Objects.Nil then
+         raise Constraint_Error with "out of memory";
       end if;
-      return Result;
+
+      declare
+         Address : constant Lith.Objects.Cell_Address :=
+                     Lith.Objects.To_Address (Result);
+      begin
+         pragma Assert (Machine.Free (Address));
+         Machine.Free_List := Machine.Core (Address).Cdr;
+         Machine.Core (Address) := (Car, Cdr);
+         Machine.Free (Address) := False;
+         Machine.Alloc_Count := Machine.Alloc_Count + 1;
+         Machine.Allocations := Machine.Allocations + 1;
+         return Result;
+      end;
    end Allocate;
 
    ---------
@@ -159,7 +163,7 @@ package body Lith.Machine is
       Machine.Control := Nil;
       Machine.Dump := Nil;
       Machine.Alloc_Count := 0;
-      Machine.Alloc_Limit := Natural (Machine.Core'Length) - 100;
+      Machine.Alloc_Limit := Natural (Machine.Core'Length) - 2000;
       return Machine;
    end Create;
 
@@ -187,6 +191,7 @@ package body Lith.Machine is
 
       if Top then
          Machine.Eval_Time := Machine.Eval_Time + (Clock - Machine.Start_Eval);
+         Machine.Evaluating := False;
       end if;
       return Machine.Pop;
    end Evaluate;
@@ -199,6 +204,11 @@ package body Lith.Machine is
      (Machine : in out Root_Lith_Machine'Class)
    is
    begin
+
+      if Machine.Alloc_Count < Machine.Alloc_Limit then
+         return;
+      end if;
+
       if Trace_GC then
          Ada.Wide_Wide_Text_IO.Put_Line ("Garbage collecting ...");
       end if;
@@ -239,6 +249,8 @@ package body Lith.Machine is
                & "ms");
          end if;
 
+         Machine.Collections := Machine.Collections +
+           (Old_Alloc_Count - Machine.Alloc_Count);
          Machine.GC_Time := Machine.GC_Time + (Clock - Start);
 
       end;
@@ -496,6 +508,13 @@ package body Lith.Machine is
         ("Eval:"
          & Duration'Wide_Wide_Image (Machine.Eval_Time * 1000.0)
          & "ms");
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Allocated cells:"
+         & Natural'Wide_Wide_Image (Machine.Allocations));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Reclaimed cells:"
+         & Natural'Wide_Wide_Image (Machine.Collections));
+
    end Report_State;
 
    -------------
