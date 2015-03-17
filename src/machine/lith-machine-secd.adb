@@ -12,7 +12,7 @@ with Lith.Paths;
 package body Lith.Machine.SECD is
 
    Trace_Eval : Boolean := False;
-   Trace_Patterns : constant Boolean := False;
+   Trace_Patterns : Boolean := False;
 
    function Import_Libraries
      (Machine    : in out Root_Lith_Machine'Class;
@@ -382,8 +382,9 @@ package body Lith.Machine.SECD is
                Environment.Get (Lith.Symbols.Get_Symbol ("*trace-eval*"),
                                 Trace, Found);
 
-               if Found and then Trace /= False_Atom then
+               if Found and then Trace /= False_Value then
                   Trace_Eval := True;
+                  Trace_Patterns := True;
                end if;
             end;
 
