@@ -31,7 +31,7 @@ package body Lith.Repl is
       end if;
 
       while Lith.Environment.Get
-        (Lith.Symbols.Get_Symbol ("__exit")) = Lith.Symbols.False_Atom
+        (Lith.Symbols.Get_Symbol ("__exit")) = False_Value
       loop
          Put ("Lith> ");
          Flush;

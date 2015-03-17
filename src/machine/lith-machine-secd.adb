@@ -209,9 +209,7 @@ package body Lith.Machine.SECD is
             if C = Nil then
                raise Evaluation_Error with
                  "attempted to evaluate nil";
-            elsif C = Lith.Symbols.False_Atom
-              or else C = Lith.Symbols.True_Atom
-            then
+            elsif C = True_Value or else C = False_Value then
                Machine.Push (C);
             elsif Is_Integer (C) then
                Machine.Push (C);
@@ -225,7 +223,7 @@ package body Lith.Machine.SECD is
                   begin
                      T := Machine.Pop;
                      F := Machine.Pop;
-                     if Cond = False_Atom then
+                     if Cond = False_Value then
                         Machine.Control :=
                           Machine.Cons (F, Cs);
                      else
@@ -416,7 +414,7 @@ package body Lith.Machine.SECD is
                         Machine.Drop;
 
                         Machine.Push
-                          ((if Result then True_Atom else False_Atom));
+                          ((if Result then True_Value else False_Value));
                      end;
                   elsif F = Begin_Atom then
                      Machine.Dump := Machine.Cons (C, Machine.Dump);

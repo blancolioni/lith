@@ -652,6 +652,10 @@ package body Lith.Machine is
    begin
       if Value = Nil then
          return "()";
+      elsif Value = True_Value then
+         return "#t";
+      elsif Value = False_Value then
+         return "#f";
       elsif Is_Integer (Value) then
          return Ada.Strings.Wide_Wide_Fixed.Trim
            (Integer'Wide_Wide_Image (To_Integer (Value)),

@@ -50,7 +50,7 @@ package body Lith.Objects is
                       when Symbol_Object    => 's',
                       when Apply_Object     => 'a',
                       when Character_Object => 'c',
-                      when Unused_Tag_6     => '6',
+                      when Internal_Object  => '-',
                       when Unused_Tag_7     => '7');
 
       Result : String (1 .. 8);

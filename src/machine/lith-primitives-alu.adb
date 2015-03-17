@@ -50,39 +50,39 @@ package body Lith.Primitives.ALU is
    is (X);
 
    function Acc_Fn_Leq (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is ((if X = Lith.Symbols.False_Atom
+   is ((if X = False_Value
         then X
         elsif To_Integer (X) <= To_Integer (Y)
         then Y
-        else Lith.Symbols.False_Atom));
+        else False_Value));
 
    function Acc_Fn_Geq (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is ((if X = Lith.Symbols.False_Atom
+   is ((if X = False_Value
         then X
         elsif To_Integer (X) >= To_Integer (Y)
         then Y
-        else Lith.Symbols.False_Atom));
+        else False_Value));
 
    function Acc_Fn_Lt (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is ((if X = Lith.Symbols.False_Atom
+   is ((if X = False_Value
         then X
         elsif To_Integer (X) < To_Integer (Y)
         then Y
-        else Lith.Symbols.False_Atom));
+        else False_Value));
 
    function Acc_Fn_Gt (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is ((if X = Lith.Symbols.False_Atom
+   is ((if X = False_Value
         then X
         elsif To_Integer (X) > To_Integer (Y)
         then Y
-        else Lith.Symbols.False_Atom));
+        else False_Value));
 
    function Acc_Fn_Eq (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is ((if X = Lith.Symbols.False_Atom
+   is ((if X = False_Value
         then X
         elsif To_Integer (X) = To_Integer (Y)
         then Y
-        else Lith.Symbols.False_Atom));
+        else False_Value));
 
    procedure Divide_Quotient
      (Store : in out Object_Store'Class)

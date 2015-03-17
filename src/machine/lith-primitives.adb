@@ -202,9 +202,9 @@ package body Lith.Primitives is
       use Lith.Objects;
    begin
       if Arguments (Arguments'First) = Arguments (Arguments'Last) then
-         return Lith.Symbols.True_Atom;
+         return True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return False_Value;
       end if;
    end Evaluate_Eq;
 
@@ -224,9 +224,9 @@ package body Lith.Primitives is
         or else (Is_Pair (A)
                  and then Store.Car (A) = Lith.Symbols.Large_Integer_Atom)
       then
-         return Lith.Symbols.True_Atom;
+         return True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return False_Value;
       end if;
    end Evaluate_Is_Integer;
 
@@ -243,9 +243,9 @@ package body Lith.Primitives is
       use Lith.Objects;
    begin
       if Arguments (Arguments'First) = Nil then
-         return Lith.Symbols.True_Atom;
+         return True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return False_Value;
       end if;
    end Evaluate_Is_Null;
 
@@ -262,9 +262,9 @@ package body Lith.Primitives is
       use Lith.Objects;
    begin
       if Is_Pair (Arguments (Arguments'First)) then
-         return Lith.Symbols.True_Atom;
+         return True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return False_Value;
       end if;
    end Evaluate_Is_Pair;
 
@@ -281,9 +281,9 @@ package body Lith.Primitives is
       use Lith.Objects;
    begin
       if Is_Symbol (Arguments (Arguments'First)) then
-         return Lith.Symbols.True_Atom;
+         return True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return False_Value;
       end if;
    end Evaluate_Is_Symbol;
 
@@ -300,9 +300,9 @@ package body Lith.Primitives is
                Store.To_String (Arguments (Arguments'First));
    begin
       if Store.Load (Path) then
-         return Lith.Symbols.True_Atom;
+         return Lith.Objects.True_Value;
       else
-         return Lith.Symbols.False_Atom;
+         return Lith.Objects.False_Value;
       end if;
    end Evaluate_Load;
 
