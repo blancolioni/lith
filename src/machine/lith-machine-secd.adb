@@ -86,6 +86,15 @@ package body Lith.Machine.SECD is
                   & Machine.Show (Actual));
             end if;
 
+            if Formal_It = Nil then
+               raise Evaluation_Error with
+                 "too many arguments: "
+                 & Ada.Characters.Conversions.To_String
+                 (Machine.Show (Formals))
+                 & " at actual: "
+                 & Ada.Characters.Conversions.To_String
+                 (Machine.Show (Actual));
+            end if;
             Machine.Push (Machine.Cons (Machine.Car (Formal_It), Actual));
             Machine.Push (Machine.Cons (Machine.Pop, Result));
             Result := Machine.Pop;
@@ -219,16 +228,15 @@ package body Lith.Machine.SECD is
                if C = Choice_Atom then
                   declare
                      Cond : constant Object := Machine.Pop;
-                     T, F : Object;
                   begin
-                     T := Machine.Pop;
-                     F := Machine.Pop;
                      if Cond = False_Value then
+                        Machine.Drop;
                         Machine.Control :=
-                          Machine.Cons (F, Cs);
+                          Machine.Cons (Machine.Pop, Cs);
                      else
                         Machine.Control :=
-                             Machine.Cons (T, Cs);
+                          Machine.Cons (Machine.Pop, Cs);
+                        Machine.Drop;
                      end if;
                      C_Updated := True;
                   end;
@@ -246,8 +254,8 @@ package body Lith.Machine.SECD is
                   end;
                elsif C = Lith_Set_Atom then
                   declare
-                     Value : constant Object := Machine.Pop;
-                     Name  : constant Object := Machine.Pop;
+                     Value : constant Object := Machine.Top (1);
+                     Name  : constant Object := Machine.Top (2);
                      Old_Value : Object;
                      Found     : Boolean;
                      Global    : Boolean;
@@ -265,9 +273,10 @@ package body Lith.Machine.SECD is
                            Lith.Environment.Define
                              (To_Symbol (Name), Value);
                         end if;
+                        Machine.Drop (2);
                      else
-                        Machine.Push (Name);
-                        Machine.Push (Value);
+                        --  name and value are still on the stack,
+                        --  in the right order.
                         Machine.Cons;
                         Machine.Environment :=
                           Machine.Cons (Machine.Pop, Machine.Environment);
@@ -328,7 +337,6 @@ package body Lith.Machine.SECD is
                         Push_Control (Lith.Symbols.Stack_To_Control);
                      end if;
                      Save_State;
-                     Machine.Stack := Nil;
                      Machine.Control :=
                        Machine.Cdr
                          (Machine.Cdr (F));
@@ -336,6 +344,7 @@ package body Lith.Machine.SECD is
                        (Machine      => Machine,
                         Formals      => Machine.Cadr (F),
                         Actuals      => Arguments);
+                     Machine.Stack := Nil;
                   else
                      raise Evaluation_Error with
                        "bad application: "
@@ -484,6 +493,8 @@ package body Lith.Machine.SECD is
                end if;
             end;
          end loop;
+
+         Machine.GC;
 
       end loop;
    end Evaluate;
