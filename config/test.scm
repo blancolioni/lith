@@ -21,7 +21,7 @@
          (unit-test-large-numbers)
          (unit-test-strings)
          (set! *total-count* (+ *pass-count* *fail-count*))
-         (display *fail-count*) (write-string "/") (display *total-count*) (write-string " tests failed\n")))
+         (display *pass-count*) (write-string "/") (display *total-count*) (write-string " tests passed\n")))
   
 (define (unit-test-symbol)
   (begin
