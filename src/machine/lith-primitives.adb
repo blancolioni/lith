@@ -4,6 +4,7 @@ with Ada.Wide_Wide_Text_IO;
 with WL.Random;
 
 with Lith.Objects.Interfaces;
+with Lith.Objects.Numbers;
 with Lith.Primitives.ALU;
 with Lith.Symbols;
 
@@ -50,6 +51,16 @@ package body Lith.Primitives is
       return Lith.Objects.Object
    is (Arguments (Arguments'First));
 
+   function Evaluate_Exact
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Inexact
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
    function Evaluate_Integer_To_Char
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -71,6 +82,11 @@ package body Lith.Primitives is
       return Lith.Objects.Object;
 
    function Evaluate_Is_Symbol
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Is_Real
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
@@ -115,10 +131,13 @@ package body Lith.Primitives is
       Define_Function ("cons", 2, Evaluate_Cons'Access);
       Define_Function ("eq?", 2, Evaluate_Eq'Access);
       Define_Function ("eval", 1, Evaluate_Eval'Access);
+      Define_Function ("exact", 1, Evaluate_Exact'Access);
+      Define_Function ("inexact", 1, Evaluate_Inexact'Access);
       Define_Function ("integer->char", 1, Evaluate_Integer_To_Char'Access);
       Define_Function ("load", 1, Evaluate_Load'Access);
       Define_Function ("null?", 1, Evaluate_Is_Null'Access);
       Define_Function ("pair?", 1, Evaluate_Is_Pair'Access);
+      Define_Function ("real?", 1, Evaluate_Is_Real'Access);
       Define_Function ("symbol?", 1, Evaluate_Is_Symbol'Access);
       Define_Function ("integer?", 1, Evaluate_Is_Integer'Access);
       Define_Function ("random", 1, Evaluate_Random'Access);
@@ -238,6 +257,36 @@ package body Lith.Primitives is
       end if;
    end Evaluate_Eq;
 
+   --------------------
+   -- Evaluate_Exact --
+   --------------------
+
+   function Evaluate_Exact
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+   begin
+      Store.Push (Arguments (Arguments'First));
+      Lith.Objects.Numbers.Ensure_Exact (Store);
+      return Store.Pop;
+   end Evaluate_Exact;
+
+   ----------------------
+   -- Evaluate_Inexact --
+   ----------------------
+
+   function Evaluate_Inexact
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+   begin
+      Store.Push (Arguments (Arguments'First));
+      Lith.Objects.Numbers.Ensure_Inexact (Store);
+      return Store.Pop;
+   end Evaluate_Inexact;
+
    ------------------------------
    -- Evaluate_Integer_To_Char --
    ------------------------------
@@ -314,6 +363,27 @@ package body Lith.Primitives is
          return False_Value;
       end if;
    end Evaluate_Is_Pair;
+
+   ----------------------
+   -- Evaluate_Is_Real --
+   ----------------------
+
+   function Evaluate_Is_Real
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects;
+   begin
+      if Is_Pair (Arguments (Arguments'First))
+        and then Store.Car (Arguments (Arguments'First))
+          = Lith.Symbols.Floating_Point_Atom
+      then
+         return True_Value;
+      else
+         return False_Value;
+      end if;
+   end Evaluate_Is_Real;
 
    ------------------------
    -- Evaluate_Is_Symbol --

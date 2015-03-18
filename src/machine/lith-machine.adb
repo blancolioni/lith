@@ -10,7 +10,7 @@ with Lith.Symbols;
 
 with Lith.Machine.SECD;
 
-with Lith.Objects.Numbers.Exact;
+with Lith.Objects.Numbers;
 
 package body Lith.Machine is
 
@@ -602,7 +602,7 @@ package body Lith.Machine is
          while Machine.Top /= Stop loop
             Machine.Push (Base);
             Machine.Swap;
-            Lith.Objects.Numbers.Exact.Divide (Machine);
+            Lith.Objects.Numbers.Exact_Divide (Machine);
             if not Is_Integer (Machine.Cadr (Machine.Top)) then
                raise Evaluation_Error with
                  "bad large integer: " &
