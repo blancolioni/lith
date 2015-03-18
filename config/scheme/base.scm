@@ -68,14 +68,13 @@
 
 (define (boolean? x) (or (eq? x #f) (eq? x #t)))
 
-(define (number? x) (integer? x))  ; the only numbers we have :(
+(define (number? x) (or (integer? x) (real? x)))  ; the only numbers we have :(
 
 (define (complex? x) #f)
-(define (real? x) #f)
 (define (rational? x) #f)
 
-(define (exact? x) (integer? x))   ; not entirely correct, but we don't have floating point yet, so it will do
-(define (inexact? x) #f)           ; see above
+(define (exact? x) (or (integer? x) (rational? x)))
+(define (inexact? x) (or (real? x) (complex? x)))
 
 (define (exact-integer? x) (and (exact? x) (integer? x)))
 

@@ -8,7 +8,7 @@ with Lith.Primitives;
 with Lith.Repl;
 
 procedure Lith.Driver is
-   Core_Size : constant := 32_768;
+   Core_Size : constant := 256 * 1024;
    Machine   : constant Lith.Machine.Lith_Machine :=
                  Lith.Machine.Create (Core_Size);
 begin
