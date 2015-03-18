@@ -1,6 +1,7 @@
 with Ada.Characters.Conversions;
 
-with Lith.Objects.Numbers.Exact;
+with Lith.Objects.Numbers;
+
 with Lith.Objects.Symbol_Maps;
 with Lith.Symbols;
 
@@ -49,13 +50,6 @@ package body Lith.Primitives.ALU is
    function Identity_Fn (X : Lith.Objects.Object) return Lith.Objects.Object
    is (X);
 
-   function Acc_Fn_Leq (X, Y : Lith.Objects.Object) return Lith.Objects.Object
-   is ((if X = False_Value
-        then X
-        elsif To_Integer (X) <= To_Integer (Y)
-        then Y
-        else False_Value));
-
    function Acc_Fn_Geq (X, Y : Lith.Objects.Object) return Lith.Objects.Object
    is ((if X = False_Value
         then X
@@ -92,6 +86,57 @@ package body Lith.Primitives.ALU is
      (Store : in out Object_Store'Class)
      with Unreferenced;
 
+   procedure Stack_Identity
+     (Store : in out Object_Store'Class)
+   is null;
+
+   type Allowed_Compares is
+     array (Lith.Objects.Numbers.Compare) of Boolean;
+
+   Compare_LE : constant Allowed_Compares := (True, True, False);
+--     Compare_LT : constant Allowed_Compares := (True, False, False);
+--     Compare_GE : constant Allowed_Compares := (False, True, True);
+--     Compare_GT : constant Allowed_Compares := (False, False, True);
+--     Compare_EQ : constant Allowed_Compares := (False, True, False);
+
+   procedure Exact_Compare
+     (Store   : in out Object_Store'Class;
+      Allowed : Allowed_Compares);
+
+   procedure Inexact_Compare
+     (Store : in out Object_Store'Class;
+      Allowed : Allowed_Compares);
+
+--     procedure Exact_Stack_LT
+--       (Store : in out Object_Store'Class);
+
+   procedure Exact_Stack_LE
+     (Store : in out Object_Store'Class);
+
+--     procedure Exact_Stack_GT
+--       (Store : in out Object_Store'Class);
+--
+--     procedure Exact_Stack_GE
+--       (Store : in out Object_Store'Class);
+--
+--     procedure Exact_Stack_EQ
+--       (Store : in out Object_Store'Class);
+--
+--     procedure Inexact_Stack_LT
+--       (Store : in out Object_Store'Class);
+--
+   procedure Inexact_Stack_LE
+     (Store : in out Object_Store'Class);
+
+--     procedure Inexact_Stack_GT
+--       (Store : in out Object_Store'Class);
+--
+--     procedure Inexact_Stack_GE
+--       (Store : in out Object_Store'Class);
+--
+--     procedure Inexact_Stack_EQ
+--       (Store : in out Object_Store'Class);
+
    -------------------
    -- Add_Operators --
    -------------------
@@ -99,19 +144,22 @@ package body Lith.Primitives.ALU is
    procedure Add_Operators is
    begin
       Operator ("+", 0, null,
-                Lith.Objects.Numbers.Exact.Add'Access, null);
+                Lith.Objects.Numbers.Exact_Add'Access,
+                Lith.Objects.Numbers.Inexact_Add'Access);
       Operator ("-", 0,
-                Lith.Objects.Numbers.Exact.Negate'Access,
-                Lith.Objects.Numbers.Exact.Subtract'Access,
+                Lith.Objects.Numbers.Exact_Negate'Access,
+                Lith.Objects.Numbers.Exact_Subtract'Access,
                 null);
 
       Operator ("*", 0, null,
-                Lith.Objects.Numbers.Exact.Multiply'Access,
+                Lith.Objects.Numbers.Exact_Multiply'Access,
                 null);
       Operator ("floor/", 0, null,
-                Lith.Objects.Numbers.Exact.Divide'Access,
+                Lith.Objects.Numbers.Exact_Divide'Access,
                 null);
-      Operator ("<=", 0, Identity_Fn'Access, Acc_Fn_Leq'Access);
+      Operator ("<=", 0, Stack_Identity'Access,
+                Exact_Stack_LE'Access, Inexact_Stack_LE'Access);
+
       Operator (">=", 0, Identity_Fn'Access, Acc_Fn_Geq'Access);
       Operator ("<", 0, Identity_Fn'Access, Acc_Fn_Lt'Access);
       Operator (">", 0, Identity_Fn'Access, Acc_Fn_Gt'Access);
@@ -159,13 +207,21 @@ package body Lith.Primitives.ALU is
 
                for I in 1 .. Args'Length - 1 loop
                   declare
-                     use Lith.Objects.Numbers.Exact;
+                     use Lith.Objects.Numbers;
                   begin
-                     if Is_Exact_Number (Store, Store.Top (1))
+                     if Store.Top = False_Value then
+                        Store.Drop (Args'Length - I);
+                        Store.Push (False_Value);
+                        exit;
+                     elsif Is_Exact_Number (Store, Store.Top (1))
                        and then Is_Exact_Number (Store, Store.Top (2))
                      then
                         Rec.Exact_Proc (Store);
                      else
+                        Ensure_Inexact (Store);
+                        Store.Swap;
+                        Ensure_Inexact (Store);
+                        Store.Swap;
                         Rec.Inexact_Proc (Store);
                      end if;
                   end;
@@ -190,7 +246,7 @@ package body Lith.Primitives.ALU is
      (Store : in out Object_Store'Class)
    is
    begin
-      Lith.Objects.Numbers.Exact.Divide (Store);
+      Lith.Objects.Numbers.Exact_Divide (Store);
       Store.Push (Store.Pop, Lith.Objects.Secondary);
       Store.Drop;
       Store.Push (Store.Pop (Lith.Objects.Secondary));
@@ -204,9 +260,67 @@ package body Lith.Primitives.ALU is
      (Store : in out Object_Store'Class)
    is
    begin
-      Lith.Objects.Numbers.Exact.Divide (Store);
+      Lith.Objects.Numbers.Exact_Divide (Store);
       Store.Drop;
    end Divide_Quotient;
+
+   -------------------
+   -- Exact_Compare --
+   -------------------
+
+   procedure Exact_Compare
+     (Store : in out Object_Store'Class;
+      Allowed : Allowed_Compares)
+   is
+      use Lith.Objects.Numbers;
+      Result : constant Compare :=
+                 Exact_Compare (Store);
+   begin
+      if not Allowed (Result) then
+         Store.Drop;
+         Store.Push (False_Value);
+      end if;
+   end Exact_Compare;
+
+   --------------------
+   -- Exact_Stack_LE --
+   --------------------
+
+   procedure Exact_Stack_LE
+     (Store : in out Object_Store'Class)
+   is
+   begin
+      Exact_Compare (Store, Compare_LE);
+   end Exact_Stack_LE;
+
+   ---------------------
+   -- Inexact_Compare --
+   ---------------------
+
+   procedure Inexact_Compare
+     (Store : in out Object_Store'Class;
+      Allowed : Allowed_Compares)
+   is
+      use Lith.Objects.Numbers;
+      Result : constant Compare :=
+                 Inexact_Compare (Store);
+   begin
+      if not Allowed (Result) then
+         Store.Drop;
+         Store.Push (False_Value);
+      end if;
+   end Inexact_Compare;
+
+   ----------------------
+   -- Inexact_Stack_LE --
+   ----------------------
+
+   procedure Inexact_Stack_LE
+     (Store : in out Object_Store'Class)
+   is
+   begin
+      Inexact_Compare (Store, Compare_LE);
+   end Inexact_Stack_LE;
 
    --------------
    -- Operator --
