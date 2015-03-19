@@ -74,7 +74,12 @@
 (define (inexact? x) (or (real? x) (complex? x)))
 
 (define (exact-integer? x) (and (exact? x) (integer? x)))
-
+(define (exact-integer-sqrt k)
+   (let ((r (isqrt-try k 0)))
+        (list r (- k (square r)))))
+        
+(define (isqrt-try k n) (if (<= (square n) k) (isqrt-try k (+ n 1)) (- n 1)))
+        
 (define (finite? x) (number? x))
 (define (infinite? x) #f)
 (define (nan? x) #f)

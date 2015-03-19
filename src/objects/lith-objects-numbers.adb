@@ -468,7 +468,9 @@ package body Lith.Objects.Numbers is
             X : constant Integer := To_Integer (Store.Pop);
             Y : constant Integer := To_Integer (Store.Pop);
          begin
-            if Highest_Small_Integer / abs X >= abs Y then
+            if X in 0 .. 1 or else Y in 0 .. 1
+              or else Highest_Small_Integer / abs X >= abs Y
+            then
                Store.Push (To_Object (X * Y));
                return;
             elsif X < Y then
