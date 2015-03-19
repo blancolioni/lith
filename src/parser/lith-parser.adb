@@ -1,11 +1,10 @@
-with Ada.Characters.Conversions;
 with Ada.Wide_Wide_Text_IO;
 
 with Lith.Parser.Tokens;             use Lith.Parser.Tokens;
 with Lith.Parser.Lexical;            use Lith.Parser.Lexical;
+with Lith.Parser.Lexical.Identifiers;
 
 with Lith.Symbols;
-with Lith.Objects.Numbers;
 
 package body Lith.Parser is
 
@@ -164,23 +163,8 @@ package body Lith.Parser is
             Scan;
             Parse_S_Expression (Machine, False);
          when Tok_Integer =>
-            declare
-               Text : constant String :=
-                        Ada.Characters.Conversions.To_String (Tok_Text);
-            begin
-               Machine.Push (0);
-               for I in Text'Range loop
-                  declare
-                     X : constant Integer :=
-                           Character'Pos (Text (I)) - Character'Pos ('0');
-                  begin
-                     Machine.Push (10);
-                     Lith.Objects.Numbers.Exact_Multiply (Machine.all);
-                     Machine.Push (X);
-                     Lith.Objects.Numbers.Exact_Add (Machine.all);
-                  end;
-               end loop;
-            end;
+            Lith.Parser.Lexical.Identifiers.Push_Integer
+              (Machine.all, Tok_Text);
             Scan;
          when others =>
             Error ("bad token");
