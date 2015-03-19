@@ -618,6 +618,8 @@ package body Lith.Machine.SECD is
                      Machine.Push (C);
                   elsif F = Large_Integer_Atom then
                      Machine.Push (C);
+                  elsif F = Floating_Point_Atom then
+                     Machine.Push (C);
                   elsif F = Import_Atom then
 
                      Machine.Push (Args);
