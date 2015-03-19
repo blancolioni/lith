@@ -4,6 +4,7 @@ with Lith.Parser.Tokens;             use Lith.Parser.Tokens;
 with Lith.Parser.Lexical;            use Lith.Parser.Lexical;
 with Lith.Parser.Lexical.Identifiers;
 
+with Lith.Objects.Numbers;
 with Lith.Symbols;
 
 package body Lith.Parser is
@@ -165,6 +166,9 @@ package body Lith.Parser is
          when Tok_Integer =>
             Lith.Parser.Lexical.Identifiers.Push_Integer
               (Machine.all, Tok_Text);
+            Scan;
+         when Tok_Float =>
+            Lith.Objects.Numbers.Push_Float (Machine.all, Tok_Text);
             Scan;
          when others =>
             Error ("bad token");

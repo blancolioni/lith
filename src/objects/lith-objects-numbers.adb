@@ -793,6 +793,18 @@ package body Lith.Objects.Numbers is
       end loop;
    end Push_Float;
 
+   ----------------
+   -- Push_Float --
+   ----------------
+
+   procedure Push_Float
+     (Store : in out Object_Store'Class;
+      Text  : Wide_Wide_String)
+   is
+   begin
+      Push_Float (Store, Lith_Float'Wide_Wide_Value (Text));
+   end Push_Float;
+
    ----------------------------
    -- Small_Integer_To_Large --
    ----------------------------

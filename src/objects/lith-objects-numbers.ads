@@ -10,6 +10,11 @@ package Lith.Objects.Numbers is
      (Store : in out Object_Store'Class);
    --  ensures that the number on top of the stack is exact
 
+   procedure Push_Float
+     (Store : in out Object_Store'Class;
+      Text  : Wide_Wide_String);
+   --  Interprets Text as a floating point number and pushes it
+
    --  exact number arithmetic
 
    function Is_Exact_Number
