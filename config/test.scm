@@ -39,6 +39,8 @@
       (test (eqv? (min 3 4) 3))
       (test (eqv? (- 3 4) (- 1)))
       (test (eqv? (- 3 4 5) (- 6)))
+      (test (eqv? (- 3 4) -1))
+      (test (eqv? (- 3 4 5) -6))
       (test (equal? (floor/ 5 2) '(2 1)))
       (test (eqv? (abs (- 7)) 7))
       (test (eqv? (gcd 32 36) 4))
@@ -68,6 +70,7 @@
       (test (inexact? 10.0e3))
       (test (<= 1 (* 1.5 0.9)))
       (test (eqv? (max 1.1 2.2 3.3 1.2) 3.3))
+      (test (eqv? -1.4 (- 1.4)))
       ))
 
 (define (unit-test-strings)
