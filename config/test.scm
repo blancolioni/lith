@@ -53,6 +53,10 @@
       (test (eqv? #x12345678790ABcdEF 20988295470375489007))
       (test (eqv? #b10101010100101010101 #xAA955))
       (test (eqv? -21342134324 (- 21342134324)))
+      (test (equal? (exact-integer-sqrt 4) '(2 0)))
+      (test (equal? (exact-integer-sqrt 5) '(2 1)))
+      (test (equal? (exact-integer-sqrt 0) '(0 0)))
+      (test (eqv? (* 11237612837621873621873 0) 0))
       ))
 
 (define (unit-test-large-numbers)
