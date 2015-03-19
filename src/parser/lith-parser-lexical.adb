@@ -6,6 +6,7 @@ with Ada.Wide_Wide_Characters.Handling;
 with Ada.Wide_Wide_Text_IO;
 
 with Lith.Parser.Lexical.Characters;
+with Lith.Parser.Lexical.Identifiers;
 
 package body Lith.Parser.Lexical is
 
@@ -459,8 +460,6 @@ package body Lith.Parser.Lexical is
                use Ada.Strings.Wide_Wide_Fixed;
                use Ada.Wide_Wide_Characters.Handling;
 
-               Non_Numeric : Boolean := False;
-
                function Is_Id return Boolean
                is (not End_Of_Stream
                    and then (Is_Alphanumeric (Current_Stream.Ch)
@@ -484,18 +483,13 @@ package body Lith.Parser.Lexical is
                   Tok := Tok_Dot;
                elsif Is_Id then
                   while Is_Id loop
-                     if not Is_Digit (Current_Stream.Ch) then
-                        Non_Numeric := True;
-                     end if;
                      Next_Character;
                   end loop;
                   Stop_Token;
 
-                  if Non_Numeric then
-                     Tok := Tok_Identifier;
-                  else
-                     Tok := Tok_Integer;
-                  end if;
+                  Tok :=
+                    Lith.Parser.Lexical.Identifiers.Classify_Identifier
+                      (Tok_Text);
 
                else
                   Next_Character;

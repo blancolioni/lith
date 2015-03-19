@@ -46,6 +46,9 @@
       (test (eqv? (lcm) 1))
       (test (eqv? (square 42) 1764))
       (test (eqv? (square (- 42)) 1764))
+      (test (eqv? 65535 #xFFFF))
+      (test (eqv? #x12345678790ABcdEF 20988295470375489007))
+      (test (eqv? #b10101010100101010101 #xAA955))
       ))
 
 (define (unit-test-large-numbers)
