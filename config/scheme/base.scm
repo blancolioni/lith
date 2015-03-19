@@ -50,9 +50,6 @@
 (define or (macro (x y) `(if ,x ,x ,y)))
 (define (not x) (if x #f #t))
 
-(define (+1 x) (+ x 1))
-(define (-1 x) (+ x 1))
-
 ; (define (set-car! xs x) (list-set! xs 0 (cons x (cdr xs))))
 (define (list-set! xs k x) (if (zero? k) (set-car! xs x)
                                (list-set! (cdr xs) (- k 1) x)))
