@@ -222,7 +222,11 @@ package body Lith.Parser.Lexical.Identifiers is
                if Ch = '#' then
                   State := Base_Prefix;
                elsif Is_Digit (Ch) then
-                  State := Scanning_Integer;
+                  if Last then
+                     State := End_State_Integer;
+                  else
+                     State := Scanning_Integer;
+                  end if;
                else
                   State := End_State_Identifier;
                end if;
