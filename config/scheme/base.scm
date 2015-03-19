@@ -64,7 +64,7 @@
 
 (define (eqv? x y)
   (cond ((eq? x y) #t)
-        ((and (exact? x) (exact? y)) (equal? x y))))   ; works because exact numbers have the same list representation
+        ((and (number? x) (number? y)) (equal? x y))))   ; works because equal numbers have the same list representation
 
 (define (boolean? x) (or (eq? x #f) (eq? x #t)))
 
