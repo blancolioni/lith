@@ -19,6 +19,7 @@
          (unit-test-symbol)
          (unit-test-numbers)
          (unit-test-large-numbers)
+         (unit-test-inexact)
          (unit-test-strings)
          (set! *total-count* (+ *pass-count* *fail-count*))
          (display *pass-count*) (write-string "/") (display *total-count*) (write-string " tests passed\n")))
@@ -49,6 +50,7 @@
       (test (eqv? 65535 #xFFFF))
       (test (eqv? #x12345678790ABcdEF 20988295470375489007))
       (test (eqv? #b10101010100101010101 #xAA955))
+      (test (eqv? -21342134324 (- 21342134324)))
       ))
 
 (define (unit-test-large-numbers)
@@ -58,6 +60,14 @@
       (test (eqv? (fac 100) (* 100 (fac 99))))
       (test (eqv? (floor-quotient 123123123123123 10000000) 12312312))
       (test (equal? (number->string 1234567890987654321) "1234567890987654321"))
+      ))
+
+(define (unit-test-inexact)
+   (begin
+      (test (inexact? 1.5))
+      (test (inexact? 10.0e3))
+      (test (<= 1 (* 1.5 0.9)))
+      (test (eqv? (max 1.1 2.2 3.3 1.2) 3.3))
       ))
 
 (define (unit-test-strings)

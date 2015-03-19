@@ -7,6 +7,8 @@ with Lith.Objects.Numbers;
 package body Lith.Parser.Lexical.Identifiers is
 
    type State_Type is (Start, Scanning_Integer, Base_Prefix,
+                       Number_Sign, Decimal_Point, Scanning_Decimals,
+                       Exponent, Exponent_Sign, Scanning_Exponent,
                        End_State_Identifier,
                        End_State_Integer,
                        End_State_Float);
@@ -26,11 +28,12 @@ package body Lith.Parser.Lexical.Identifiers is
       Base : Integer_Base)
       return Natural;
 
-   procedure Scan_Identifier
+   function Scan_Identifier
      (Text : Wide_Wide_String;
       Call_Back : access
         procedure (State : State_Type;
-                   Ch    : Wide_Wide_Character));
+                   Ch    : Wide_Wide_Character))
+      return End_State;
 
    ----------------------
    -- Base_Digit_Value --
@@ -67,76 +70,18 @@ package body Lith.Parser.Lexical.Identifiers is
      (Text : Wide_Wide_String)
       return Lith.Parser.Tokens.Token
    is
-      use Ada.Wide_Wide_Characters.Handling;
-
-      Base   : Integer_Base := 10;
-      State  : State_Type := Start;
-      Result : Token := Tok_Identifier;
+      Final_State : constant End_State :=
+                      Scan_Identifier (Text, null);
 
    begin
-      for I in Text'Range loop
-         exit when State in End_State;
-         declare
-            Ch : constant Wide_Wide_Character := Text (I);
-            Last : constant Boolean := I = Text'Last;
---              Next_Ch : constant Wide_Wide_Character :=
---                          (if not Last
---                           then Text (I + 1)
---                           else Wide_Wide_Character'Val (26));
-         begin
-            case State is
-            when Start =>
-               if Ch = '#' then
-                  State := Base_Prefix;
-               elsif Is_Digit (Ch) then
-                  if Last then
-                     State := End_State_Integer;
-                  else
-                     State := Scanning_Integer;
-                  end if;
-               else
-                  State := End_State_Identifier;
-               end if;
-            when Scanning_Integer =>
-               if not Is_Base_Digit (Ch, Base) then
-                  State := End_State_Identifier;
-               elsif Last then
-                  State := End_State_Integer;
-               end if;
-            when Base_Prefix =>
-               if Ch = 'o' then
-                  Base := 8;
-                  State := Scanning_Integer;
-               elsif Ch = 'b' then
-                  Base := 2;
-                  State := Scanning_Integer;
-               elsif Ch = 'd' then
-                  Base := 10;
-                  State := Scanning_Integer;
-               elsif Ch = 'x' then
-                  Base := 16;
-                  State := Scanning_Integer;
-               else
-                  State := End_State_Identifier;
-               end if;
-            when End_State =>
-               null;
-            end case;
-         end;
-      end loop;
-
-      if State in End_State then
-         case End_State (State) is
-            when End_State_Identifier =>
-               Result := Tok_Identifier;
-            when End_State_Integer =>
-               Result := Tok_Integer;
-            when End_State_Float =>
-               Result := Tok_Float;
-         end case;
-      end if;
-
-      return Result;
+      case Final_State is
+         when End_State_Identifier =>
+            return Tok_Identifier;
+         when End_State_Integer =>
+            return Tok_Integer;
+         when End_State_Float =>
+            return Tok_Float;
+      end case;
    end Classify_Identifier;
 
    -------------------
@@ -175,7 +120,8 @@ package body Lith.Parser.Lexical.Identifiers is
      (Store : in out Lith.Objects.Object_Store'Class;
       Text  : in     Wide_Wide_String)
    is
-      Base  : Integer_Base := 10;
+      Base   : Integer_Base := 10;
+      Negate : Boolean := False;
 
       procedure On_Character
         (State : State_Type;
@@ -201,7 +147,7 @@ package body Lith.Parser.Lexical.Identifiers is
                elsif Ch = 'x' then
                   Base := 16;
                end if;
-            when Start | Scanning_Integer =>
+            when Start | Scanning_Integer | Number_Sign =>
                if Is_Base_Digit (Ch, Base) then
                   Store.Push (Lith.Objects.To_Object (Integer (Base)));
                   Lith.Objects.Numbers.Exact_Multiply (Store);
@@ -209,6 +155,8 @@ package body Lith.Parser.Lexical.Identifiers is
                               (Base_Digit_Value (Ch,
                                  Base)));
                   Lith.Objects.Numbers.Exact_Add (Store);
+               elsif Ch = '-' then
+                  Negate := True;
                end if;
             when others =>
                null;
@@ -217,18 +165,28 @@ package body Lith.Parser.Lexical.Identifiers is
 
    begin
       Store.Push (Lith.Objects.To_Object (Integer'(0)));
-      Scan_Identifier (Text, On_Character'Access);
+      declare
+         Final_State : constant End_State :=
+                         Scan_Identifier (Text, On_Character'Access);
+      begin
+         pragma Assert (Final_State = End_State_Integer);
+      end;
+
+      if Negate then
+         Lith.Objects.Numbers.Exact_Negate (Store);
+      end if;
    end Push_Integer;
 
    ---------------------
    -- Scan_Identifier --
    ---------------------
 
-   procedure Scan_Identifier
+   function Scan_Identifier
      (Text : Wide_Wide_String;
       Call_Back : access
         procedure (State : State_Type;
                    Ch    : Wide_Wide_Character))
+      return End_State
    is
       use Ada.Wide_Wide_Characters.Handling;
 
@@ -249,16 +207,103 @@ package body Lith.Parser.Lexical.Identifiers is
             when Start =>
                if Ch = '#' then
                   State := Base_Prefix;
+               elsif Ch = '+' or else Ch = '-' then
+                  State := Number_Sign;
+               elsif Is_Digit (Ch) then
+                  if Last then
+                     State := End_State_Integer;
+                  else
+                     State := Scanning_Integer;
+                  end if;
+               else
+                  State := End_State_Identifier;
+               end if;
+            when Number_Sign =>
+               if Ch = '#' then
+                  State := Base_Prefix;
                elsif Is_Digit (Ch) then
                   State := Scanning_Integer;
                else
                   State := End_State_Identifier;
                end if;
             when Scanning_Integer =>
-               if not Is_Base_Digit (Ch, Base) then
+               if Ch = '.' then
+                  State := Decimal_Point;
+                  if Base /= 10 then
+                     State := End_State_Identifier;
+                  elsif Last then
+                     State := End_State_Float;
+                  end if;
+               elsif not Is_Base_Digit (Ch, Base) then
                   State := End_State_Identifier;
                elsif Last then
                   State := End_State_Integer;
+               end if;
+            when Decimal_Point =>
+               if Is_Digit (Ch) then
+                  if Last then
+                     State := End_State_Float;
+                  else
+                     State := Scanning_Decimals;
+                  end if;
+               elsif Ch = 'e' or else Ch = 'E' then
+                  if Last then
+                     State := End_State_Identifier;
+                  else
+                     State := Exponent;
+                  end if;
+               else
+                  State := End_State_Identifier;
+               end if;
+            when Scanning_Decimals =>
+               if Is_Digit (Ch) then
+                  if Last then
+                     State := End_State_Float;
+                  end if;
+               elsif Ch = 'e' or else Ch = 'E' then
+                  if Last then
+                     State := End_State_Identifier;
+                  else
+                     State := Exponent;
+                  end if;
+               else
+                  State := End_State_Identifier;
+               end if;
+
+            when Exponent =>
+               if Ch = '+' or else Ch = '-' then
+                  if Last then
+                     State := End_State_Identifier;
+                  else
+                     State := Exponent_Sign;
+                  end if;
+               elsif Is_Digit (Ch) then
+                  if Last then
+                     State := End_State_Float;
+                  else
+                     State := Scanning_Exponent;
+                  end if;
+               else
+                  State := End_State_Identifier;
+               end if;
+            when Exponent_Sign =>
+               if Is_Digit (Ch) then
+                  if Last then
+                     State := End_State_Float;
+                  else
+                     State := Scanning_Exponent;
+                  end if;
+               else
+                  State := End_State_Identifier;
+               end if;
+
+            when Scanning_Exponent =>
+               if Is_Digit (Ch) then
+                  if Last then
+                     State := End_State_Float;
+                  end if;
+               else
+                  State := End_State_Identifier;
                end if;
             when Base_Prefix =>
                if Ch = 'o' then
@@ -281,6 +326,12 @@ package body Lith.Parser.Lexical.Identifiers is
             end case;
          end;
       end loop;
+
+      if State in End_State then
+         return State;
+      else
+         return End_State_Identifier;
+      end if;
 
    end Scan_Identifier;
 
