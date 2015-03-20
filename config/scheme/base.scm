@@ -268,10 +268,12 @@
 
 (define string-append (lambda xs (do-string-append xs)))
 
-(define (call-with-output-file identity proc)
-  (let ((port (open-output-file identity)))
-       (call-with-port port proc)))
-
 (define (call-with-port port proc)
   (begin (proc port)
          (close-port port)))
+
+(define (input-port? port) (port-attribute? port 'input))
+(define (output-port? port) (port-attribute? port 'output))
+(define (textual-port? port) (port-attribute? port 'textual))
+(define (binary-port? port) (port-attribute? port 'binary))
+(define (port? port) (port-attribute? port 'port))

@@ -12,4 +12,6 @@ package Lith.IO.Text_IO is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
+   function Is_Text_Port (Port : Port_Type'Class) return Boolean;
+
 end Lith.IO.Text_IO;
