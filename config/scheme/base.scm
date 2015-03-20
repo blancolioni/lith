@@ -267,3 +267,11 @@
       (append (car xs) (cdr (do-string-append (cdr xs)))))))
 
 (define string-append (lambda xs (do-string-append xs)))
+
+(define (call-with-output-file identity proc)
+  (let ((port (open-output-file identity)))
+       (call-with-port port proc)))
+
+(define (call-with-port port proc)
+  (begin (proc port)
+         (close-port port)))
