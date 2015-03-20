@@ -51,7 +51,7 @@ package body Lith.Objects is
                       when Apply_Object     => 'a',
                       when Character_Object => 'c',
                       when Internal_Object  => '-',
-                      when Unused_Tag_7     => '7');
+                      when External_Object  => 'e');
 
       Result : String (1 .. 8);
 
@@ -107,6 +107,15 @@ package body Lith.Objects is
    begin
       return Item.Tag = Character_Object;
    end Is_Character;
+
+   ------------------------
+   -- Is_External_Object --
+   ------------------------
+
+   function Is_External_Object (Item : Object) return Boolean is
+   begin
+      return Item.Tag = External_Object;
+   end Is_External_Object;
 
    -----------------
    -- Is_Function --
@@ -178,6 +187,18 @@ package body Lith.Objects is
       return Wide_Wide_Character'Val (Item.Payload);
    end To_Character;
 
+   --------------------------------
+   -- To_External_Object_Address --
+   --------------------------------
+
+   function To_External_Object_Address
+     (Item : Object)
+      return External_Object_Address
+   is
+   begin
+      return External_Object_Address (Item.Payload);
+   end To_External_Object_Address;
+
    -----------------
    -- To_Function --
    -----------------
@@ -246,11 +267,24 @@ package body Lith.Objects is
       return (Object_Payload (Symbol), Symbol_Object);
    end To_Object;
 
+   ---------------
+   -- To_Object --
+   ---------------
+
    function To_Object (Ch : Wide_Wide_Character) return Object is
    begin
       return (Object_Payload
               (Wide_Wide_Character'Pos (Ch)),
               Character_Object);
+   end To_Object;
+
+   ---------------
+   -- To_Object --
+   ---------------
+
+   function To_Object (Address : External_Object_Address) return Object is
+   begin
+      return (Object_Payload (Address), External_Object);
    end To_Object;
 
    ---------------------

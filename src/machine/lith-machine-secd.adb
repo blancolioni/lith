@@ -399,6 +399,8 @@ package body Lith.Machine.SECD is
                  "attempted to evaluate nil";
             elsif C = True_Value or else C = False_Value then
                Machine.Push (C);
+            elsif C = No_Value then
+               Machine.Push (C);
             elsif Is_Integer (C) then
                Machine.Push (C);
             elsif Is_Character (C) then
@@ -701,8 +703,6 @@ package body Lith.Machine.SECD is
                end if;
             end;
          end loop;
-
-         Machine.GC;
 
       end loop;
    end Evaluate;

@@ -2,6 +2,7 @@ with Ada.Characters.Conversions;
 with Ada.Exceptions;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Strings.Wide_Wide_Unbounded;
+with Ada.Unchecked_Deallocation;
 with Ada.Wide_Wide_Text_IO;
 
 with Lith.Environment;
@@ -24,6 +25,11 @@ package body Lith.Machine is
      with Pre => Lith.Objects.Is_Pair (Pair)
      and then not Machine.Free (Lith.Objects.To_Address (Pair));
 
+   procedure Free is
+     new Ada.Unchecked_Deallocation
+       (Lith.Objects.External_Object_Interface'Class,
+        External_Object_Access);
+
    --------------
    -- Allocate --
    --------------
@@ -34,10 +40,17 @@ package body Lith.Machine is
       return Lith.Objects.Object
    is
       use type Lith.Objects.Object;
-      Result : constant Lith.Objects.Object := Machine.Free_List;
+      Result : Lith.Objects.Object := Machine.Free_List;
    begin
+
       if Result = Lith.Objects.Nil then
-         raise Constraint_Error with "out of memory";
+         Machine.R1 := Car;
+         Machine.R2 := Cdr;
+         Machine.GC;
+         Result := Machine.Free_List;
+         if Result = Lith.Objects.Nil then
+            raise Constraint_Error with "out of memory";
+         end if;
       end if;
 
       declare
@@ -167,6 +180,42 @@ package body Lith.Machine is
       return Machine;
    end Create;
 
+   -------------------------------
+   -- Create_External_Reference --
+   -------------------------------
+
+   overriding function Create_External_Reference
+     (Machine : in out Root_Lith_Machine;
+      External : Lith.Objects.External_Object_Interface'Class)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects;
+      Address : External_Object_Address := 0;
+      New_Item : constant External_Object_Access :=
+                   new Lith.Objects.External_Object_Interface'Class'
+                     (External);
+      New_Entry : constant External_Object_Record :=
+                    (External_Object => New_Item,
+                     Free            => False,
+                     Marked          => False);
+   begin
+      for I in 1 .. Machine.External_Objects.Last_Index loop
+         if Machine.External_Objects (I).Free then
+            Address := I;
+            exit;
+         end if;
+      end loop;
+
+      if Address = 0 then
+         Machine.External_Objects.Append (New_Entry);
+         Address := Machine.External_Objects.Last_Index;
+      else
+         Machine.External_Objects (Address) := New_Entry;
+      end if;
+
+      return Lith.Objects.To_Object (Address);
+   end Create_External_Reference;
+
    --------------
    -- Evaluate --
    --------------
@@ -205,10 +254,6 @@ package body Lith.Machine is
    is
    begin
 
-      if Machine.Alloc_Count < Machine.Alloc_Limit then
-         return;
-      end if;
-
       if Trace_GC then
          Ada.Wide_Wide_Text_IO.Put_Line ("Garbage collecting ...");
       end if;
@@ -220,11 +265,17 @@ package body Lith.Machine is
          Machine.Alloc_Count := 0;
          Machine.Free_List := Lith.Objects.Nil;
          Machine.Free.all := (others => True);
+         for I in 1 .. Machine.External_Objects.Last_Index loop
+            Machine.External_Objects (I).Marked := False;
+         end loop;
+
          Lith.Environment.Mark (Machine);
          Machine.Mark (Machine.Stack);
          Machine.Mark (Machine.Environment);
          Machine.Mark (Machine.Control);
          Machine.Mark (Machine.Dump);
+         Machine.Mark (Machine.R1);
+         Machine.Mark (Machine.R2);
 
          for I in Machine.Core'Range loop
             if Machine.Marked (I) then
@@ -235,6 +286,23 @@ package body Lith.Machine is
                Machine.Core (I).Cdr := Machine.Free_List;
                Machine.Free_List := Lith.Objects.To_Object (I);
             end if;
+         end loop;
+
+         for I in 1 .. Machine.External_Objects.Last_Index loop
+            declare
+               Item : External_Object_Record renames
+                        Machine.External_Objects (I);
+            begin
+               if Item.Marked then
+                  Item.Marked := False;
+               elsif not Item.Free then
+                  Item.External_Object.Finalize;
+                  Free (Item.External_Object);
+                  Item.Free := True;
+               end if;
+            end;
+
+            Machine.External_Objects (I).Marked := False;
          end loop;
 
          Machine.Marked.all := (others => False);
@@ -268,6 +336,21 @@ package body Lith.Machine is
    begin
       return Machine.Core (Lith.Objects.To_Address (Pair));
    end Get;
+
+   -------------------------
+   -- Get_External_Object --
+   -------------------------
+
+   overriding function Get_External_Object
+     (Machine : Root_Lith_Machine;
+      Item    : Lith.Objects.Object)
+      return Lith.Objects.External_Object_Interface'Class
+   is
+      Address : constant Real_External_Address :=
+                  Lith.Objects.To_External_Object_Address (Item);
+   begin
+      return Machine.External_Objects (Address).External_Object.all;
+   end Get_External_Object;
 
    ----------
    -- Load --
@@ -320,6 +403,15 @@ package body Lith.Machine is
                   Machine.Mark (X);
                end if;
             end;
+         elsif Lith.Objects.Is_External_Object (X) then
+            declare
+               Addr : constant Real_External_Address :=
+                        Lith.Objects.To_External_Object_Address (X);
+            begin
+               if not Machine.External_Objects (Addr).Marked then
+                  Machine.Mark (X);
+               end if;
+            end;
          end if;
       end Check;
 
@@ -332,6 +424,14 @@ package body Lith.Machine is
             Machine.Marked (Address) := True;
             Check (Machine.Core (Address).Car);
             Check (Machine.Core (Address).Cdr);
+         end;
+      elsif Lith.Objects.Is_External_Object (Start) then
+         declare
+            Addr : constant Real_External_Address :=
+                     Lith.Objects.To_External_Object_Address (Start);
+         begin
+            Machine.External_Objects (Addr).Marked := True;
+            Machine.External_Objects (Addr).External_Object.Mark;
          end;
       end if;
    end Mark;
@@ -675,6 +775,8 @@ package body Lith.Machine is
          return "#t";
       elsif Value = False_Value then
          return "#f";
+      elsif Value = No_Value then
+         return "";
       elsif Is_Integer (Value) then
          return Ada.Strings.Wide_Wide_Fixed.Trim
            (Integer'Wide_Wide_Image (To_Integer (Value)),
@@ -688,6 +790,8 @@ package body Lith.Machine is
            (Lith.Objects.Hex_Image (Value));
       elsif Is_Apply (Value) then
          return "apply" & Integer'Wide_Wide_Image (-Argument_Count (Value));
+      elsif Is_External_Object (Value) then
+         return Machine.Get_External_Object (Value).Print;
       elsif Is_Pair (Value) then
          if Machine.Car (Value) = Lith.Symbols.String_Atom then
             return '"' & String_Image (Machine.Cdr (Value)) & '"';

@@ -43,9 +43,12 @@ package body Lith.Repl is
                   Expr : constant Lith.Objects.Object :=
                            Lith.Parser.Parse_Expression
                              (Machine, Expr_Text);
+                  Result : constant Object :=
+                             Machine.Evaluate (Expr, Lith.Objects.Nil);
                begin
-                  Put_Line
-                    (Machine.Show (Machine.Evaluate (Expr, Lith.Objects.Nil)));
+                  if Result /= No_Value then
+                     Put_Line (Machine.Show (Result));
+                  end if;
                end;
             end if;
          exception

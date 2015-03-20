@@ -2,6 +2,7 @@ project_name = Lith
 source_dir = src
 source_dir = src/driver
 source_dir = src/evaluator
+source_dir = src/io
 source_dir = src/machine
 source_dir = src/objects
 source_dir = src/parser

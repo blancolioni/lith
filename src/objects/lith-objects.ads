@@ -9,6 +9,7 @@ package Lith.Objects is
    Nil         : constant Object;
    True_Value  : constant Object;
    False_Value : constant Object;
+   No_Value    : constant Object;
 
    type Cell_Address is mod 2 ** 32
      with Size => 32;
@@ -47,6 +48,14 @@ package Lith.Objects is
    function To_Character (Item : Object) return Wide_Wide_Character
      with Pre => Is_Character (Item);
 
+   type External_Object_Address is new Natural;
+   function Is_External_Object (Item : Object) return Boolean;
+   function To_Object (Address : External_Object_Address) return Object;
+   function To_External_Object_Address
+     (Item : Object)
+      return External_Object_Address
+     with Pre => Is_External_Object (Item);
+
    function Is_Atom (Item : Object) return Boolean;
    function Is_Pair (Item : Object) return Boolean;
 
@@ -55,6 +64,15 @@ package Lith.Objects is
    function Hex_Image (Item : Object) return String;
 
    type Stack_Type is (Primary, Secondary);
+
+   type External_Object_Interface is interface;
+
+   function Print (Item : External_Object_Interface) return Wide_Wide_String
+                   is abstract;
+   function Equal (X, Y : External_Object_Interface) return Boolean
+                   is abstract;
+   procedure Mark (Item : in out External_Object_Interface) is null;
+   procedure Finalize (Item : in out External_Object_Interface) is null;
 
    type Object_Store is limited interface;
 
@@ -146,6 +164,18 @@ package Lith.Objects is
 
    procedure Report_State (Store : in out Object_Store) is abstract;
 
+   function Get_External_Object
+     (Store : Object_Store;
+      Item  : Object)
+      return External_Object_Interface'Class
+     is abstract;
+
+   function Create_External_Reference
+     (Store    : in out Object_Store;
+      External : External_Object_Interface'Class)
+      return Object
+      is abstract;
+
    procedure Drop (Store : in out Object_Store'Class;
                    Count : Natural := 1;
                    Stack : Stack_Type := Primary);
@@ -169,7 +199,7 @@ private
                        Apply_Object,
                        Character_Object,
                        Internal_Object,
-                       Unused_Tag_7);
+                       External_Object);
 
    type Object is
       record
@@ -189,6 +219,10 @@ private
    True_Value : constant Object :=
                   (Payload => 2,
                    Tag     => Internal_Object);
+
+   No_Value : constant Object :=
+                (Payload => 3,
+                 Tag     => Internal_Object);
 
    type Symbol_Type is new Object_Payload;
 
