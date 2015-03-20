@@ -2,9 +2,16 @@ with Lith.Objects.Interfaces;
 
 with Lith.IO.Text_IO;
 
+with Lith.Symbols;
+
 package body Lith.IO is
 
    function Evaluate_Close_Port
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Port_Attribute
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
@@ -38,6 +45,57 @@ package body Lith.IO is
       return Lith.Objects.No_Value;
    end Evaluate_Close_Port;
 
+   -----------------------------
+   -- Evaluate_Port_Attribute --
+   -----------------------------
+
+   function Evaluate_Port_Attribute
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects;
+      Port_Object : constant Object := Arguments (Arguments'First);
+      Result : Boolean;
+   begin
+      if not Is_External_Object (Port_Object) then
+         Result := False;
+      else
+         declare
+            Ext : constant External_Object_Interface'Class :=
+                    Store.Get_External_Object (Port_Object);
+         begin
+            if Ext not in Port_Type'Class then
+               Result := False;
+            else
+               declare
+                  Port      : constant Port_Type'Class :=
+                                Port_Type'Class (Ext);
+                  Attribute : constant Wide_Wide_String :=
+                                Lith.Symbols.Get_Name
+                                  (To_Symbol
+                                     (Arguments (Arguments'First + 1)));
+               begin
+                  if Attribute = "input" then
+                     Result := Port.Input;
+                  elsif Attribute = "output" then
+                     Result := Port.Output;
+                  elsif Attribute = "textual" then
+                     Result := Lith.IO.Text_IO.Is_Text_Port (Port);
+                  elsif Attribute = "binary" then
+                     Result := False;
+                  elsif Attribute = "port" then
+                     Result := True;
+                  end if;
+               end;
+            end if;
+         end;
+      end if;
+
+      return To_Object (Result);
+
+   end Evaluate_Port_Attribute;
+
    --------------
    -- Finalize --
    --------------
@@ -61,6 +119,8 @@ package body Lith.IO is
                        Lith.IO.Text_IO.Evaluate_Open_Output_File'Access);
       Define_Function ("open-input-file", 1,
                        Lith.IO.Text_IO.Evaluate_Open_Input_File'Access);
+      Define_Function ("port-attribute?", 2,
+                       Evaluate_Port_Attribute'Access);
    end Initialise_IO;
 
    -----------

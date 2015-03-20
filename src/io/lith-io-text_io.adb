@@ -47,8 +47,8 @@ package body Lith.IO.Text_IO is
         (Port.File.all, Ada.Wide_Wide_Text_IO.In_File,
          Ada.Characters.Conversions.To_String
            (Lith.Objects.To_String (Store, Arguments (Arguments'First))));
-      Port.Open := True;
       Port.Input := True;
+      Port.Output := False;
       return Store.Create_External_Reference (Port);
    exception
       when others =>
@@ -74,7 +74,8 @@ package body Lith.IO.Text_IO is
          Ada.Characters.Conversions.To_String
            (Lith.Objects.To_String (Store, Arguments (Arguments'First))));
       Port.Open := True;
-      Port.Input := True;
+      Port.Input := False;
+      Port.Output := True;
       return Store.Create_External_Reference (Port);
    exception
       when others =>
@@ -82,5 +83,14 @@ package body Lith.IO.Text_IO is
          Port.Open := False;
          return Lith.Objects.False_Value;
    end Evaluate_Open_Output_File;
+
+   ------------------
+   -- Is_Text_Port --
+   ------------------
+
+   function Is_Text_Port (Port : Port_Type'Class) return Boolean is
+   begin
+      return Port in Text_Port_Type'Class;
+   end Is_Text_Port;
 
 end Lith.IO.Text_IO;

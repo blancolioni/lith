@@ -20,8 +20,9 @@ private
    type Port_Type is
      abstract new Lith.Objects.External_Object_Interface
    with record
-      Open : Boolean := False;
-      Input : Boolean;
+      Open   : Boolean := False;
+      Input  : Boolean;
+      Output : Boolean;
    end record;
 
 end Lith.IO;
