@@ -64,6 +64,15 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("."));
    end Dot;
 
+   ------------------
+   -- Dynamic_Wind --
+   ------------------
+
+   function Dynamic_Wind return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("dynamic-wind"));
+   end Dynamic_Wind;
+
    -------------------
    -- Ellipsis_Atom --
    -------------------
@@ -228,6 +237,15 @@ package body Lith.Symbols is
    begin
       return Lith.Objects.To_Object (Get_Symbol ("set!"));
    end Set_Atom;
+
+   ----------------
+   -- Stack_Drop --
+   ----------------
+
+   function Stack_Drop return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("(stack-drop)"));
+   end Stack_Drop;
 
    ----------------------
    -- Stack_To_Control --

@@ -13,6 +13,7 @@ package Lith.Symbols is
    function Choice_Atom return Lith.Objects.Object;
    function Define_Atom return Lith.Objects.Object;
    function Dot return Lith.Objects.Object;
+   function Dynamic_Wind return Lith.Objects.Object;
    function Ellipsis_Atom return Lith.Objects.Object;
    function Eval_Atom return Lith.Objects.Object;
    function Floating_Point_Atom return Lith.Objects.Object;
@@ -29,6 +30,7 @@ package Lith.Symbols is
    function Rational_Atom return Lith.Objects.Object;
    function Set_Atom return Lith.Objects.Object;
    function Stack_To_Control return Lith.Objects.Object;
+   function Stack_Drop return Lith.Objects.Object;
    function String_Atom return Lith.Objects.Object;
    function Unquote return Lith.Objects.Object;
    function Unquote_Splicing return Lith.Objects.Object;

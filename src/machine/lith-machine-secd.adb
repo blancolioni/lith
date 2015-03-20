@@ -425,6 +425,8 @@ package body Lith.Machine.SECD is
                   Machine.Control := Cs;
                   Push_Control (Machine.Pop);
                   C_Updated := True;
+               elsif C = Stack_Drop then
+                  Machine.Drop;
                elsif C = Internal_Define_Atom then
                   declare
                      Value : constant Object := Machine.Pop;
@@ -614,6 +616,20 @@ package body Lith.Machine.SECD is
                           Machine.Cons (Machine.Pop, Cs);
                         C_Updated := True;
                      end;
+                  elsif F = Dynamic_Wind then
+                     Machine.Push (Machine.Car (Args));
+                     Machine.Push (Stack_Drop);
+                     Machine.Push (Machine.Cadr (Args));
+                     Machine.Push (Machine.Car (Machine.Cddr (Args)));
+                     Machine.Push (Stack_Drop);
+                     Machine.Push (Cs);
+                     Machine.Cons;
+                     Machine.Cons;
+                     Machine.Cons;
+                     Machine.Cons;
+                     Machine.Cons;
+                     Machine.Control := Machine.Pop;
+                     C_Updated := True;
                   elsif F = Lambda or else F = Macro then
                      Machine.Push (C);
                   elsif F = String_Atom then
