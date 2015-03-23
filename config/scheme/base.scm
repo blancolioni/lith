@@ -3,51 +3,22 @@
 (define (cdar x) (cdr (car x)))
 (define (cddr x) (cdr (cdr x)))
 
-(define define-syntax (macro (name rules) 
-    (list 'define name (list 'macro 'xs (list 'apply-syntax 'xs rules))))) ; (list 'macro 'xs (list 'apply-syntax 'xs rules)))))
-    
-; `(define ,name (macro xs (apply-syntax (xs ,rules))))))
+(define define-syntax (macro (name rules)
+    ((lambda (xs)
+       (list 'define name (list 'macro xs (list 'apply-syntax xs rules)))) (gensym)))) ; (list 'macro 'xs (list 'apply-syntax 'xs rules)))))
 
-(define-syntax lith-and
-  (syntax-rules () ((lith-and) #t) ((lith-and test) test) ((lith-and test1 test2 ...) (if test1 (lith-and test2 ...) #f))))
+(define-syntax and
+  (syntax-rules () 
+    ((and) #t)
+    ((and test) test)
+    ((and test1 test2 ...) (if test1 (and test2 ...) #f))))
                
-; (define (match-syntax-rules call rules)
-  ; (let ((keywords (cadr rules))
-        ; (patterns (cddr rules)))
-      ; (match-patterns call keywords patterns)))
-      
-; (define (match-patterns call keywords patterns)
-  ; (if (null? patterns) (error "no matching patterns")
-      ; (let ((env (match-pat call keywords (caar patterns) '())))
-           ; (if env (apply-pat keywords (car (cdar patterns)) env)
-               ; (match-patterns call keywords (cdr patterns))))))
+(define-syntax or
+  (syntax-rules () 
+    ((or) #f)
+    ((or test) test)
+    ((or test1 test2 ...) (if test1 #t (or test2 ...)))))
                
-; (define (match-pat call keywords pat env)
-  ; (if (and (null? call) (null? pat)) 
-      ; env
-      ; (if (null? pat) 
-          ; #f
-          ; (if (eq? (car pat) '...) 
-              ; (cons (list '&rest call) env)
-              ; (if (null? call)
-                  ; #f
-                  ; (match-pat (cdr call) keywords (cdr pat) (cons (list (car pat) (car call)) env)))))))
-               
-; (define (apply-pat keywords body env)
-   ; (if (pair? body) (cons (apply-pat (car body)) (apply-pat (cdr body)))
-       ; (if (eq? body '...) (apply-pat-rest env)
-           ; (if (symbol? body)
-               ; (apply-pat-sub body env)
-               ; body))))
-           
-; (define (apply-pat-sub sym env)
-   ; (if (null? env) sym
-       ; (if (eq? (caar env) sym) (car (cdar env))
-           ; (apply-pat-sub sym (cdr env)))))
-           
-
-(define and (macro (x y) `(if ,x ,y ,x)))
-(define or (macro (x y) `(if ,x ,x ,y)))
 (define (not x) (if x #f #t))
 
 ; (define (set-car! xs x) (list-set! xs 0 (cons x (cdr xs))))
