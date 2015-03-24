@@ -21,6 +21,7 @@
          (unit-test-large-numbers)
          (unit-test-inexact)
          (unit-test-strings)
+         (unit-test-exceptions)
          (set! *total-count* (+ *pass-count* *fail-count*))
          (display *pass-count*) (write-string "/") (display *total-count*) (write-string " tests passed\n")))
   
@@ -82,6 +83,11 @@
       (test (string? "hello"))
       (test (not (string? 'hello)))
       (test (equal? (make-string 5 #\X) "XXXXX"))
+   ))
+   
+(define (unit-test-exceptions)
+   (begin
+      (test (eqv? (dynamic-wind 1 2 3) 2))
    ))
    
 (define (fac n) (if (zero? n) 1 (* n (fac (- n 1)))))
