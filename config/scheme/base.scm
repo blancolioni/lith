@@ -249,4 +249,9 @@
 (define (binary-port? port) (port-attribute? port 'binary))
 (define (port? port) (port-attribute? port 'port))
 
+(define (global-error-handler obj) (write (string-append "unhandled exception: " (display-error-object obj))))
+(define (display-error-object err)
+   (if (and (pair? err) (eq? (car err) '#error-object)) (cadr err) (if (symbol? err) (symbol->string err) "unknown")))
+   
 (define (raise obj) (lith-raise-exception obj))
+(define (error message . xs) (raise (list '#error-object message xs)))
