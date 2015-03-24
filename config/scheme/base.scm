@@ -277,3 +277,5 @@
 (define (textual-port? port) (port-attribute? port 'textual))
 (define (binary-port? port) (port-attribute? port 'binary))
 (define (port? port) (port-attribute? port 'port))
+
+(define (raise obj) (lith-raise-exception obj))

@@ -91,6 +91,15 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("eval"));
    end Eval_Atom;
 
+   -----------------------
+   -- Exception_Handler --
+   -----------------------
+
+   function Exception_Handler return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("(exception-handler)"));
+   end Exception_Handler;
+
    -------------------------
    -- Floating_Point_Atom --
    -------------------------
@@ -220,6 +229,15 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("quote"));
    end Quote;
 
+   --------------------------
+   -- Raise_Exception_Atom --
+   --------------------------
+
+   function Raise_Exception_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("lith-raise-exception"));
+   end Raise_Exception_Atom;
+
    -------------------
    -- Rational_Atom --
    -------------------
@@ -283,6 +301,33 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("unquote-splicing"));
    end Unquote_Splicing;
 
+   ---------------------
+   -- Unwind_Continue --
+   ---------------------
+
+   function Unwind_Continue return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("(unwind-continue)"));
+   end Unwind_Continue;
+
+   -----------------
+   -- Unwind_Dump --
+   -----------------
+
+   function Unwind_Dump return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("(unwind-dump)"));
+   end Unwind_Dump;
+
+   --------------------
+   -- Unwind_Protect --
+   --------------------
+
+   function Unwind_Protect return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("(unwind-protect)"));
+   end Unwind_Protect;
+
    -------------------
    -- Wildcard_Atom --
    -------------------
@@ -291,5 +336,14 @@ package body Lith.Symbols is
    begin
       return Lith.Objects.To_Object (Get_Symbol ("_"));
    end Wildcard_Atom;
+
+   ---------------------------------
+   -- With_Exception_Handler_Atom --
+   ---------------------------------
+
+   function With_Exception_Handler_Atom return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("with-exception-handler"));
+   end With_Exception_Handler_Atom;
 
 end Lith.Symbols;

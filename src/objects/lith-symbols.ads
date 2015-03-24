@@ -15,6 +15,7 @@ package Lith.Symbols is
    function Dot return Lith.Objects.Object;
    function Dynamic_Wind return Lith.Objects.Object;
    function Ellipsis_Atom return Lith.Objects.Object;
+   function Exception_Handler return Lith.Objects.Object;
    function Eval_Atom return Lith.Objects.Object;
    function Floating_Point_Atom return Lith.Objects.Object;
    function If_Atom return Lith.Objects.Object;
@@ -27,6 +28,7 @@ package Lith.Symbols is
    function Macro return Lith.Objects.Object;
    function Quote return Lith.Objects.Object;
    function Quasiquote return Lith.Objects.Object;
+   function Raise_Exception_Atom return Lith.Objects.Object;
    function Rational_Atom return Lith.Objects.Object;
    function Set_Atom return Lith.Objects.Object;
    function Stack_To_Control return Lith.Objects.Object;
@@ -34,6 +36,10 @@ package Lith.Symbols is
    function String_Atom return Lith.Objects.Object;
    function Unquote return Lith.Objects.Object;
    function Unquote_Splicing return Lith.Objects.Object;
+   function Unwind_Protect return Lith.Objects.Object;
+   function Unwind_Continue return Lith.Objects.Object;
+   function Unwind_Dump return Lith.Objects.Object;
    function Wildcard_Atom return Lith.Objects.Object;
+   function With_Exception_Handler_Atom return Lith.Objects.Object;
 
 end Lith.Symbols;
