@@ -10,6 +10,8 @@ with Lith.Symbols;
 
 package body Lith.Primitives is
 
+   Next_Gensym_Index : Natural := 0;
+
    function Evaluate_ALU
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -57,6 +59,11 @@ package body Lith.Primitives is
    is (Arguments (Arguments'First));
 
    function Evaluate_Exact
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Gensym
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
@@ -138,6 +145,7 @@ package body Lith.Primitives is
       Define_Function ("error", 1, Evaluate_Error'Access);
       Define_Function ("eval", 1, Evaluate_Eval'Access);
       Define_Function ("exact", 1, Evaluate_Exact'Access);
+      Define_Function ("gensym", 0, Evaluate_Gensym'Access);
       Define_Function ("inexact", 1, Evaluate_Inexact'Access);
       Define_Function ("integer->char", 1, Evaluate_Integer_To_Char'Access);
       Define_Function ("load", 1, Evaluate_Load'Access);
@@ -295,6 +303,24 @@ package body Lith.Primitives is
       Lith.Objects.Numbers.Ensure_Exact (Store);
       return Store.Pop;
    end Evaluate_Exact;
+
+   ---------------------
+   -- Evaluate_Gensym --
+   ---------------------
+
+   function Evaluate_Gensym
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      pragma Unreferenced (Store);
+      pragma Unreferenced (Arguments);
+   begin
+      Next_Gensym_Index := Next_Gensym_Index + 1;
+      return Lith.Objects.To_Object
+        (Lith.Symbols.Get_Symbol
+           ("#:g" & Integer'Wide_Wide_Image (-Next_Gensym_Index)));
+   end Evaluate_Gensym;
 
    ----------------------
    -- Evaluate_Inexact --
