@@ -185,6 +185,14 @@ package Lith.Objects is
 
    procedure Swap (Store : in out Object_Store'Class);
 
+   procedure Make_List
+     (Store : in out Object_Store'Class;
+      Items : Array_Of_Objects);
+   --  Create a (possibly improper) list from the items in the array,
+   --  where each Item is a car except the last.
+   --  The list is proper if and only if the last element of Items
+   --  is nil, or is a proper list itself.
+
    function To_Object_Array
      (Store : in out Object_Store'Class;
       List  : Object)

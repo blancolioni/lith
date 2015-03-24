@@ -153,6 +153,23 @@ package body Lith.Objects is
       return Item.Tag = Symbol_Object;
    end Is_Symbol;
 
+   ---------------
+   -- Make_List --
+   ---------------
+
+   procedure Make_List
+     (Store : in out Object_Store'Class;
+      Items : Array_Of_Objects)
+   is
+   begin
+      for X of Items loop
+         Store.Push (X);
+      end loop;
+      for I in 1 .. Items'Length - 1 loop
+         Store.Cons;
+      end loop;
+   end Make_List;
+
    ----------
    -- Swap --
    ----------
