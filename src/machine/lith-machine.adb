@@ -175,8 +175,10 @@ package body Lith.Machine is
       Machine.Stack := Nil;
       Machine.Control := Nil;
       Machine.Dump := Nil;
+      Machine.Handlers := Nil;
       Machine.Alloc_Count := 0;
       Machine.Alloc_Limit := Natural (Machine.Core'Length) - 2000;
+
       return Machine;
    end Create;
 
@@ -232,6 +234,16 @@ package body Lith.Machine is
       if not Machine.Evaluating then
          Machine.Evaluating := True;
          Machine.Start_Eval := Ada.Calendar.Clock;
+
+         Machine.Make_List
+           ((Lith.Objects.To_Object
+            (Lith.Symbols.Get_Symbol
+                 ("global-error-handler")),
+            Lith.Objects.Nil, Lith.Objects.Nil));
+         Machine.Push (Lith.Objects.Nil);
+         Machine.Cons;
+         Machine.Handlers := Machine.Pop;
+
       end if;
 
       Machine.Environment := Environment;
@@ -274,6 +286,7 @@ package body Lith.Machine is
          Machine.Mark (Machine.Environment);
          Machine.Mark (Machine.Control);
          Machine.Mark (Machine.Dump);
+         Machine.Mark (Machine.Handlers);
          Machine.Mark (Machine.R1);
          Machine.Mark (Machine.R2);
 
@@ -600,6 +613,8 @@ package body Lith.Machine is
         (" C: " & Machine.Show (Machine.Control));
       Ada.Wide_Wide_Text_IO.Put_Line
         (" D: " & Machine.Show (Machine.Dump));
+      Ada.Wide_Wide_Text_IO.Put_Line
+        (" H: " & Machine.Show (Machine.Handlers));
       Ada.Wide_Wide_Text_IO.Put_Line
         ("GC:"
          & Natural'Wide_Wide_Image (Natural (Machine.GC_Time * 1000.0))

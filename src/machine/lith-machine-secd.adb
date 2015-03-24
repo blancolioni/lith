@@ -313,7 +313,11 @@ package body Lith.Machine.SECD is
       procedure Push_Control (C : Object);
       function Pop_Control return Object with Unreferenced;
       procedure Save_State;
-      procedure Restore_State;
+      procedure Restore_State (State : Object := False_Value);
+      --  Restore the state to the given state, which is either False,
+      --  or desired final state from the dump stack.  Evaluate any
+      --  unwinding expressions on the way.  If State is False,
+      --  restore a single level of state.
 
       -----------------
       -- Pop_Control --
@@ -339,14 +343,42 @@ package body Lith.Machine.SECD is
       -- Restore_State --
       -------------------
 
-      procedure Restore_State is
+      procedure Restore_State (State : Object := False_Value) is
       begin
-         Machine.Stack := Machine.Car (Machine.Dump);
-         Machine.Dump := Machine.Cdr (Machine.Dump);
-         Machine.Environment := Machine.Car (Machine.Dump);
-         Machine.Dump := Machine.Cdr (Machine.Dump);
-         Machine.Control := Machine.Car (Machine.Dump);
-         Machine.Dump := Machine.Cdr (Machine.Dump);
+         loop
+            if State = Nil and then Machine.Dump = Nil then
+               Machine.Stack := Nil;
+               Machine.Environment := Nil;
+               Machine.Control := Nil;
+               Machine.Push (No_Value);
+               return;
+            elsif Is_Pair (Machine.Car (Machine.Dump))
+              and then Machine.Caar (Machine.Dump) = Unwind_Protect
+            then
+               Machine.Push ((Machine.Cdar (Machine.Dump)));
+               Machine.Control := Machine.Pop;
+
+               if Machine.Cdr (Machine.Dump) /= Nil then
+                  Machine.Make_List ((Unwind_Dump, State, Nil));
+               end if;
+               Machine.Push (Stack_Drop);
+               Machine.Push (Nil);
+               Machine.Cons;
+               if Machine.Cdr (Machine.Dump) /= Nil then
+                  Machine.Cons;
+               end if;
+               Machine.Dump := Machine.Cdr (Machine.Dump);
+               return;
+            else
+               Machine.Stack := Machine.Car (Machine.Dump);
+               Machine.Dump := Machine.Cdr (Machine.Dump);
+               Machine.Environment := Machine.Car (Machine.Dump);
+               Machine.Dump := Machine.Cdr (Machine.Dump);
+               Machine.Control := Machine.Car (Machine.Dump);
+               Machine.Dump := Machine.Cdr (Machine.Dump);
+               exit when State = False_Value or else State = Machine.Dump;
+            end if;
+         end loop;
       end Restore_State;
 
       ----------------
@@ -427,6 +459,10 @@ package body Lith.Machine.SECD is
                   C_Updated := True;
                elsif C = Stack_Drop then
                   Machine.Drop;
+               elsif C = Unwind_Protect then
+                  null;
+               elsif C = Exception_Handler then
+                  null;
                elsif C = Internal_Define_Atom then
                   declare
                      Value : constant Object := Machine.Pop;
@@ -617,18 +653,108 @@ package body Lith.Machine.SECD is
                         C_Updated := True;
                      end;
                   elsif F = Dynamic_Wind then
+                     Machine.Make_List
+                       ((Unwind_Protect,
+                        Machine.Car (Machine.Cddr (Args)),
+                        Nil));
+                     Machine.Push (Machine.Dump);
+                     Machine.Cons;
+                     Machine.Dump := Machine.Pop;
+
                      Machine.Push (Machine.Car (Args));
                      Machine.Push (Stack_Drop);
                      Machine.Push (Machine.Cadr (Args));
-                     Machine.Push (Machine.Car (Machine.Cddr (Args)));
-                     Machine.Push (Stack_Drop);
                      Machine.Push (Cs);
                      Machine.Cons;
                      Machine.Cons;
                      Machine.Cons;
+                     Machine.Control := Machine.Pop;
+                     C_Updated := True;
+                  elsif F = With_Exception_Handler_Atom then
+                     Machine.Push (Machine.Cadr (Args));
+                     Machine.Push (Nil);
                      Machine.Cons;
+                     Machine.Push (Cs);
                      Machine.Cons;
                      Machine.Control := Machine.Pop;
+                     Machine.Make_List
+                       ((Machine.Car (Args), Machine.Dump, Nil));
+                     Machine.Push (Machine.Handlers);
+                     Machine.Cons;
+                     Machine.Handlers := Machine.Pop;
+                     C_Updated := True;
+                  elsif F = Raise_Exception_Atom then
+                     declare
+                        Handler : Object;
+                        Ex      : Object;
+                        Found   : Boolean;
+                     begin
+
+                        if Trace_Eval then
+                           Ada.Wide_Wide_Text_IO.Put_Line
+                             ("raise exception");
+                           Machine.Report_State;
+                        end if;
+
+                        if Machine.Handlers = Nil then
+                           Ada.Wide_Wide_Text_IO.Put_Line
+                           ("Unhandled exception: "
+                            & Machine.Show (Machine.Car (Args)));
+                           Restore_State (Nil);
+                        else
+                           Handler := Machine.Car (Machine.Handlers);
+
+                           --  we happen to know that we are called with one
+                           --  argument, 'obj', which allows as to fetch the
+                           --  actual exception object for the unwind operation
+                           Get (Machine, Get_Symbol ("obj"),
+                                Ex, Found);
+                           pragma Assert (Found);
+                           Machine.Make_List
+                             ((Machine.Car (Handler),
+                              Machine.Car (Args),
+                              Nil));
+                           Machine.Make_List
+                             ((Unwind_Continue, Ex, Nil));
+                           Machine.Push (Nil);
+                           Machine.Cons;
+                           Machine.Cons;
+                           Machine.Control := Machine.Pop;
+                           C_Updated := True;
+                        end if;
+
+                     end;
+                  elsif F = Unwind_Continue then
+                     Machine.Drop;
+                     Restore_State
+                       (Machine.Cadr (Machine.Car (Machine.Handlers)));
+                     Machine.Handlers := Machine.Cdr (Machine.Handlers);
+
+                     Machine.Make_List
+                       ((Raise_Exception_Atom, Machine.Car (Args), Nil));
+                     Machine.Push (Nil);
+                     Machine.Cons;
+                     if Machine.Control = Nil then
+                        Machine.Control := Machine.Pop;
+                     else
+                        declare
+                           It : Object := Machine.Control;
+                        begin
+                           while Machine.Cdr (It) /= Nil loop
+                              It := Machine.Cdr (It);
+                           end loop;
+                           Machine.Set_Cdr (It, Machine.Pop);
+                        end;
+                     end if;
+
+                     if Trace_Eval then
+                        Ada.Wide_Wide_Text_IO.Put_Line
+                          ("unwind-continue");
+                        Machine.Report_State;
+                     end if;
+                     C_Updated := True;
+                  elsif F = Unwind_Dump then
+                     Restore_State (Machine.Car (Args));
                      C_Updated := True;
                   elsif F = Lambda or else F = Macro then
                      Machine.Push (C);
@@ -713,6 +839,7 @@ package body Lith.Machine.SECD is
             begin
                Restore_State;
                Machine.Push (S);
+
                if Trace_Eval then
                   Ada.Wide_Wide_Text_IO.Put_Line ("new context:");
                   Machine.Report_State;

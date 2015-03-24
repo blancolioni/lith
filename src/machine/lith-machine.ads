@@ -160,6 +160,7 @@ private
          Environment      : Lith.Objects.Object;
          Control          : Lith.Objects.Object;
          Dump             : Lith.Objects.Object;
+         Handlers         : Lith.Objects.Object;
          Free_List        : Lith.Objects.Object;
          R1, R2           : Lith.Objects.Object;
          Alloc_Count      : Natural;
