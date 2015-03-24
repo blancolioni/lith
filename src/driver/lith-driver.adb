@@ -1,5 +1,6 @@
 with Ada.Text_IO;
 
+with Lith.IO;
 with Lith.Machine;
 
 with Lith.Parser;
@@ -8,12 +9,13 @@ with Lith.Primitives;
 with Lith.Repl;
 
 procedure Lith.Driver is
-   Core_Size : constant := 256 * 1024;
+   Core_Size : constant := 128 * 1024;
    Machine   : constant Lith.Machine.Lith_Machine :=
                  Lith.Machine.Create (Core_Size);
 begin
 
    Lith.Primitives.Add_Primitives;
+   Lith.IO.Initialise_IO;
 
    Lith.Parser.Parse_File
      (Machine,
