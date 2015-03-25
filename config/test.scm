@@ -4,9 +4,9 @@
 (define *show-all-tests* #f)
 
 (define (reset-counts)
-  (begin (set! *total-count* 0)
-         (set! *pass-count* 0)
-         (set! *fail-count* 0)))
+  (set! *total-count* 0)
+  (set! *pass-count* 0)
+  (set! *fail-count* 0))
          
 (define test (macro (expr) 
   `(begin (if *show-all-tests* (begin (display (quote ,expr)) (newline)) #f)
@@ -15,27 +15,26 @@
                     (set! *fail-count* (+ 1 *fail-count*)))))))
 
 (define (unit-test-all)
-  (begin (reset-counts)
-         (unit-test-symbol)
-         (unit-test-numbers)
-         (unit-test-large-numbers)
-         (unit-test-inexact)
-         (unit-test-strings)
-         (unit-test-exceptions)
-         (set! *total-count* (+ *pass-count* *fail-count*))
-         (display *pass-count*) (write-string "/") (display *total-count*) (write-string " tests passed\n")))
+  (reset-counts)
+  (unit-test-symbol)
+  (unit-test-numbers)
+  (unit-test-large-numbers)
+  (unit-test-inexact)
+  (unit-test-strings)
+  (unit-test-exceptions)
+  (unit-test-functions)
+  (set! *total-count* (+ *pass-count* *fail-count*))
+  (display *pass-count*) (write-string "/") (display *total-count*) (write-string " tests passed\n"))
   
 (define (unit-test-symbol)
-  (begin
     (test (symbol? 'foo))
     (test (symbol? (car '(a b))))
     (test (not (symbol? "bar")))
     (test (symbol? 'nil))
     (test (not (symbol? '())))
-    (test (not (symbol? #f)))))
+    (test (not (symbol? #f))))
 
 (define (unit-test-numbers)
-   (begin
       (test (eqv? (max 3 4) 4))
       (test (eqv? (min 3 4) 3))
       (test (eqv? (- 3 4) (- 1)))
@@ -58,36 +57,39 @@
       (test (equal? (exact-integer-sqrt 5) '(2 1)))
       (test (equal? (exact-integer-sqrt 0) '(0 0)))
       (test (eqv? (* 11237612837621873621873 0) 0))
-      ))
+      )
 
 (define (unit-test-large-numbers)
-   (begin
       (test (exact? (fac 100)))
       (test (eqv? 123123123123123 123123123123123))
       (test (eqv? (fac 100) (* 100 (fac 99))))
       (test (eqv? (floor-quotient 123123123123123 10000000) 12312312))
       (test (equal? (number->string 1234567890987654321) "1234567890987654321"))
-      ))
+      )
 
 (define (unit-test-inexact)
-   (begin
       (test (inexact? 1.5))
       (test (inexact? 10.0e3))
       (test (<= 1 (* 1.5 0.9)))
       (test (eqv? (max 1.1 2.2 3.3 1.2) 3.3))
       (test (eqv? -1.4 (- 1.4)))
-      ))
+      )
 
 (define (unit-test-strings)
-   (begin
       (test (string? "hello"))
       (test (not (string? 'hello)))
       (test (equal? (make-string 5 #\X) "XXXXX"))
-   ))
+   )
    
 (define (unit-test-exceptions)
-   (begin
       (test (eqv? (dynamic-wind 1 2 3) 2))
-   ))
+   )
+   
+(define (unit-test-functions)
+      (test (eqv? ((lambda (x) (+ x 1) (+ x 2)) 1) 3))
+      (test (eqv? (multi-expr-body 4) 6))
+   )
+
+(define (multi-expr-body x) (+ x 1) (+ x 2))
    
 (define (fac n) (if (zero? n) 1 (* n (fac (- n 1)))))

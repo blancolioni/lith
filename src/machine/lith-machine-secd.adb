@@ -558,9 +558,24 @@ package body Lith.Machine.SECD is
                         Push_Control (Lith.Symbols.Stack_To_Control);
                      end if;
                      Save_State;
-                     Machine.Control :=
-                       Machine.Cdr
-                         (Machine.Cdr (F));
+
+                     Machine.Control := Nil;
+                     Machine.Dump    := Machine.Cons (C, Machine.Dump);
+
+                     declare
+                        Arg_Array : constant Array_Of_Objects :=
+                                      Machine.To_Object_Array
+                                        (Machine.Cdr
+                                           (Machine.Cdr (F)));
+                     begin
+                        for Arg of reverse Arg_Array loop
+                           Push_Control (Arg);
+                        end loop;
+                        Machine.Dump := Machine.Cdr (Machine.Dump);
+                     end;
+
+                     C_Updated := True;
+
                      Create_Environment
                        (Machine      => Machine,
                         Formals      => Machine.Cadr (F),
