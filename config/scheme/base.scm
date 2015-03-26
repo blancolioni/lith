@@ -177,7 +177,7 @@
 
 (define (minmax curr rest compare)
    (if (null? rest) curr
-       (minmax (if (compare (car rest) curr) (car rest) curr) (cdr rest))))
+       (minmax (if (compare (car rest) curr) (car rest) curr) (cdr rest) compare)))
 
 (define (number->string . z-and-radix)
    (let ((z (car z-and-radix))
