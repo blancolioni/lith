@@ -44,10 +44,12 @@ package body Lith.Machine is
    begin
 
       if Result = Lith.Objects.Nil then
-         Machine.R1 := Car;
-         Machine.R2 := Cdr;
+         Machine.G1 := Car;
+         Machine.G2 := Cdr;
          Machine.GC;
          Result := Machine.Free_List;
+         Machine.G1 := Lith.Objects.Nil;
+         Machine.G2 := Lith.Objects.Nil;
          if Result = Lith.Objects.Nil then
             raise Constraint_Error with "out of memory";
          end if;
@@ -289,6 +291,8 @@ package body Lith.Machine is
          Machine.Mark (Machine.Handlers);
          Machine.Mark (Machine.R1);
          Machine.Mark (Machine.R2);
+         Machine.Mark (Machine.G1);
+         Machine.Mark (Machine.G2);
 
          for I in Machine.Core'Range loop
             if Machine.Marked (I) then
@@ -333,7 +337,7 @@ package body Lith.Machine is
          Machine.Collections := Machine.Collections +
            (Old_Alloc_Count - Machine.Alloc_Count);
          Machine.GC_Time := Machine.GC_Time + (Clock - Start);
-
+         Machine.GC_Count := Machine.GC_Count + 1;
       end;
    end GC;
 
@@ -617,6 +621,8 @@ package body Lith.Machine is
         (" H: " & Machine.Show (Machine.Handlers));
       Ada.Wide_Wide_Text_IO.Put_Line
         ("GC:"
+         & Natural'Wide_Wide_Image (Machine.GC_Count)
+         & " @"
          & Natural'Wide_Wide_Image (Natural (Machine.GC_Time * 1000.0))
          & "ms");
       Ada.Wide_Wide_Text_IO.Put_Line
