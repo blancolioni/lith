@@ -162,9 +162,11 @@ private
          Dump             : Lith.Objects.Object;
          Handlers         : Lith.Objects.Object;
          Free_List        : Lith.Objects.Object;
-         R1, R2           : Lith.Objects.Object;
+         R1, R2           : Lith.Objects.Object := Lith.Objects.Nil;
+         G1, G2           : Lith.Objects.Object := Lith.Objects.Nil;
          Alloc_Count      : Natural;
          Alloc_Limit      : Natural;
+         GC_Count         : Natural  := 0;
          GC_Time          : Duration := 0.0;
          Eval_Time        : Duration := 0.0;
          Start_Eval       : Ada.Calendar.Time;
