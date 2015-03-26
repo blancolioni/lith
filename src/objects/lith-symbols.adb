@@ -283,6 +283,11 @@ package body Lith.Symbols is
       return Lith.Objects.To_Object (Get_Symbol ("#string"));
    end String_Atom;
 
+   function Tail_Context return Lith.Objects.Object is
+   begin
+      return Lith.Objects.To_Object (Get_Symbol ("(tail-context)"));
+   end Tail_Context;
+
    -------------
    -- Unquote --
    -------------

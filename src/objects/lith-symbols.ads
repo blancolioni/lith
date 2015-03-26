@@ -34,6 +34,7 @@ package Lith.Symbols is
    function Stack_To_Control return Lith.Objects.Object;
    function Stack_Drop return Lith.Objects.Object;
    function String_Atom return Lith.Objects.Object;
+   function Tail_Context return Lith.Objects.Object;
    function Unquote return Lith.Objects.Object;
    function Unquote_Splicing return Lith.Objects.Object;
    function Unwind_Protect return Lith.Objects.Object;
