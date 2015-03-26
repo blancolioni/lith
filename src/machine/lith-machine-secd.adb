@@ -223,16 +223,17 @@ package body Lith.Machine.SECD is
       Actuals      : Lith.Objects.Array_Of_Objects)
    is
       use Lith.Objects;
-      Formal_It : Object  := Formals;
-      Rest      : Boolean := Is_Atom (Formals);
-      Rest_Name : Object  := (if Rest then Formals else Nil);
-      Acc       : Object  := Nil;
-      Result    : Object  := Nil;
+      Formal_It  : Object  := Formals;
+      Rest       : Boolean := Is_Atom (Formals);
+      Rest_Name  : Object  := (if Rest then Formals else Nil);
+      Count      : Natural := 0;
+      Rest_Count : Natural := 0;
    begin
       if Formals = Nil then
          Machine.Environment := Machine.Cons (Nil, Machine.Environment);
          return;
       end if;
+
       if not Is_Pair (Formals) and then not Is_Symbol (Formals) then
          raise Evaluation_Error with
          Ada.Characters.Conversions.To_String
@@ -240,11 +241,19 @@ package body Lith.Machine.SECD is
            & " cannot be used as a formal argument";
       end if;
 
+      if Is_Symbol (Formals) then
+         Rest := True;
+         Rest_Name := Formals;
+         Count := 1;
+      end if;
+
       for Actual of Actuals loop
+
          if Rest then
-            Machine.Push (Machine.Cons (Actual, Acc));
-            Acc := Machine.Pop;
+            Machine.Push (Actual);
+            Rest_Count := Rest_Count + 1;
          else
+
             if Trace_Eval then
                Ada.Wide_Wide_Text_IO.Put_Line
                  (Machine.Show (Machine.Car (Formal_It))
@@ -261,10 +270,14 @@ package body Lith.Machine.SECD is
                  & Ada.Characters.Conversions.To_String
                  (Machine.Show (Actual));
             end if;
-            Machine.Push (Machine.Cons (Machine.Car (Formal_It), Actual));
-            Machine.Push (Machine.Cons (Machine.Pop, Result));
-            Result := Machine.Pop;
+
+            Machine.Push (Machine.Car (Formal_It));
+            Machine.Push (Actual);
+            Machine.Cons;
+
             Formal_It := Machine.Cdr (Formal_It);
+            Count := Count + 1;
+
          end if;
 
          if not Rest and then Formal_It /= Nil and then
@@ -272,32 +285,35 @@ package body Lith.Machine.SECD is
          then
             Rest_Name := Formal_It;
             Rest := True;
+            Count := Count + 1;
          end if;
+
       end loop;
 
       if Rest then
-         declare
-            T : Object := Nil;
-         begin
-            while Acc /= Nil loop
-               Machine.Push (Acc);
-               Machine.Push (Machine.Cons (Machine.Car (Machine.Top), T));
-               T := Machine.Pop;
-               Acc := Machine.Cdr (Machine.Pop);
-            end loop;
-            Machine.Push (Machine.Cons (Rest_Name, T));
-            Machine.Push (Machine.Cons (Machine.Pop, Result));
-            Result := Machine.Pop;
-            if Trace_Eval then
-               Ada.Wide_Wide_Text_IO.Put_Line
-                 (Machine.Show (Rest_Name)
-                  & " <-- "
-                  & Machine.Show (T));
-            end if;
-         end;
+         Machine.Push (Nil);
+         for I in 1 .. Rest_Count loop
+            Machine.Cons;
+         end loop;
+         Machine.Push (Rest_Name);
+         Machine.Swap;
+         Machine.Cons;
       end if;
 
-      Machine.Environment := Machine.Cons (Result, Machine.Environment);
+      Machine.Push (Nil);
+
+      for I in 1 .. Count loop
+         Machine.Cons;
+      end loop;
+
+      if Trace_Eval then
+         Ada.Wide_Wide_Text_IO.Put_Line
+           ("create environment: " & Machine.Show (Machine.Top));
+      end if;
+
+      Machine.Push (Machine.Environment);
+      Machine.Cons;
+      Machine.Environment := Machine.Pop;
 
    end Create_Environment;
 
@@ -481,8 +497,17 @@ package body Lith.Machine.SECD is
                      Value : constant Object := Machine.Pop;
                      Name  : constant Object := Machine.Pop;
                   begin
-                     Lith.Environment.Define (To_Symbol (Name), Value);
-                     Machine.Push (Value);
+                     if Machine.Environment = Nil then
+                        Lith.Environment.Define (To_Symbol (Name), Value);
+                        Machine.Push (Value);
+                     else
+                        Machine.Push (Name);
+                        Machine.Push (Value);
+                        Machine.Cons;
+                        Machine.Push (Machine.Car (Machine.Environment));
+                        Machine.Cons;
+                        Machine.Set_Car (Machine.Environment, Machine.Pop);
+                     end if;
                   end;
                elsif C = Lith_Set_Atom then
                   declare
