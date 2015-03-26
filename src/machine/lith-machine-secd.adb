@@ -230,6 +230,7 @@ package body Lith.Machine.SECD is
       Result    : Object  := Nil;
    begin
       if Formals = Nil then
+         Machine.Environment := Machine.Cons (Nil, Machine.Environment);
          return;
       end if;
       if not Is_Pair (Formals) and then not Is_Symbol (Formals) then
@@ -400,11 +401,12 @@ package body Lith.Machine.SECD is
 
       while Machine.Control /= Nil loop
          declare
-            C : constant Lith.Objects.Object :=
+            C : Lith.Objects.Object :=
                   Machine.Car (Machine.Control);
             Cs : constant Lith.Objects.Object :=
                    Machine.Cdr (Machine.Control);
             C_Updated : Boolean := False;
+            Is_Tail_Context : Boolean := False;
          begin
 
             declare
@@ -424,6 +426,17 @@ package body Lith.Machine.SECD is
                Ada.Wide_Wide_Text_IO.Put_Line
                  ("Eval: " & Machine.Show (C));
                Machine.Report_State;
+            end if;
+
+            if Is_Pair (C)
+              and then Machine.Car (C) = Tail_Context
+            then
+               C := Machine.Cdr (C);
+               Is_Tail_Context := True;
+               if Trace_Eval then
+                  Ada.Wide_Wide_Text_IO.Put_Line
+                    ("tail-context: " & Machine.Show (C));
+               end if;
             end if;
 
             if C = Nil then
@@ -528,24 +541,33 @@ package body Lith.Machine.SECD is
                   Arguments : Array_Of_Objects (1 .. Argument_Count (C));
                begin
 
+                  Machine.R1 := C;
+                  Machine.R2 := Nil;
+
                   Machine.Control := Cs;
                   C_Updated := True;
 
                   if Is_Pair (F) and then Machine.Car (F) = Macro then
                      for I in reverse Arguments'Range loop
-                        Arguments (I) := Machine.Pop;
+                        Machine.R2 := Machine.Cons (Machine.Pop, Machine.R2);
+                        Arguments (I) := Machine.Car (Machine.R2);
                      end loop;
                   else
                      for I in Arguments'Range loop
-                        Arguments (I) := Machine.Pop;
+                        Machine.R2 := Machine.Cons (Machine.Pop, Machine.R2);
+                        Arguments (I) := Machine.Car (Machine.R2);
                      end loop;
                   end if;
 
                   if Is_Function (F) then
-                     Machine.Push
-                       (Lith.Objects.Interfaces.Evaluate
-                          (Machine, To_Function (F),
-                           Arguments, Machine.Environment));
+                     declare
+                        Result : constant Object :=
+                                   Lith.Objects.Interfaces.Evaluate
+                                     (Machine, To_Function (F),
+                                      Arguments, Machine.Environment);
+                     begin
+                        Machine.Push (Result);
+                     end;
                   elsif Is_Pair (F)
                     and then (Machine.Car (F) = Lambda
                               or else Machine.Car (F) = Macro)
@@ -557,19 +579,37 @@ package body Lith.Machine.SECD is
                         end if;
                         Push_Control (Lith.Symbols.Stack_To_Control);
                      end if;
-                     Save_State;
 
+                     if Trace_Eval and then Is_Tail_Context then
+                        Ada.Wide_Wide_Text_IO.Put_Line
+                          ("tail-call: " & Machine.Show (F));
+                     end if;
+
+                     if Is_Tail_Context then
+                        Machine.Environment :=
+                          Machine.Cdr (Machine.Environment);
+                     else
+                        Save_State;
+                     end if;
+
+                     Machine.Dump := Machine.Cons (C, Machine.Dump);
                      Machine.Control := Nil;
-                     Machine.Dump    := Machine.Cons (C, Machine.Dump);
 
                      declare
                         Arg_Array : constant Array_Of_Objects :=
                                       Machine.To_Object_Array
                                         (Machine.Cdr
                                            (Machine.Cdr (F)));
+                        Last : Boolean := True;
                      begin
                         for Arg of reverse Arg_Array loop
-                           Push_Control (Arg);
+                           if Last then
+                              Machine.Make_List ((Tail_Context, Arg));
+                              Push_Control (Machine.Pop);
+                              Last := False;
+                           else
+                              Push_Control (Arg);
+                           end if;
                         end loop;
                         Machine.Dump := Machine.Cdr (Machine.Dump);
                      end;
@@ -587,6 +627,8 @@ package body Lith.Machine.SECD is
                        & Ada.Characters.Conversions.To_String
                        (Machine.Show (F));
                   end if;
+                  Machine.R1 := Nil;
+                  Machine.R2 := Nil;
                end;
             else
                --  a pair
@@ -607,9 +649,25 @@ package body Lith.Machine.SECD is
                      Machine.Control :=
                        Machine.Cons (Machine.Car (Args),
                                      Machine.Control);
-                     Machine.Push
-                       (Machine.Car (Machine.Cdr (Machine.Cdr (Args))));
-                     Machine.Push (Machine.Cadr (Args));
+                     declare
+                        True_Part  : constant Object :=
+                                       Machine.Cadr (Args);
+                        False_Part : constant Object :=
+                                       Machine.Car (Machine.Cddr (Args));
+                     begin
+                        if Is_Tail_Context then
+                           Machine.Push (Tail_Context);
+                           Machine.Push (False_Part);
+                           Machine.Cons;
+                           Machine.Push (Tail_Context);
+                           Machine.Push (True_Part);
+                           Machine.Cons;
+                        else
+                           Machine.Push (False_Part);
+                           Machine.Push (True_Part);
+                        end if;
+                     end;
+
                      Machine.Drop (1, Secondary);
                      C_Updated := True;
                   elsif F = Set_Atom then
@@ -809,8 +867,24 @@ package body Lith.Machine.SECD is
                      Machine.Dump := Machine.Cons (C, Machine.Dump);
                      Machine.Control := Cs;
                      C_Updated := True;
-                     Push_Control (Apply_Object (Length (Machine, Args)));
+
+                     if (Is_Pair (F) and then
+                         Machine.Car (F) = Lambda)
+                       or else Is_Macro (Machine, F)
+                     then
+                        Is_Tail_Context := False;
+                     end if;
+
+                     if Is_Tail_Context then
+                        Machine.Push (Tail_Context);
+                     end if;
+                     Machine.Push (Apply_Object (Length (Machine, Args)));
+                     if Is_Tail_Context then
+                        Machine.Cons;
+                     end if;
+                     Push_Control (Machine.Pop);
                      Push_Control (F);
+
                      declare
                         It : Object := Args;
                         Macro : constant Boolean := Is_Macro (Machine, F);
