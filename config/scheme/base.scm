@@ -146,21 +146,23 @@
 (define (floor-quotient x y) (car (floor/ x y)))
 (define (floor-remainder x y) (cadr (floor/ x y)))
 
-(define (gcd . xs) (run-gcd xs 0))
-(define (run-gcd xs acc)
-  (if (null? xs) acc
-       (run-gcd (cdr xs) (gcd-2 (car xs) acc))))
-(define (gcd-2 x y)       
-  (if (eq? y 0)
-      x
-      (gcd-2 y (floor-remainder x y))))
+(define (gcd . xs) 
+  (define (gcd-2 x y)       
+    (if (eq? y 0)
+        x
+        (gcd-2 y (floor-remainder x y))))
+  (define (run-gcd xs acc)
+    (if (null? xs) acc
+        (run-gcd (cdr xs) (gcd-2 (car xs) acc))))
+ (run-gcd xs 0))
 
-(define (lcm . xs) (run-lcm xs 1))
-(define (run-lcm xs acc)
-  (if (null? xs) acc
-      (run-lcm (cdr xs) (lcm-2 (car xs) acc))))
+(define (lcm . xs) 
+  (define (lcm-2 x y) (floor-quotient (* x y) (gcd x y)))
+  (define (run-lcm xs acc)
+    (if (null? xs) acc
+        (run-lcm (cdr xs) (lcm-2 (car xs) acc))))
+  (run-lcm xs 1))
       
-(define (lcm-2 x y) (floor-quotient (* x y) (gcd x y)))
 
 (define (square x) (* x x))
 
@@ -222,22 +224,22 @@
     ((pair? x) (write-list x))
     (else (write-string (symbol->string x)))))
 
-(define (wchars xs) (if (null? xs) nil
-              (begin (write-char (car xs))
-                 (wchars (cdr xs)))))
 
 (define (write-string x)
-  (wchars (cdr x)))
+   (define (wchars xs) (if (null? xs) nil
+                           (begin (write-char (car xs))
+                                  (wchars (cdr xs)))))
+   (wchars (cdr x)))
   
 (define (newline) (write-char #\newline))
 (define (write x) (begin (display x) (newline)))
 
-(define (do-string-append xs)
-  (if (null? xs) ""
-    (if (null? (cdr xs)) (car xs)
-      (append (car xs) (cdr (do-string-append (cdr xs)))))))
-
-(define string-append (lambda xs (do-string-append xs)))
+(define (string-append . xs)
+  (define (go xs)
+    (if (null? xs) ""
+      (if (null? (cdr xs)) (car xs)
+          (append (car xs) (cdr (go (cdr xs)))))))
+  (go xs))
 
 (define (call-with-port port proc)
   (begin (proc port)
