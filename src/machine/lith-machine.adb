@@ -744,6 +744,8 @@ package body Lith.Machine is
             end;
          end loop;
 
+         Machine.Drop;
+
          return To_Wide_Wide_String (Acc);
 
       end Large_Integer_Image;
