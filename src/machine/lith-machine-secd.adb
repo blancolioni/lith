@@ -11,8 +11,8 @@ with Lith.Paths;
 
 package body Lith.Machine.SECD is
 
-   Trace_Eval : Boolean := False;
-   Trace_Patterns : Boolean := False;
+   Trace_Eval       : Boolean := False;
+   Trace_Patterns   : Boolean := False;
 
    function Import_Libraries
      (Machine    : in out Root_Lith_Machine'Class;
@@ -228,6 +228,44 @@ package body Lith.Machine.SECD is
       Rest_Name  : Object  := (if Rest then Formals else Nil);
       Count      : Natural := 0;
       Rest_Count : Natural := 0;
+      Env        : Object := Machine.Car (Machine.Environment);
+
+      procedure Save_Binding
+        (Name  : Object;
+         Value : Object);
+
+      ------------------
+      -- Save_Binding --
+      ------------------
+
+      procedure Save_Binding
+        (Name  : Object;
+         Value : Object)
+      is
+         It : Object := Env;
+      begin
+         Machine.Push (Name);
+         Machine.Push (Value);
+         Machine.Cons;
+
+         while It /= Nil
+           and then Machine.Caar (It) /= Name
+         loop
+            It := Machine.Cdr (It);
+         end loop;
+
+         if It = Nil then
+            Machine.Push (Env);
+            Machine.Cons;
+            Machine.Push (Machine.Cdr (Machine.Environment));
+            Machine.Cons;
+            Machine.Environment := Machine.Pop;
+            Env := Machine.Car (Machine.Environment);
+         else
+            Machine.Set_Cdr (Machine.Car (It), Value);
+         end if;
+      end Save_Binding;
+
    begin
       if Formals = Nil then
          Machine.Environment := Machine.Cons (Nil, Machine.Environment);
@@ -271,9 +309,7 @@ package body Lith.Machine.SECD is
                  (Machine.Show (Actual));
             end if;
 
-            Machine.Push (Machine.Car (Formal_It));
-            Machine.Push (Actual);
-            Machine.Cons;
+            Save_Binding (Machine.Car (Formal_It), Actual);
 
             Formal_It := Machine.Cdr (Formal_It);
             Count := Count + 1;
@@ -295,25 +331,15 @@ package body Lith.Machine.SECD is
          for I in 1 .. Rest_Count loop
             Machine.Cons;
          end loop;
-         Machine.Push (Rest_Name);
-         Machine.Swap;
-         Machine.Cons;
+
+         Save_Binding (Rest_Name, Machine.Pop);
       end if;
-
-      Machine.Push (Nil);
-
-      for I in 1 .. Count loop
-         Machine.Cons;
-      end loop;
 
       if Trace_Eval then
          Ada.Wide_Wide_Text_IO.Put_Line
-           ("create environment: " & Machine.Show (Machine.Top));
+           ("create environment: "
+            & Machine.Show (Machine.Car (Machine.Environment)));
       end if;
-
-      Machine.Push (Machine.Environment);
-      Machine.Cons;
-      Machine.Environment := Machine.Pop;
 
    end Create_Environment;
 
@@ -494,19 +520,26 @@ package body Lith.Machine.SECD is
                   null;
                elsif C = Internal_Define_Atom then
                   declare
-                     Value : constant Object := Machine.Pop;
-                     Name  : constant Object := Machine.Pop;
+                     Value : constant Object := Machine.Top (1);
+                     Name  : constant Object := Machine.Top (2);
                   begin
                      if Machine.Environment = Nil then
+                        if Trace_Eval then
+                           Ada.Wide_Wide_Text_IO.Put_Line
+                             (Machine.Show (Name) & " = "
+                              & Machine.Show (Value));
+                           Ada.Wide_Wide_Text_IO.Put_Line
+                             (Machine.Show (Machine.Stack));
+                        end if;
+
                         Lith.Environment.Define (To_Symbol (Name), Value);
-                        Machine.Push (Value);
+                        Machine.Drop;
                      else
-                        Machine.Push (Name);
-                        Machine.Push (Value);
                         Machine.Cons;
                         Machine.Push (Machine.Car (Machine.Environment));
                         Machine.Cons;
                         Machine.Set_Car (Machine.Environment, Machine.Pop);
+                        Machine.Push (Name);
                      end if;
                   end;
                elsif C = Lith_Set_Atom then
@@ -611,10 +644,13 @@ package body Lith.Machine.SECD is
                      end if;
 
                      if Is_Tail_Context then
-                        Machine.Environment :=
-                          Machine.Cdr (Machine.Environment);
+                        null;
                      else
                         Save_State;
+                        Machine.Push (Nil);
+                        Machine.Push (Machine.Environment);
+                        Machine.Cons;
+                        Machine.Environment := Machine.Pop;
                      end if;
 
                      Machine.Dump := Machine.Cons (C, Machine.Dump);
@@ -876,15 +912,37 @@ package body Lith.Machine.SECD is
                           ((if Result then True_Value else False_Value));
                      end;
                   elsif F = Begin_Atom then
+
+                     if Trace_Eval then
+                        Ada.Wide_Wide_Text_IO.Put_Line
+                          ("begin: "
+                           & Machine.Show (Args));
+                     end if;
+
                      Machine.Dump := Machine.Cons (C, Machine.Dump);
                      Machine.Control := Cs;
                      C_Updated := True;
                      declare
                         Arg_Array : constant Array_Of_Objects :=
                                       Machine.To_Object_Array (Args);
+                        First     : Boolean := True;
+
                      begin
                         for Arg of reverse Arg_Array loop
-                           Push_Control (Arg);
+                           if First then
+                              if Is_Tail_Context then
+                                 Machine.Push (Tail_Context);
+                                 Machine.Push (Arg);
+                                 Machine.Cons;
+                                 Push_Control (Machine.Pop);
+                              else
+                                 Push_Control (Arg);
+                              end if;
+                              First := False;
+                           else
+                              Push_Control (Stack_Drop);
+                              Push_Control (Arg);
+                           end if;
                         end loop;
                         Machine.Dump := Machine.Cdr (Machine.Dump);
                      end;
