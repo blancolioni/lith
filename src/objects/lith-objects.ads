@@ -70,14 +70,25 @@ package Lith.Objects is
 
    type External_Object_Interface is interface;
 
-   function Print (Item : External_Object_Interface) return Wide_Wide_String
-                   is abstract;
-   function Equal (X, Y : External_Object_Interface) return Boolean
-                   is abstract;
-   procedure Mark (Item : in out External_Object_Interface) is null;
-   procedure Finalize (Item : in out External_Object_Interface) is null;
-
    type Object_Store is limited interface;
+
+   function Print (Item  : External_Object_Interface;
+                   Store : in out Object_Store'Class)
+                   return Wide_Wide_String
+                   is abstract;
+
+   function Equal (X, Y  : External_Object_Interface;
+                   Store : Object_Store'Class)
+                   return Boolean
+                   is abstract;
+
+   procedure Mark (Item  : in out External_Object_Interface;
+                   Store : in out Object_Store'Class)
+   is null;
+
+   procedure Finalize (Item  : in out External_Object_Interface;
+                       Store : in out Object_Store'Class)
+   is null;
 
    function Car (Store : Object_Store;
                  Item  : Object)
@@ -170,7 +181,7 @@ package Lith.Objects is
    function Get_External_Object
      (Store : Object_Store;
       Item  : Object)
-      return External_Object_Interface'Class
+      return access External_Object_Interface'Class
      is abstract;
 
    function Create_External_Reference

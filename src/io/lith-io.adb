@@ -20,7 +20,12 @@ package body Lith.IO is
    -- Equal --
    -----------
 
-   overriding function Equal (X, Y : Port_Type) return Boolean is
+   overriding function Equal
+     (X, Y  : Port_Type;
+      Store : Lith.Objects.Object_Store'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Store);
       pragma Unreferenced (X);
       pragma Unreferenced (Y);
    begin
@@ -39,7 +44,7 @@ package body Lith.IO is
       Port : Port_Type'Class :=
                Port_Type'Class
                  (Store.Get_External_Object
-                    (Arguments (Arguments'First)));
+                    (Arguments (Arguments'First)).all);
    begin
       Port.Close;
       return Lith.Objects.No_Value;
@@ -62,15 +67,15 @@ package body Lith.IO is
          Result := False;
       else
          declare
-            Ext : constant External_Object_Interface'Class :=
+            Ext : constant access External_Object_Interface'Class :=
                     Store.Get_External_Object (Port_Object);
          begin
-            if Ext not in Port_Type'Class then
+            if Ext.all not in Port_Type'Class then
                Result := False;
             else
                declare
                   Port      : constant Port_Type'Class :=
-                                Port_Type'Class (Ext);
+                                Port_Type'Class (Ext.all);
                   Attribute : constant Wide_Wide_String :=
                                 Lith.Symbols.Get_Name
                                   (To_Symbol
@@ -100,7 +105,11 @@ package body Lith.IO is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Item : in out Port_Type) is
+   overriding procedure Finalize
+     (Item  : in out Port_Type;
+      Store : in out Lith.Objects.Object_Store'Class)
+   is
+      pragma Unreferenced (Store);
    begin
       if Item.Open then
          Port_Type'Class (Item).Close;
@@ -127,7 +136,12 @@ package body Lith.IO is
    -- Print --
    -----------
 
-   overriding function Print (Item : Port_Type) return Wide_Wide_String is
+   overriding function Print
+     (Item  : Port_Type;
+      Store : in out Lith.Objects.Object_Store'Class)
+      return Wide_Wide_String
+   is
+      pragma Unreferenced (Store);
       pragma Unreferenced (Item);
    begin
       return "#<port>";

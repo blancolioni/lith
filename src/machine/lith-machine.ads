@@ -102,7 +102,7 @@ package Lith.Machine is
    overriding function Get_External_Object
      (Machine : Root_Lith_Machine;
       Item    : Lith.Objects.Object)
-      return Lith.Objects.External_Object_Interface'Class;
+      return access Lith.Objects.External_Object_Interface'Class;
 
    overriding function Create_External_Reference
      (Machine : in out Root_Lith_Machine;
