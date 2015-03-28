@@ -209,6 +209,20 @@
 (define (string-set! s k char) (list-set! (cdr s) k char))
 (define string=? equal?)
 
+(define (string-copy . args)
+  (define (take s count)
+     (cond ((null? s) s)
+           ((not (positive? count)) nil)
+           (else (cons (car s) (take (cdr s) (- count 1))))))
+  (define (go s start count)
+     (if (positive? start) (if (null? s) s (go (cdr s) (- start 1) count)) (if count (take s count) s)))
+  (let ((s (cdr (car args)))
+        (start (if (null? (cdr args)) 0 (cadr args)))
+        (end (if (or (null? (cdr args)) (null? (cddr args))) #f (car (cddr args)))))
+       (cons '#string (go s start (if end (+ 1 (- end start)) #f)))))
+
+(define substring string-copy)
+
 (define (write-list xs)
   (begin
     (write-string "(")
