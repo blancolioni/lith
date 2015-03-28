@@ -121,6 +121,8 @@
       (test (vector? (vector 1 2 3)))
       (test (not (vector? '(1 2 3))))
       (test (vector? #(1 2 3)))
+      (test (eqv? (vector-length #(1 2 3)) 3))
+      (test (eqv? (vector-ref #(1 2 3) 1) 2))
    )
 
 (define (multi-expr-body x) (+ x 1) (+ x 2))
