@@ -17,11 +17,6 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
-   function Evaluate_Symbol_To_String
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object;
-
    function Evaluate_Car
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -118,6 +113,16 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
+   function Evaluate_String_To_Symbol
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Symbol_To_String
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
    function Evaluate_Write_Char
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -131,7 +136,6 @@ package body Lith.Primitives is
       use Lith.Objects.Interfaces;
    begin
       Define_Function ("#alu", 2, Evaluate_ALU'Access);
-      Define_Function ("symbol->string", 1, Evaluate_Symbol_To_String'Access);
       Define_Function ("car", 1, Evaluate_Car'Access);
       Define_Function ("cdr", 1, Evaluate_Cdr'Access);
       Define_Function ("char->integer", 1, Evaluate_Char_To_Integer'Access);
@@ -151,6 +155,8 @@ package body Lith.Primitives is
       Define_Function ("random", 1, Evaluate_Random'Access);
       Define_Function ("set-car!", 2, Evaluate_Set_Car'Access);
       Define_Function ("set-cdr!", 2, Evaluate_Set_Cdr'Access);
+      Define_Function ("string->symbol", 1, Evaluate_String_To_Symbol'Access);
+      Define_Function ("symbol->string", 1, Evaluate_Symbol_To_String'Access);
       Define_Function ("write-char", 2, Evaluate_Write_Char'Access);
       Lith.Primitives.ALU.Add_Operators;
    end Add_Primitives;
@@ -496,6 +502,22 @@ package body Lith.Primitives is
                      Arguments (Arguments'First + 1));
       return Arguments (Arguments'First);
    end Evaluate_Set_Cdr;
+
+   -------------------------------
+   -- Evaluate_String_To_Symbol --
+   -------------------------------
+
+   function Evaluate_String_To_Symbol
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      Name : constant Wide_Wide_String :=
+               Store.To_String (Arguments (Arguments'First));
+   begin
+      return Lith.Objects.To_Object
+        (Lith.Symbols.Get_Symbol (Name));
+   end Evaluate_String_To_Symbol;
 
    -------------------------------
    -- Evaluate_Symbol_To_String --
