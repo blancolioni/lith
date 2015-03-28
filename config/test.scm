@@ -24,6 +24,7 @@
   (unit-test-strings)
   (unit-test-exceptions)
   (unit-test-functions)
+  (unit-test-vectors)
   (set! *total-count* (+ *pass-count* *fail-count*))
   (display *pass-count*) (write-string "/") (display *total-count*) (write-string " tests passed\n"))
   
@@ -114,6 +115,12 @@
 (define (unit-test-functions)
       (test (eqv? ((lambda (x) (+ x 1) (+ x 2)) 1) 3))
       (test (eqv? (multi-expr-body 4) 6))
+   )
+
+(define (unit-test-vectors)
+      (test (vector? (vector 1 2 3)))
+      (test (not (vector? '(1 2 3))))
+      (test (vector? #(1 2 3)))
    )
 
 (define (multi-expr-body x) (+ x 1) (+ x 2))
