@@ -313,7 +313,7 @@ package body Lith.Machine is
                if Item.Marked then
                   Item.Marked := False;
                elsif not Item.Free then
-                  Item.External_Object.Finalize;
+                  Item.External_Object.Finalize (Machine);
                   Free (Item.External_Object);
                   Item.Free := True;
                end if;
@@ -361,12 +361,12 @@ package body Lith.Machine is
    overriding function Get_External_Object
      (Machine : Root_Lith_Machine;
       Item    : Lith.Objects.Object)
-      return Lith.Objects.External_Object_Interface'Class
+      return access Lith.Objects.External_Object_Interface'Class
    is
       Address : constant Real_External_Address :=
                   Lith.Objects.To_External_Object_Address (Item);
    begin
-      return Machine.External_Objects (Address).External_Object.all;
+      return Machine.External_Objects (Address).External_Object;
    end Get_External_Object;
 
    ----------
@@ -448,7 +448,7 @@ package body Lith.Machine is
                      Lith.Objects.To_External_Object_Address (Start);
          begin
             Machine.External_Objects (Addr).Marked := True;
-            Machine.External_Objects (Addr).External_Object.Mark;
+            Machine.External_Objects (Addr).External_Object.Mark (Machine);
          end;
       end if;
    end Mark;
@@ -814,7 +814,7 @@ package body Lith.Machine is
       elsif Is_Apply (Value) then
          return "apply" & Integer'Wide_Wide_Image (-Argument_Count (Value));
       elsif Is_External_Object (Value) then
-         return Machine.Get_External_Object (Value).Print;
+         return Machine.Get_External_Object (Value).Print (Machine);
       elsif Is_Pair (Value) then
          if Machine.Car (Value) = Lith.Symbols.String_Atom then
             return '"' & String_Image (Machine.Cdr (Value)) & '"';
