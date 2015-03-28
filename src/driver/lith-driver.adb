@@ -8,6 +8,8 @@ with Lith.Paths;
 with Lith.Primitives;
 with Lith.Repl;
 
+with Lith.Vectors;
+
 procedure Lith.Driver is
    Core_Size : constant := 128 * 1024;
    Machine   : constant Lith.Machine.Lith_Machine :=
@@ -16,6 +18,7 @@ begin
 
    Lith.Primitives.Add_Primitives;
    Lith.IO.Initialise_IO;
+   Lith.Vectors.Register;
 
    Lith.Parser.Parse_File
      (Machine,
