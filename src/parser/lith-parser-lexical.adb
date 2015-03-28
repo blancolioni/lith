@@ -475,6 +475,13 @@ package body Lith.Parser.Lexical is
                     Read_Character (Long_Names => True);
                   Stop_Token;
                   Tok := Tok_Character;
+               elsif Current_Stream.Ch = '#'
+                 and then Peek = '('
+               then
+                  Next_Character;
+                  Next_Character;
+                  Stop_Token;
+                  Tok := Tok_Start_Vector;
                elsif Current_Stream.Ch = '.'
                  and then Ada.Wide_Wide_Characters.Handling.Is_Space (Peek)
                then

@@ -127,6 +127,11 @@ package body Lith.Parser is
                Machine.Push (Tok_Text);
             end if;
             Scan;
+         when Tok_Start_Vector =>
+            Scan;
+            Machine.Push (Lith.Symbols.Get_Symbol ("vector"));
+            Parse_Rest_Of_List;
+            Machine.Cons;
          when Tok_Character =>
             Machine.Push
               (Lith.Objects.To_Object
