@@ -244,9 +244,12 @@ package body Lith.Machine.SECD is
       is
          It : Object := Env;
       begin
+         --  protect against GC when we push Name
+         Machine.R1 := Value;
          Machine.Push (Name);
          Machine.Push (Value);
          Machine.Cons;
+         Machine.R1 := Nil;
 
          while It /= Nil
            and then Machine.Caar (It) /= Name
