@@ -67,16 +67,19 @@
                             ((f (car xs)) (cons (car xs) (filter f (cdr xs))))
                             (else (filter f (cdr xs)))))
                             
-(define (append . lists) (do-append lists))
-(define (do-append lists)
-  (cond ((null? lists) '())
-        ((null? (cdr lists)) (car lists))
-        (else (append-2 (car lists) (do-append (cdr lists))))))
-(define (append-2 xs ys)
-  (if (null? xs) ys (cons (car xs) (append-2 (cdr xs) ys))))
+(define (append . lists) 
+  (define (do-append lists)
+    (cond ((null? lists) '())
+          ((null? (cdr lists)) (car lists))
+          (else (append-2 (car lists) (do-append (cdr lists))))))
+  (define (append-2 xs ys)
+    (if (null? xs) ys (cons (car xs) (append-2 (cdr xs) ys))))
+  (do-append lists))
 
-(define (reverse xs) (reverse-acc xs '()))
-(define (reverse-acc xs acc) (if (null? xs) acc (reverse-acc (cdr xs) (cons (car xs) acc))))
+(define (reverse xs) 
+  (define (reverse-acc xs acc) (if (null? xs) acc (reverse-acc (cdr xs) (cons (car xs) acc))))
+  (reverse-acc xs '()))
+
 (define (list-tail x k) (if (zero? k) x (list-tail (cdr x) (- k 1))))
 (define (list-ref x k) (car (list-tail x k)))
 (define (memq obj xs)
@@ -131,6 +134,8 @@
 
 (define alu (macro (op) `(define ,op (lambda x (#alu (quote ,op) x)))))
 (define alu2 (macro (op) `(define ,op (lambda (x y) (#alu (quote ,op) (list x y))))))
+(define char-alu (macro (op) 
+  `(define ,(string->symbol (string-append "char" (symbol->string op) "?")) (lambda x (#alu (quote ,op) (map char->integer x))))))
 
 (alu +)
 (alu -)
@@ -224,7 +229,6 @@
     ((pair? x) (write-list x))
     (else (write-string (symbol->string x)))))
 
-
 (define (write-string x)
    (define (wchars xs) (if (null? xs) nil
                            (begin (write-char (car xs))
@@ -240,6 +244,12 @@
       (if (null? (cdr xs)) (car xs)
           (append (car xs) (cdr (go (cdr xs)))))))
   (go xs))
+
+(char-alu <=)
+(char-alu >=)
+(char-alu <)
+(char-alu >)
+(char-alu =)
 
 (define (call-with-port port proc)
   (begin (proc port)
