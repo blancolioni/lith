@@ -21,6 +21,9 @@
                
 (define (not x) (if x #f #t))
 
+(define (boolean? x) (or (eq? x #t) (eq? x #f)))
+(define (boolean=? x y) (and (boolean? x) (boolean? y) (eq? x y)))
+
 ; (define (set-car! xs x) (list-set! xs 0 (cons x (cdr xs))))
 (define (list-set! xs k x) (if (zero? k) (set-car! xs x)
                                (list-set! (cdr xs) (- k 1) x)))
@@ -35,8 +38,6 @@
 (define (eqv? x y)
   (cond ((eq? x y) #t)
         ((and (number? x) (number? y)) (equal? x y))))   ; works because equal numbers have the same list representation
-
-(define (boolean? x) (or (eq? x #f) (eq? x #t)))
 
 (define (number? x) (or (integer? x) (real? x)))  ; the only numbers we have :(
 

@@ -17,6 +17,7 @@
 (define (unit-test-all)
   (reset-counts)
   (unit-test-symbol)
+  (unit-test-boolean)
   (unit-test-numbers)
   (unit-test-large-numbers)
   (unit-test-inexact)
@@ -36,6 +37,15 @@
     (test (not (symbol? '())))
     (test (not (symbol? #f))))
 
+(define (unit-test-boolean)
+    (test (boolean? #t))
+    (test (boolean? #f))
+    (test (not (boolean? '())))
+    (test (not (boolean? 1)))
+    (test (boolean=? #t #t))
+    (test (boolean=? #f #f))
+    (test (not (boolean=? #t 77))))
+    
 (define (unit-test-numbers)
       (test (eqv? (max 3 4) 4))
       (test (eqv? (min 3 4) 3))
