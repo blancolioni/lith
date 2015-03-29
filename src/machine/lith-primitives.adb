@@ -53,6 +53,16 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
+   function Evaluate_External_Equal
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_External_Is_Type
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
    function Evaluate_Gensym
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -143,6 +153,8 @@ package body Lith.Primitives is
       Define_Function ("eq?", 2, Evaluate_Eq'Access);
       Define_Function ("eval", 1, Evaluate_Eval'Access);
       Define_Function ("exact", 1, Evaluate_Exact'Access);
+      Define_Function ("#extern-equal", 3, Evaluate_External_Equal'Access);
+      Define_Function ("#extern-is-type", 2, Evaluate_External_Is_Type'Access);
       Define_Function ("gensym", 0, Evaluate_Gensym'Access);
       Define_Function ("inexact", 1, Evaluate_Inexact'Access);
       Define_Function ("integer->char", 1, Evaluate_Integer_To_Char'Access);
@@ -285,6 +297,57 @@ package body Lith.Primitives is
       Lith.Objects.Numbers.Ensure_Exact (Store);
       return Store.Pop;
    end Evaluate_Exact;
+
+   -----------------------------
+   -- Evaluate_External_Equal --
+   -----------------------------
+
+   function Evaluate_External_Equal
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects;
+      X_Object : constant access External_Object_Interface'Class :=
+                   Store.Get_External_Object
+                     (Arguments (Arguments'First));
+      Y_Object : constant access External_Object_Interface'Class :=
+                   Store.Get_External_Object
+                     (Arguments (Arguments'First + 1));
+   begin
+      if X_Object.Name = Y_Object.Name then
+         return To_Object (X_Object.Equal (Y_Object.all, Store));
+      else
+         return To_Object (False);
+      end if;
+   end Evaluate_External_Equal;
+
+   -------------------------------
+   -- Evaluate_External_Is_Type --
+   -------------------------------
+
+   function Evaluate_External_Is_Type
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects;
+   begin
+      if Is_External_Object (Arguments (Arguments'First)) then
+         declare
+            X_Object : constant access External_Object_Interface'Class :=
+                         Store.Get_External_Object
+                           (Arguments (Arguments'First));
+            Name_Sym : constant Wide_Wide_String :=
+                         Lith.Symbols.Get_Name
+                           (To_Symbol (Arguments (Arguments'First + 1)));
+         begin
+            return To_Object (X_Object.Name = Name_Sym);
+         end;
+      else
+         return To_Object (False);
+      end if;
+   end Evaluate_External_Is_Type;
 
    ---------------------
    -- Evaluate_Gensym --
