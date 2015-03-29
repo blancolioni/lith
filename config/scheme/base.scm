@@ -220,7 +220,7 @@
         (start (if (null? (cdr args)) 0 (cadr args)))
         (end (if (or (null? (cdr args)) (null? (cddr args))) #f (car (cddr args)))))
        (cons '#string (go s start (if end (+ 1 (- end start)) #f)))))
-
+       
 (define substring string-copy)
 
 (define (write-list xs)
@@ -265,6 +265,18 @@
 (char-alu >)
 (char-alu =)
 
+(define-syntax when
+  (syntax-rules ()
+    ((when test result1 result2 ...)
+     (if test
+         (begin result1 result2 ...)))))
+         
+(define-syntax unless
+  (syntax-rules ()
+    ((unless test result1 result2 ...)
+     (if (not test)
+         (begin result1 result2 ...)))))
+         
 (define (call-with-port port proc)
   (begin (proc port)
          (close-port port)))
