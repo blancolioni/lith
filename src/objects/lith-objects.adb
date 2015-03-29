@@ -171,10 +171,36 @@ package body Lith.Objects is
    end Make_List;
 
    ----------
+   -- Push --
+   ----------
+
+   procedure Push
+     (Store : in out Object_Store'Class;
+      Symbol  : Lith.Objects.Symbol_Type)
+   is
+   begin
+      Store.Push (To_Object (Symbol));
+   end Push;
+
+   ----------
+   -- Push --
+   ----------
+
+   procedure Push
+     (Store : in out Object_Store'Class;
+      Value   : Integer)
+   is
+   begin
+      Store.Push (To_Object (Value));
+   end Push;
+
+   ----------
    -- Swap --
    ----------
 
-   procedure Swap (Store : in out Object_Store'Class) is
+   procedure Swap
+     (Store : in out Object_Store'Class)
+   is
    begin
       Store.Push (Store.Top (2), Secondary);
       Store.Push (Store.Pop, Secondary);

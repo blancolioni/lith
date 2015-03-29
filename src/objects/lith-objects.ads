@@ -72,6 +72,11 @@ package Lith.Objects is
 
    type Object_Store is limited interface;
 
+   function Name
+     (Item : External_Object_Interface)
+      return Wide_Wide_String
+      is abstract;
+
    function Print (Item  : External_Object_Interface;
                    Store : in out Object_Store'Class)
                    return Wide_Wide_String
@@ -165,6 +170,14 @@ package Lith.Objects is
                    Stack     : Stack_Type := Primary)
    is abstract;
 
+   procedure Push
+     (Store   : in out Object_Store'Class;
+      Symbol  : Lith.Objects.Symbol_Type);
+
+   procedure Push
+     (Store   : in out Object_Store'Class;
+      Value   : Integer);
+
    function Pop (Store : in out Object_Store;
                  Stack     : Stack_Type := Primary)
                  return Object
@@ -175,6 +188,12 @@ package Lith.Objects is
                  Stack     : Stack_Type := Primary)
                  return Object
                  is abstract;
+
+   function Evaluate (Store : in out Object_Store;
+                      Expr  : Object;
+                      Env   : Object)
+                      return Object
+                      is abstract;
 
    procedure Report_State (Store : in out Object_Store) is abstract;
 
