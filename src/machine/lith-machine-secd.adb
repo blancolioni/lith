@@ -1124,7 +1124,7 @@ package body Lith.Machine.SECD is
                      Get_Library_Path (Machine.Car (It));
          begin
             Lith.Parser.Parse_File
-              (Machine'Unchecked_Access,
+              (Machine,
                Lith.Paths.Config_Path & Path);
          exception
             when E : others =>
