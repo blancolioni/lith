@@ -9,9 +9,10 @@ with Lith.Primitives;
 with Lith.Repl;
 
 with Lith.Vectors;
+with Lith.Bytevectors;
 
 procedure Lith.Driver is
-   Core_Size : constant := 128 * 1024;
+   Core_Size : constant := 256 * 1024;
    Machine   : constant Lith.Machine.Lith_Machine :=
                  Lith.Machine.Create (Core_Size);
 begin
@@ -19,6 +20,7 @@ begin
    Lith.Primitives.Add_Primitives;
    Lith.IO.Initialise_IO;
    Lith.Vectors.Register (Machine.all);
+   Lith.Bytevectors.Register (Machine.all);
 
    Lith.Parser.Parse_File
      (Machine.all,
