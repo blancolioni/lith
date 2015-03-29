@@ -102,6 +102,13 @@
       (test (string=? "hello" (string-copy "hello world" 0 4)))
       (test (string=? "hello" (substring "erm, hello world" 5 9)))
       (test (string=? "hello" (list->string (string->list "erm, hello world" 5 9))))
+      (test (string<? "hello" "hellop"))
+      (test (string<? "hello" "hells"))
+      (test (string<? "hello" "hells" "help"))
+      (test (string>? "hello" "hella" "hell" "he"))
+      (test (string>=? "hello" "hello" "hella"))
+      (test (string<=? "hella" "hello"))
+      (test (string<=? "hella" "hello" "hello"))
    )
    
 (define (unit-test-characters)
