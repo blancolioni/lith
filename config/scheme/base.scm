@@ -218,7 +218,7 @@
            (else (and (equal? (car xs) (cadr xs)) (go (cdr xs))))))
    (go strings))
 
-(define (string-copy . args)
+(define (lith-string-copy args)   
   (define (take s count)
      (cond ((null? s) s)
            ((not (positive? count)) nil)
@@ -230,7 +230,12 @@
         (end (if (or (null? (cdr args)) (null? (cddr args))) #f (car (cddr args)))))
        (cons '#string (go s start (if end (+ 1 (- end start)) #f)))))
        
+(define (string-copy . args) (lith-string-copy args))
 (define substring string-copy)
+
+(define (string->list . args) (cdr (lith-string-copy args)))
+
+(define (list->string list) (cons '#string list))
 
 (define (write-list xs)
   (begin
