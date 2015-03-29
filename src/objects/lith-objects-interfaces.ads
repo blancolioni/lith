@@ -31,8 +31,7 @@ package Lith.Objects.Interfaces is
 
    generic
       Type_Name : Wide_Wide_String;
-      Type_Predicate_Name  : Wide_Wide_String := "";
-      Equal_Predicate_Name : Wide_Wide_String := "";
+      Type_Predicate_Name  : Wide_Wide_String := "?";
    package Registration is
       procedure Create_Standard_Objects
         (Store : in out Object_Store'Class);

@@ -111,37 +111,23 @@ package body Lith.Objects.Interfaces is
         (Store : in out Object_Store'Class)
       is
          Is_Type_Name : constant Wide_Wide_String :=
-           (if Type_Predicate_Name = ""
+           (if Type_Predicate_Name = "?"
             then Type_Name & "?"
             else Type_Predicate_Name);
-         Equal_Name   : constant Wide_Wide_String :=
-                          (if Equal_Predicate_Name = ""
-                           then Type_Name & "=?"
-                           else Equal_Predicate_Name);
       begin
-         declare
-            Is_Type_Fn   : constant Object :=
-                             Lith.Parser.Parse_Expression
-                               (Store,
-                                "(lambda (x) (#extern-is-type x '"
-                                & Type_Name
-                                & "))");
-         begin
-            Lith.Environment.Define
-              (Lith.Symbols.Get_Symbol (Is_Type_Name), Is_Type_Fn);
-         end;
-
-         declare
-            Equal_Fn   : constant Object :=
-                           Lith.Parser.Parse_Expression
-                             (Store,
-                              "(lambda (x y) (#extern-equal x y '"
-                              & Type_Name
-                              & "))");
-         begin
-            Lith.Environment.Define
-              (Lith.Symbols.Get_Symbol (Equal_Name), Equal_Fn);
-         end;
+         if Type_Predicate_Name /= "" then
+            declare
+               Is_Type_Fn   : constant Object :=
+                                Lith.Parser.Parse_Expression
+                                  (Store,
+                                   "(lambda (x) (#extern-is-type x '"
+                                   & Type_Name
+                                   & "))");
+            begin
+               Lith.Environment.Define
+                 (Lith.Symbols.Get_Symbol (Is_Type_Name), Is_Type_Fn);
+            end;
+         end if;
       end Create_Standard_Objects;
 
    end Registration;

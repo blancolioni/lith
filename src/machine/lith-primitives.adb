@@ -56,7 +56,10 @@ package body Lith.Primitives is
    function Evaluate_External_Equal
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object;
+      return Lith.Objects.Object
+     with Pre => Arguments'Length = 2
+       and then Lith.Objects.Is_External_Object
+       (Arguments (Arguments'First));
 
    function Evaluate_External_Is_Type
      (Store       : in out Lith.Objects.Object_Store'Class;
@@ -74,6 +77,11 @@ package body Lith.Primitives is
       return Lith.Objects.Object;
 
    function Evaluate_Integer_To_Char
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Is_External
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
@@ -153,11 +161,13 @@ package body Lith.Primitives is
       Define_Function ("eq?", 2, Evaluate_Eq'Access);
       Define_Function ("eval", 1, Evaluate_Eval'Access);
       Define_Function ("exact", 1, Evaluate_Exact'Access);
-      Define_Function ("#extern-equal", 3, Evaluate_External_Equal'Access);
+      Define_Function ("lith-external-equal", 2,
+                       Evaluate_External_Equal'Access);
       Define_Function ("#extern-is-type", 2, Evaluate_External_Is_Type'Access);
       Define_Function ("gensym", 0, Evaluate_Gensym'Access);
       Define_Function ("inexact", 1, Evaluate_Inexact'Access);
       Define_Function ("integer->char", 1, Evaluate_Integer_To_Char'Access);
+      Define_Function ("lith-external?", 1, Evaluate_Is_External'Access);
       Define_Function ("load", 1, Evaluate_Load'Access);
       Define_Function ("null?", 1, Evaluate_Is_Null'Access);
       Define_Function ("pair?", 1, Evaluate_Is_Pair'Access);
@@ -308,15 +318,22 @@ package body Lith.Primitives is
       return Lith.Objects.Object
    is
       use Lith.Objects;
-      X_Object : constant access External_Object_Interface'Class :=
-                   Store.Get_External_Object
-                     (Arguments (Arguments'First));
-      Y_Object : constant access External_Object_Interface'Class :=
-                   Store.Get_External_Object
-                     (Arguments (Arguments'First + 1));
    begin
-      if X_Object.Name = Y_Object.Name then
-         return To_Object (X_Object.Equal (Y_Object.all, Store));
+      if Is_External_Object (Arguments (Arguments'First + 1)) then
+         declare
+            X_Object : constant access External_Object_Interface'Class :=
+                         Store.Get_External_Object
+                           (Arguments (Arguments'First));
+            Y_Object : constant access External_Object_Interface'Class :=
+                         Store.Get_External_Object
+                           (Arguments (Arguments'First + 1));
+         begin
+            if X_Object.Name = Y_Object.Name then
+               return To_Object (X_Object.Equal (Y_Object.all, Store));
+            else
+               return To_Object (False);
+            end if;
+         end;
       else
          return To_Object (False);
       end if;
@@ -398,6 +415,22 @@ package body Lith.Primitives is
         (Wide_Wide_Character'Val
                 (To_Integer (Arguments (Arguments'First))));
    end Evaluate_Integer_To_Char;
+
+   --------------------------
+   -- Evaluate_Is_External --
+   --------------------------
+
+   function Evaluate_Is_External
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      pragma Unreferenced (Store);
+   begin
+      return Lith.Objects.To_Object
+        (Lith.Objects.Is_External_Object
+           (Arguments (Arguments'First)));
+   end Evaluate_Is_External;
 
    -------------------------
    -- Evaluate_Is_Integer --
