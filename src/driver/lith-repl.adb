@@ -22,12 +22,12 @@ package body Lith.Repl is
    begin
 
       Lith.Parser.Parse_File
-        (Machine,
+        (Machine.all,
          Lith.Paths.Config_Path & "/interaction-environment.scm");
 
       if Ada.Directories.Exists ("auto.l") then
          Lith.Parser.Parse_File
-           (Machine, String'("auto.l"));
+           (Machine.all, String'("auto.l"));
       end if;
 
       while Lith.Environment.Get
@@ -42,7 +42,7 @@ package body Lith.Repl is
                declare
                   Expr : constant Lith.Objects.Object :=
                            Lith.Parser.Parse_Expression
-                             (Machine, Expr_Text);
+                             (Machine.all, Expr_Text);
                   Result : constant Object :=
                              Machine.Evaluate (Expr, Lith.Objects.Nil);
                begin
