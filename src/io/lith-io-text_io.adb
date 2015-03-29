@@ -14,6 +14,8 @@ package body Lith.IO.Text_IO is
       end record;
 
    overriding procedure Close (Port : in out Text_Port_Type);
+   overriding function Name (Port : Text_Port_Type) return Wide_Wide_String
+   is ("textual-port");
 
    procedure Free is
      new Ada.Unchecked_Deallocation
