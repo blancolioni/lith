@@ -717,7 +717,10 @@ package body Lith.Machine.SECD is
                         True_Part  : constant Object :=
                                        Machine.Cadr (Args);
                         False_Part : constant Object :=
-                                       Machine.Car (Machine.Cddr (Args));
+                                       (if Machine.Cddr (Args) = Nil
+                                        then No_Value
+                                        else Machine.Car
+                                          (Machine.Cddr (Args)));
                      begin
                         if Is_Tail_Context then
                            Machine.Push (Tail_Context);
