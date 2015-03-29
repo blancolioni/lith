@@ -1,6 +1,7 @@
 with Ada.Containers.Vectors;
 
 with Lith.Environment;
+with Lith.Parser;
 with Lith.Symbols;
 
 package body Lith.Objects.Interfaces is
@@ -95,5 +96,54 @@ package body Lith.Objects.Interfaces is
         (Name  => Lith.Symbols.Get_Symbol (Name),
          Value => To_Object (Function_Type (Defs.Last_Index)));
    end New_Def;
+
+   ------------------
+   -- Registration --
+   ------------------
+
+   package body Registration is
+
+      -----------------------------
+      -- Create_Standard_Objects --
+      -----------------------------
+
+      procedure Create_Standard_Objects
+        (Store : in out Object_Store'Class)
+      is
+         Is_Type_Name : constant Wide_Wide_String :=
+           (if Type_Predicate_Name = ""
+            then Type_Name & "?"
+            else Type_Predicate_Name);
+         Equal_Name   : constant Wide_Wide_String :=
+                          (if Equal_Predicate_Name = ""
+                           then Type_Name & "=?"
+                           else Equal_Predicate_Name);
+      begin
+         declare
+            Is_Type_Fn   : constant Object :=
+                             Lith.Parser.Parse_Expression
+                               (Store,
+                                "(lambda (x) (#extern-is-type x '"
+                                & Type_Name
+                                & "))");
+         begin
+            Lith.Environment.Define
+              (Lith.Symbols.Get_Symbol (Is_Type_Name), Is_Type_Fn);
+         end;
+
+         declare
+            Equal_Fn   : constant Object :=
+                           Lith.Parser.Parse_Expression
+                             (Store,
+                              "(lambda (x y) (#extern-equal x y '"
+                              & Type_Name
+                              & "))");
+         begin
+            Lith.Environment.Define
+              (Lith.Symbols.Get_Symbol (Equal_Name), Equal_Fn);
+         end;
+      end Create_Standard_Objects;
+
+   end Registration;
 
 end Lith.Objects.Interfaces;
