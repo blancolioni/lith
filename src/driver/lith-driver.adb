@@ -18,10 +18,10 @@ begin
 
    Lith.Primitives.Add_Primitives;
    Lith.IO.Initialise_IO;
-   Lith.Vectors.Register;
+   Lith.Vectors.Register (Machine.all);
 
    Lith.Parser.Parse_File
-     (Machine,
+     (Machine.all,
       Lith.Paths.Config_Path & "/lith.l");
 
    if True then
