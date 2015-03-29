@@ -786,7 +786,7 @@ package body Lith.Objects.Numbers is
          Rep := Rep / Object_Payload'Modulus;
       end loop;
       for I in Payloads'Range loop
-         Store.Push ((Payloads (I), Integer_Object));
+         Store.Push (Object'(Payloads (I), Integer_Object));
       end loop;
       Store.Push (Nil);
       Store.Cons;
