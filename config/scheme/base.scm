@@ -210,7 +210,13 @@
 (define (string-length s) (length (cdr s)))
 (define (string-ref s k) (list-ref (cdr s) k))
 (define (string-set! s k char) (list-set! (cdr s) k char))
-(define string=? equal?)
+
+(define (string=? . strings)
+   (define (go xs)
+     (cond ((null? xs) #t)
+           ((null? (cdr xs)) #t)
+           (else (and (equal? (car xs) (cadr xs)) (go (cdr xs))))))
+   (go strings))
 
 (define (string-copy . args)
   (define (take s count)
