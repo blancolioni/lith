@@ -20,16 +20,8 @@ package Lith.Machine is
       Stack   : Lith.Objects.Stack_Type := Lith.Objects.Primary);
 
    procedure Push
-     (Machine : in out Root_Lith_Machine'Class;
-      Symbol  : Lith.Objects.Symbol_Type);
-
-   procedure Push
-     (Machine : in out Root_Lith_Machine'Class;
+     (Machine : in out Root_Lith_Machine;
       Symbol_Name : Wide_Wide_String);
-
-   procedure Push
-     (Machine : in out Root_Lith_Machine'Class;
-      Value   : Integer);
 
    overriding function Pop
      (Machine : in out Root_Lith_Machine;
@@ -82,8 +74,8 @@ package Lith.Machine is
       Pair    : in     Lith.Objects.Object;
       New_Cdr : in Lith.Objects.Object);
 
-   function Evaluate
-     (Machine     : in out Root_Lith_Machine'Class;
+   overriding function Evaluate
+     (Machine     : in out Root_Lith_Machine;
       Expression  : Lith.Objects.Object;
       Environment : Lith.Objects.Object)
       return Lith.Objects.Object;

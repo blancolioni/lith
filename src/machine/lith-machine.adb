@@ -224,8 +224,8 @@ package body Lith.Machine is
    -- Evaluate --
    --------------
 
-   function Evaluate
-     (Machine     : in out Root_Lith_Machine'Class;
+   overriding function Evaluate
+     (Machine     : in out Root_Lith_Machine;
       Expression  : Lith.Objects.Object;
       Environment : Lith.Objects.Object)
       return Lith.Objects.Object
@@ -379,7 +379,7 @@ package body Lith.Machine is
    is
    begin
       Lith.Parser.Parse_File
-        (Machine'Unchecked_Access,
+        (Machine,
          Ada.Characters.Conversions.To_String (Path));
       return True;
    exception
@@ -511,37 +511,12 @@ package body Lith.Machine is
    ----------
 
    procedure Push
-     (Machine : in out Root_Lith_Machine'Class;
-      Symbol  : Lith.Objects.Symbol_Type)
-   is
-   begin
-      Machine.Push (Lith.Objects.To_Object (Symbol));
-   end Push;
-
-   ----------
-   -- Push --
-   ----------
-
-   procedure Push
-     (Machine : in out Root_Lith_Machine'Class;
+     (Machine : in out Root_Lith_Machine;
       Symbol_Name : Wide_Wide_String)
    is
    begin
       Machine.Push
         (Lith.Objects.To_Object (Lith.Symbols.Get_Symbol (Symbol_Name)));
-   end Push;
-
-   ----------
-   -- Push --
-   ----------
-
-   procedure Push
-     (Machine : in out Root_Lith_Machine'Class;
-      Value   : Integer)
-   is
-   begin
-      Machine.Push
-        (Lith.Objects.To_Object (Value));
    end Push;
 
    -------------------
