@@ -4,11 +4,6 @@ with Lith.Objects.Interfaces;
 
 package body Lith.Vectors is
 
-   function Evaluate_Is_Vector
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object;
-
    function Evaluate_Vector
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
@@ -43,25 +38,6 @@ package body Lith.Vectors is
    begin
       return X = Y;
    end Equal;
-
-   ------------------------
-   -- Evaluate_Is_Vector --
-   ------------------------
-
-   function Evaluate_Is_Vector
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object
-   is
-      use Lith.Objects;
-      Item : constant Object := Arguments (Arguments'First);
-      Result : constant Boolean :=
-                 Is_External_Object (Item)
-                   and then Get_External_Object (Store, Item).all in
-                   Lith_Vector_Type'Class;
-   begin
-      return To_Object (Result);
-   end Evaluate_Is_Vector;
 
    ---------------------
    -- Evaluate_Vector --
@@ -149,6 +125,33 @@ package body Lith.Vectors is
       null;
    end Finalize;
 
+   ----------
+   -- Mark --
+   ----------
+
+   overriding procedure Mark
+     (Item  : in out Lith_Vector_Type;
+      Store : in out Lith.Objects.Object_Store'Class)
+   is
+   begin
+      for E of Item.V loop
+         Store.Mark (E);
+      end loop;
+   end Mark;
+
+   ----------
+   -- Name --
+   ----------
+
+   overriding function Name
+     (Item  : Lith_Vector_Type)
+      return Wide_Wide_String
+   is
+      pragma Unreferenced (Item);
+   begin
+      return "vector";
+   end Name;
+
    -----------
    -- Print --
    -----------
@@ -175,10 +178,15 @@ package body Lith.Vectors is
    -- Register --
    --------------
 
-   procedure Register is
+   procedure Register
+     (Store : in out Lith.Objects.Object_Store'Class)
+   is
       use Lith.Objects.Interfaces;
+      package Registration is
+        new Lith.Objects.Interfaces.Registration
+          ("vector");
    begin
-      Define_Function ("vector?", 1, Evaluate_Is_Vector'Access);
+      Registration.Create_Standard_Objects (Store);
       Define_Function ("vector", 1, Evaluate_Vector'Access);
       Define_Function ("vector-length", 1, Evaluate_Vector_Length'Access);
       Define_Function ("vector-ref", 2, Evaluate_Vector_Ref'Access);
