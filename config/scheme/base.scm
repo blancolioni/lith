@@ -27,6 +27,8 @@
 
 (define (equal? x y)
   (cond ((eq? x y) #t)
+        ((lith-external? x) (lith-external-equal x y))
+        ((lith-external? y) #f)
         ((and (pair? x) (pair? y)) (and (equal? (car x) (car y)) (equal? (cdr x) (cdr y))))
         (else #f)))
 
