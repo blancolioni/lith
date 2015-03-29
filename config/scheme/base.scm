@@ -61,8 +61,10 @@
 (define (list? xs)
    (or (null? xs) (lith-and (pair? xs) (list? (cdr xs)))))
 
-(define (make-list . xs) (do-make-list (car xs) (if (null? (cdr xs)) #f (cadr xs))))
-(define (do-make-list n fill) (if (eq? n 0) '() (cons fill (do-make-list (- n 1) fill))))
+(define (make-list . xs)
+    (define (do-make-list n fill) (if (eq? n 0) '() (cons fill (do-make-list (- n 1) fill))))
+  (do-make-list (car xs) (if (null? (cdr xs)) #f (cadr xs))))
+  
 (define (length xs) (if (null? xs) 0 (+ 1 (length (cdr xs)))))
 
 (define (map f xs) (if (null? xs) '() (cons (f (car xs)) (map f (cdr xs)))))
