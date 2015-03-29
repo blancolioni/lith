@@ -8,6 +8,10 @@ package Lith.Vectors is
      new Lith.Objects.External_Object_Interface
    with private;
 
+   overriding function Name
+     (Item  : Lith_Vector_Type)
+      return Wide_Wide_String;
+
    overriding function Print
      (Item  : Lith_Vector_Type;
       Store : in out Lith.Objects.Object_Store'Class)
@@ -22,7 +26,12 @@ package Lith.Vectors is
      (Item  : in out Lith_Vector_Type;
       Store : in out Lith.Objects.Object_Store'Class);
 
-   procedure Register;
+   overriding procedure Mark
+     (Item  : in out Lith_Vector_Type;
+      Store : in out Lith.Objects.Object_Store'Class);
+
+   procedure Register
+     (Store : in out Lith.Objects.Object_Store'Class);
 
 private
 
