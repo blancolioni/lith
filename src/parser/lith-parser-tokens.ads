@@ -8,7 +8,7 @@ private package Lith.Parser.Tokens is
 
        Tok_Left_Paren, Tok_Right_Paren, Tok_Quote, Tok_Quasiquote, Tok_Comma,
        Tok_Unquote_Splice,
-       Tok_Start_Vector,
+       Tok_Start_Vector, Tok_Start_Bytevector,
        Tok_Nil);
 
 end Lith.Parser.Tokens;

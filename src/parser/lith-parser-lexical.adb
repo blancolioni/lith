@@ -492,11 +492,17 @@ package body Lith.Parser.Lexical is
                   while Is_Id loop
                      Next_Character;
                   end loop;
+
                   Stop_Token;
 
-                  Tok :=
-                    Lith.Parser.Lexical.Identifiers.Classify_Identifier
-                      (Tok_Text);
+                  if Tok_Text = "#u8" and then Current_Stream.Ch = '(' then
+                     Next_Character;
+                     Tok := Tok_Start_Bytevector;
+                  else
+                     Tok :=
+                       Lith.Parser.Lexical.Identifiers.Classify_Identifier
+                         (Tok_Text);
+                  end if;
 
                else
                   Next_Character;

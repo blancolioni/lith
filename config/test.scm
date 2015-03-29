@@ -26,6 +26,7 @@
   (unit-test-exceptions)
   (unit-test-functions)
   (unit-test-vectors)
+  (unit-test-bytevectors)
   (set! *total-count* (+ *pass-count* *fail-count*))
   (display *pass-count*) (write-string "/") (display *total-count*) (write-string " tests passed\n"))
   
@@ -145,6 +146,14 @@
       (test (vector? #(1 2 3)))
       (test (eqv? (vector-length #(1 2 3)) 3))
       (test (eqv? (vector-ref #(1 2 3) 1) 2))
+   )
+
+(define (unit-test-bytevectors)
+      (test (bytevector? #u8(1 2 3)))
+      (test (not (bytevector? '(1 2 3))))
+      (test (bytevector? (bytevector 1 2 3)))
+      (test (eqv? (bytevector-length #u8(1 2 3)) 3))
+      (test (eqv? (bytevector-u8-ref #u8(1 2 3) 1) 2))
    )
 
 (define (multi-expr-body x) (+ x 1) (+ x 2))
