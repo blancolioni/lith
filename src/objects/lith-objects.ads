@@ -195,6 +195,12 @@ package Lith.Objects is
                       return Object
                       is abstract;
 
+   procedure Set_Context
+     (Store       : in out Object_Store;
+      File_Name   : Wide_Wide_String;
+      Line_Number : Natural)
+   is abstract;
+
    procedure Report_State (Store : in out Object_Store) is abstract;
 
    function Get_External_Object

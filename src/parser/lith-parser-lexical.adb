@@ -94,6 +94,24 @@ package body Lith.Parser.Lexical is
       end if;
    end Close_Stream;
 
+   -----------------------
+   -- Current_File_Name --
+   -----------------------
+
+   function Current_File_Name return Wide_Wide_String is
+   begin
+      return To_Wide_Wide_String (Current_Stream.Identity);
+   end Current_File_Name;
+
+   ------------------
+   -- Current_Line --
+   ------------------
+
+   function Current_Line return Natural is
+   begin
+      return Current_Stream.Tok_Line;
+   end Current_Line;
+
    -----------------
    -- End_Of_Line --
    -----------------

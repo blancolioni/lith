@@ -1,5 +1,10 @@
 private with Ada.Calendar;
 private with Ada.Containers.Vectors;
+private with Ada.Containers.Indefinite_Hashed_Maps;
+private with Ada.Containers.Indefinite_Vectors;
+
+private with Ada.Strings.Fixed.Hash_Case_Insensitive;
+private with Ada.Strings.Fixed.Equal_Case_Insensitive;
 
 with Lith.Objects;
 
@@ -80,6 +85,11 @@ package Lith.Machine is
       Environment : Lith.Objects.Object)
       return Lith.Objects.Object;
 
+   overriding procedure Set_Context
+     (Machine     : in out Root_Lith_Machine;
+      File_Name   : Wide_Wide_String;
+      Line        : Natural);
+
    overriding function Show
      (Machine : in out Root_Lith_Machine;
       Value   : Lith.Objects.Object)
@@ -143,29 +153,63 @@ private
        (Real_External_Address,
         External_Object_Record);
 
+   type File_Id is range 0 .. 255;
+   subtype Real_File_Id is File_Id range 1 .. File_Id'Last;
+   type Line_Number is mod 2**24;
+   type Source_Reference is
+      record
+         File : File_Id;
+         Line : Line_Number;
+      end record
+     with Pack, Size => 32;
+
+   function Show (Machine : Root_Lith_Machine'Class;
+                  Ref     : Source_Reference)
+                  return Wide_Wide_String;
+
+   package Source_File_Maps is
+     new Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Real_File_Id,
+        Hash            => Ada.Strings.Fixed.Hash_Case_Insensitive,
+        Equivalent_Keys => Ada.Strings.Fixed.Equal_Case_Insensitive);
+
+   package Source_File_Vectors is
+     new Ada.Containers.Indefinite_Vectors
+       (Index_Type   => Real_File_Id,
+        Element_Type => Wide_Wide_String);
+
+   type Memory_Source_Reference_Type is
+     array (Lith.Objects.Cell_Address range <>) of Source_Reference
+     with Pack;
+
    type Root_Lith_Machine is limited new Lith.Objects.Object_Store with
       record
-         Core             : access Core_Memory_Type;
-         Marked           : access Memory_Tag_Type;
-         Free             : access Memory_Tag_Type;
-         Stack            : Lith.Objects.Object;
-         Environment      : Lith.Objects.Object;
-         Control          : Lith.Objects.Object;
-         Dump             : Lith.Objects.Object;
-         Handlers         : Lith.Objects.Object;
-         Free_List        : Lith.Objects.Object;
-         R1, R2           : Lith.Objects.Object := Lith.Objects.Nil;
-         G1, G2           : Lith.Objects.Object := Lith.Objects.Nil;
-         Alloc_Count      : Natural;
-         Alloc_Limit      : Natural;
-         GC_Count         : Natural  := 0;
-         GC_Time          : Duration := 0.0;
-         Eval_Time        : Duration := 0.0;
-         Start_Eval       : Ada.Calendar.Time;
-         Evaluating       : Boolean := False;
-         Allocations      : Natural := 0;
-         Collections      : Natural := 0;
-         External_Objects : External_Object_Vectors.Vector;
+         Core              : access Core_Memory_Type;
+         Marked            : access Memory_Tag_Type;
+         Free              : access Memory_Tag_Type;
+         Source_Refs       : access Memory_Source_Reference_Type;
+         Stack             : Lith.Objects.Object;
+         Environment       : Lith.Objects.Object;
+         Control           : Lith.Objects.Object;
+         Dump              : Lith.Objects.Object;
+         Handlers          : Lith.Objects.Object;
+         Free_List         : Lith.Objects.Object;
+         R1, R2            : Lith.Objects.Object := Lith.Objects.Nil;
+         G1, G2            : Lith.Objects.Object := Lith.Objects.Nil;
+         Alloc_Count       : Natural;
+         Alloc_Limit       : Natural;
+         GC_Count          : Natural  := 0;
+         GC_Time           : Duration := 0.0;
+         Eval_Time         : Duration := 0.0;
+         Start_Eval        : Ada.Calendar.Time;
+         Evaluating        : Boolean := False;
+         Allocations       : Natural := 0;
+         Collections       : Natural := 0;
+         External_Objects  : External_Object_Vectors.Vector;
+         Source_Files      : Source_File_Maps.Map;
+         Source_File_Names : Source_File_Vectors.Vector;
+         Current_Context   : Source_Reference;
       end record;
 
    function Allocate
@@ -175,5 +219,9 @@ private
 
    procedure GC
      (Machine : in out Root_Lith_Machine'Class);
+
+   procedure Set_Context
+     (Machine : in out Root_Lith_Machine'Class;
+      Item    : Lith.Objects.Object);
 
 end Lith.Machine;
