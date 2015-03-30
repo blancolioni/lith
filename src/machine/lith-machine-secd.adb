@@ -341,7 +341,7 @@ package body Lith.Machine.SECD is
       if Trace_Eval then
          Ada.Wide_Wide_Text_IO.Put_Line
            ("create environment: "
-            & Machine.Show (Machine.Car (Machine.Environment)));
+            & Machine.Show (Machine.Environment));
       end if;
 
    end Create_Environment;
@@ -435,7 +435,6 @@ package body Lith.Machine.SECD is
       begin
          if Trace_Eval then
             Ada.Wide_Wide_Text_IO.Put_Line ("saving context ...");
-            Machine.Report_State;
          end if;
          Machine.Dump := Machine.Cons (Machine.Control, Machine.Dump);
          Machine.Dump := Machine.Cons (Machine.Environment, Machine.Dump);
@@ -470,7 +469,7 @@ package body Lith.Machine.SECD is
             if Trace_Eval then
                Ada.Wide_Wide_Text_IO.Put_Line
                  ("Eval: " & Machine.Show (C));
-               Machine.Report_State;
+               --  Machine.Report_State;
             end if;
 
             if Is_Pair (C)
@@ -833,7 +832,6 @@ package body Lith.Machine.SECD is
                         if Trace_Eval then
                            Ada.Wide_Wide_Text_IO.Put_Line
                              ("raise exception");
-                           Machine.Report_State;
                         end if;
 
                         if Machine.Handlers = Nil then
@@ -890,7 +888,6 @@ package body Lith.Machine.SECD is
                      if Trace_Eval then
                         Ada.Wide_Wide_Text_IO.Put_Line
                           ("unwind-continue");
-                        Machine.Report_State;
                      end if;
                      C_Updated := True;
                   elsif F = Unwind_Dump then
@@ -1009,7 +1006,6 @@ package body Lith.Machine.SECD is
          loop
             if Trace_Eval then
                Ada.Wide_Wide_Text_IO.Put_Line ("restoring context ...");
-               Machine.Report_State;
             end if;
 
             declare
@@ -1018,10 +1014,6 @@ package body Lith.Machine.SECD is
                Restore_State;
                Machine.Push (S);
 
-               if Trace_Eval then
-                  Ada.Wide_Wide_Text_IO.Put_Line ("new context:");
-                  Machine.Report_State;
-               end if;
             end;
          end loop;
 
