@@ -322,7 +322,7 @@ package body Lith.Parser.Lexical is
          if Is_White_Space then
             Next_Character;
             return ' ';
-         else
+         elsif Is_Alphanumeric then
             while Count + 1 in Buffer'Range
               and then Is_Alphanumeric
             loop
@@ -333,7 +333,14 @@ package body Lith.Parser.Lexical is
 
             return Lith.Parser.Lexical.Characters.Name_To_Character
               (Buffer (1 .. Count));
-
+         else
+            declare
+               Result : constant Wide_Wide_Character :=
+                          Current_Stream.Ch;
+            begin
+               Next_Character;
+               return Result;
+            end;
          end if;
       else
          declare
