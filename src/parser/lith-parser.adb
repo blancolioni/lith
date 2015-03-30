@@ -101,6 +101,9 @@ package body Lith.Parser is
       end Parse_Rest_Of_List;
 
    begin
+
+      Machine.Set_Context (Current_File_Name, Current_Line);
+
       case Tok is
          when Tok_Nil =>
             Scan;

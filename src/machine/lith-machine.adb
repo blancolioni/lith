@@ -1,4 +1,5 @@
 with Ada.Characters.Conversions;
+with Ada.Directories;
 with Ada.Exceptions;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Strings.Wide_Wide_Unbounded;
@@ -63,6 +64,7 @@ package body Lith.Machine is
          Machine.Free_List := Machine.Core (Address).Cdr;
          Machine.Core (Address) := (Car, Cdr);
          Machine.Free (Address) := False;
+         Machine.Source_Refs (Address) := Machine.Current_Context;
          Machine.Alloc_Count := Machine.Alloc_Count + 1;
          Machine.Allocations := Machine.Allocations + 1;
          return Result;
@@ -166,8 +168,13 @@ package body Lith.Machine is
         new Memory_Tag_Type (0 .. Last_Address);
       Machine.Free :=
         new Memory_Tag_Type (0 .. Last_Address);
+      Machine.Source_Refs :=
+        new Memory_Source_Reference_Type (0 .. Last_Address);
+
       Machine.Free.all := (others => True);
       Machine.Marked.all := (others => False);
+      Machine.Source_Refs.all := (others => (0, 0));
+
       for I in Machine.Core'Range loop
          Machine.Core (I) :=
            (Car => Nil, Cdr => To_Object (I + 1));
@@ -642,6 +649,94 @@ package body Lith.Machine is
    begin
       Machine.Core (Address).Cdr := New_Cdr;
    end Set_Cdr;
+
+   -----------------
+   -- Set_Context --
+   -----------------
+
+   overriding procedure Set_Context
+     (Machine   : in out Root_Lith_Machine;
+      File_Name : Wide_Wide_String;
+      Line      : Natural)
+   is
+      Name : constant String :=
+               Ada.Characters.Conversions.To_String (File_Name);
+      File : File_Id;
+   begin
+      if Machine.Source_Files.Contains (Name) then
+         File := Machine.Source_Files.Element (Name);
+      else
+         Machine.Source_File_Names.Append (File_Name);
+         File := Machine.Source_File_Names.Last_Index;
+         Machine.Source_Files.Insert (Name, File);
+      end if;
+      Machine.Current_Context := (File, Line_Number (Line));
+   end Set_Context;
+
+   -----------------
+   -- Set_Context --
+   -----------------
+
+   procedure Set_Context
+     (Machine : in out Root_Lith_Machine'Class;
+      Item    : Lith.Objects.Object)
+   is
+      use Lith.Objects;
+   begin
+      if Is_Address (Item)
+        and then Machine.Source_Refs (To_Address (Item)).Line /= 0
+      then
+         Machine.Current_Context :=
+           Machine.Source_Refs (To_Address (Item));
+      end if;
+   end Set_Context;
+
+   ----------
+   -- Show --
+   ----------
+
+   function Show (Machine : Root_Lith_Machine'Class;
+                  Ref     : Source_Reference)
+                  return Wide_Wide_String
+   is
+      function Line_Name return Wide_Wide_String;
+      function Source_Name return Wide_Wide_String;
+
+      ---------------
+      -- Line_Name --
+      ---------------
+
+      function Line_Name return Wide_Wide_String is
+         Result : constant Wide_Wide_String :=
+                    Line_Number'Wide_Wide_Image (Ref.Line);
+      begin
+         return Result (2 .. Result'Last);
+      end Line_Name;
+
+      -----------------
+      -- Source_Name --
+      -----------------
+
+      function Source_Name return Wide_Wide_String is
+         Path : constant String :=
+                  Ada.Characters.Conversions.To_String
+                    (Machine.Source_File_Names (Ref.File));
+         File : constant String :=
+                  Ada.Directories.Simple_Name (Path);
+      begin
+         return Ada.Characters.Conversions.To_Wide_Wide_String
+           (File);
+      end Source_Name;
+
+   begin
+      if Ref.File = 0 then
+         return "no source reference";
+      elsif Ref.File = 0 then
+         return Source_Name & ":";
+      else
+         return Source_Name & ":" & Line_Name & ":";
+      end if;
+   end Show;
 
    ----------
    -- Show --

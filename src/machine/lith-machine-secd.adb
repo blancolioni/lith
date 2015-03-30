@@ -453,6 +453,8 @@ package body Lith.Machine.SECD is
             Is_Tail_Context : Boolean := False;
          begin
 
+            Set_Context (Machine, C);
+
             declare
                Trace : Object;
                Found : Boolean;
@@ -468,7 +470,10 @@ package body Lith.Machine.SECD is
 
             if Trace_Eval then
                Ada.Wide_Wide_Text_IO.Put_Line
-                 ("Eval: " & Machine.Show (C));
+                 ("Eval: "
+                  & Show (Machine, Machine.Current_Context)
+                  & ": "
+                  & Machine.Show (C));
                --  Machine.Report_State;
             end if;
 
@@ -620,14 +625,27 @@ package body Lith.Machine.SECD is
                   end if;
 
                   if Is_Function (F) then
-                     declare
-                        Result : constant Object :=
-                                   Lith.Objects.Interfaces.Evaluate
-                                     (Machine, To_Function (F),
-                                      Arguments, Machine.Environment);
                      begin
-                        Machine.Push (Result);
+                        declare
+                           Result : constant Object :=
+                                      Lith.Objects.Interfaces.Evaluate
+                                        (Machine, To_Function (F),
+                                         Arguments, Machine.Environment);
+                        begin
+                           Machine.Push (Result);
+                        end;
+                     exception
+                        when E : others =>
+                           Ada.Wide_Wide_Text_IO.Put_Line
+                             (Ada.Wide_Wide_Text_IO.Standard_Error,
+                              "Error: "
+                              & Show (Machine, Machine.Current_Context)
+                              & " "
+                              & Ada.Characters.Conversions.To_Wide_Wide_String
+                                (Ada.Exceptions.Exception_Message (E)));
+                           raise;
                      end;
+
                   elsif Is_Pair (F)
                     and then (Machine.Car (F) = Lambda
                               or else Machine.Car (F) = Macro)
@@ -666,6 +684,7 @@ package body Lith.Machine.SECD is
                         Last : Boolean := True;
                      begin
                         for Arg of reverse Arg_Array loop
+                           Machine.Set_Context (Arg);
                            if Last then
                               Machine.Make_List ((Tail_Context, Arg));
                               Push_Control (Machine.Pop);
@@ -674,6 +693,7 @@ package body Lith.Machine.SECD is
                               Push_Control (Arg);
                            end if;
                         end loop;
+                        Set_Context (Machine, C);
                         Machine.Dump := Machine.Cdr (Machine.Dump);
                      end;
 

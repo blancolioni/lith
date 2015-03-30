@@ -16,4 +16,7 @@ private package Lith.Parser.Lexical is
 
    procedure Error (Message : Wide_Wide_String);
 
+   function Current_File_Name return Wide_Wide_String;
+   function Current_Line return Natural;
+
 end Lith.Parser.Lexical;
