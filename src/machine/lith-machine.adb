@@ -782,7 +782,7 @@ package body Lith.Machine is
       elsif Is_Symbol (Value) then
          return Lith.Symbols.Get_Name (To_Symbol (Value));
       elsif Is_Character (Value) then
-         return "\#" & To_Character (Value);
+         return "#\" & To_Character (Value);
       elsif Is_Function (Value) then
          return Ada.Characters.Conversions.To_Wide_Wide_String
            (Lith.Objects.Hex_Image (Value));
