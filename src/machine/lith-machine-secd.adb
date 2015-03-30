@@ -592,7 +592,9 @@ package body Lith.Machine.SECD is
                         Machine.Push (Value);
                      else
                         raise Evaluation_Error with
-                          "undefined: "
+                        Ada.Characters.Conversions.To_String
+                          (Show (Machine, Machine.Current_Context))
+                          & " undefined: "
                           & Ada.Characters.Conversions.To_String
                           (Get_Name (To_Symbol (C)));
                      end if;
