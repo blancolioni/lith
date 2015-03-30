@@ -35,12 +35,12 @@
     (test (not (symbol? #f))))
 
 (define (unit-test-numbers)
-      (test (eqv? (max 3 4) 4))
-      (test (eqv? (min 3 4) 3))
-      (test (eqv? (- 3 4) (- 1)))
-      (test (eqv? (- 3 4 5) (- 6)))
-      (test (eqv? (- 3 4) -1))
-      (test (eqv? (- 3 4 5) -6))
+      (test (eqv? (max 2 3) 3))
+      (test (eqv? (min 5 6) 5))
+      (test (eqv? (- 7 8) (- 1)))
+      (test (eqv? (- 9 10 11) (- 12)))
+      (test (eqv? (- 12 13) -1))
+      (test (eqv? (- 9 10 11) -12))
       (test (equal? (floor/ 5 2) '(2 1)))
       (test (eqv? (abs (- 7)) 7))
       (test (eqv? (gcd 32 36) 4))
@@ -53,7 +53,7 @@
       (test (eqv? #x12345678790ABcdEF 20988295470375489007))
       (test (eqv? #b10101010100101010101 #xAA955))
       (test (eqv? -21342134324 (- 21342134324)))
-      (test (equal? (exact-integer-sqrt 4) '(2 0)))
+      (test (equal? (exact-integer-sqrt 9) '(3 0)))
       (test (equal? (exact-integer-sqrt 5) '(2 1)))
       (test (equal? (exact-integer-sqrt 0) '(0 0)))
       (test (eqv? (* 11237612837621873621873 0) 0))
@@ -93,3 +93,9 @@
 (define (multi-expr-body x) (+ x 1) (+ x 2))
    
 (define (fac n) (if (zero? n) 1 (* n (fac (- n 1)))))
+
+(define (loop m n expr)
+  (define (do-loop x)
+     (if (> x n) #t
+         (do-loop (+ 1 x))))
+  (do-loop m))
