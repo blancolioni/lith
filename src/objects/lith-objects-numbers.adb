@@ -1,7 +1,5 @@
 with Ada.Unchecked_Conversion;
 
-with Lith.Symbols;
-
 package body Lith.Objects.Numbers is
 
    subtype Lith_Float is Long_Float;
@@ -175,7 +173,7 @@ package body Lith.Objects.Numbers is
 
                Store.Push (Store.Pop, Secondary);
                Store.Push (Store.Pop, Secondary);
-               Store.Push (Lith.Symbols.Large_Integer_Atom);
+               Store.Push (Large_Integer_Value);
 
                for I in 1 .. Max_Length loop
                   if I <= Xs'Last then
@@ -363,7 +361,7 @@ package body Lith.Objects.Numbers is
          Count : Natural := 0;
       begin
          Store.Push (Store.Pop, Secondary);
-         Store.Push (Lith.Symbols.Large_Integer_Atom); -- quotient
+         Store.Push (Large_Integer_Value); -- quotient
 
          for Elem of reverse It loop
             if True then
@@ -549,7 +547,7 @@ package body Lith.Objects.Numbers is
                Count : Natural := 0;
             begin
                Store.Push (It, Secondary);
-               Store.Push (Lith.Symbols.Large_Integer_Atom);
+               Store.Push (Large_Integer_Value);
                It := Store.Cdr (It);  --  skip large integer atom
                while It /= Nil loop
                   Store.Push
@@ -678,8 +676,7 @@ package body Lith.Objects.Numbers is
    is
    begin
       return Is_Integer (Item)
-        or else Is_Integral_Number (Store, Item)
-        or else Is_Rational_Number (Store, Item);
+        or else Is_Integral_Number (Store, Item);
    end Is_Exact_Number;
 
    ------------------------
@@ -694,22 +691,8 @@ package body Lith.Objects.Numbers is
    begin
       return Is_Integer (Item)
         or else (Is_Pair (Item)
-                 and then Store.Car (Item) = Lith.Symbols.Large_Integer_Atom);
+                 and then Store.Car (Item) = Large_Integer_Value);
    end Is_Integral_Number;
-
-   ------------------------
-   -- Is_Rational_Number --
-   ------------------------
-
-   function Is_Rational_Number
-     (Store : Object_Store'Class;
-      Item  : Object)
-      return Boolean
-   is
-   begin
-      return Is_Pair (Item)
-        and then Store.Car (Item) = Lith.Symbols.Rational_Atom;
-   end Is_Rational_Number;
 
    --------------------
    -- Is_Real_Number --
@@ -722,7 +705,7 @@ package body Lith.Objects.Numbers is
    is
    begin
       return Is_Pair (Item)
-        and then Store.Car (Item) = Lith.Symbols.Floating_Point_Atom;
+        and then Store.Car (Item) = Floating_Point_Value;
    end Is_Real_Number;
 
    -----------------
@@ -780,7 +763,7 @@ package body Lith.Objects.Numbers is
       Rep      : Float_Rep := Lith_Float_To_Rep (Value);
       Payloads : array (1 .. Objects_Per_Float) of Object_Payload;
    begin
-      Store.Push (Lith.Symbols.Floating_Point_Atom);
+      Store.Push (Floating_Point_Value);
       for I in reverse Payloads'Range loop
          Payloads (I) := Object_Payload (Rep mod Object_Payload'Modulus);
          Rep := Rep / Object_Payload'Modulus;
@@ -814,7 +797,7 @@ package body Lith.Objects.Numbers is
    procedure Small_Integer_To_Large (Store : in out Object_Store'Class) is
       X : constant Object := Store.Pop;
    begin
-      Store.Push (Lith.Symbols.Large_Integer_Atom);
+      Store.Push (Large_Integer_Value);
       Store.Push (X);
       Store.Push (Nil);
       Store.Cons;
@@ -834,9 +817,9 @@ package body Lith.Objects.Numbers is
    begin
       if Is_Integer (Item) then
          return Small_Integer;
-      elsif Store.Car (Item) = Lith.Symbols.Large_Integer_Atom then
+      elsif Store.Car (Item) = Large_Integer_Value then
          return Large_Integer;
-      elsif Store.Car (Item) = Lith.Symbols.Floating_Point_Atom then
+      elsif Store.Car (Item) = Floating_Point_Value then
          return Inexact_Real;
       else
          raise Constraint_Error with

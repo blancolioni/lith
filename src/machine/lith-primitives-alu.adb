@@ -3,7 +3,7 @@ with Ada.Characters.Conversions;
 with Lith.Objects.Numbers;
 
 with Lith.Objects.Symbol_Maps;
-with Lith.Symbols;
+with Lith.Objects.Symbols;
 
 package body Lith.Primitives.ALU is
 
@@ -185,7 +185,7 @@ package body Lith.Primitives.ALU is
          raise Constraint_Error with
            "no such ALU function: "
            & Ada.Characters.Conversions.To_String
-           (Lith.Symbols.Get_Name (Op));
+           (Lith.Objects.Symbols.Get_Name (Op));
       end if;
    end Apply;
 
@@ -373,7 +373,7 @@ package body Lith.Primitives.ALU is
                        Inexact_Proc      : Stack_Operator_Accumulator)
    is
    begin
-      Ops.Insert (Lith.Symbols.Get_Symbol (Symbol),
+      Ops.Insert (Lith.Objects.Symbols.Get_Symbol (Symbol),
                   (Identity, Exact_Unit_Proc, Inexact_Unit_Proc,
                    Exact_Proc, Inexact_Proc));
    end Operator;

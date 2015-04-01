@@ -1,8 +1,7 @@
 with Lith.Objects.Interfaces;
+with Lith.Objects.Symbols;
 
 with Lith.IO.Text_IO;
-
-with Lith.Symbols;
 
 package body Lith.IO is
 
@@ -77,7 +76,7 @@ package body Lith.IO is
                   Port      : constant Port_Type'Class :=
                                 Port_Type'Class (Ext.all);
                   Attribute : constant Wide_Wide_String :=
-                                Lith.Symbols.Get_Name
+                                Lith.Objects.Symbols.Get_Name
                                   (To_Symbol
                                      (Arguments (Arguments'First + 1)));
                begin

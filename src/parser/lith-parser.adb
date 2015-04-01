@@ -5,7 +5,7 @@ with Lith.Parser.Lexical;            use Lith.Parser.Lexical;
 with Lith.Parser.Lexical.Identifiers;
 
 with Lith.Objects.Numbers;
-with Lith.Symbols;
+with Lith.Objects.Symbols;
 
 package body Lith.Parser is
 
@@ -66,7 +66,7 @@ package body Lith.Parser is
       Quasiquote : Boolean)
    is
 
-      use Lith.Symbols;
+      use Lith.Objects.Symbols;
 
       procedure Parse_Rest_Of_List;
 
@@ -124,6 +124,8 @@ package body Lith.Parser is
                Machine.Push (Lith.Objects.False_Value);
             elsif Tok_Text = "#no-value" then
                Machine.Push (Lith.Objects.No_Value);
+            elsif Tok_Text = "#string" then
+               Machine.Push (Lith.Objects.String_Value);
             elsif Quasiquote then
                Machine.Push (Get_Symbol ("quote"));
                Machine.Push (Get_Symbol (Tok_Text));
@@ -136,12 +138,12 @@ package body Lith.Parser is
             Scan;
          when Tok_Start_Vector =>
             Scan;
-            Machine.Push (Lith.Symbols.Get_Symbol ("vector"));
+            Machine.Push (Lith.Objects.Symbols.Get_Symbol ("vector"));
             Parse_Rest_Of_List;
             Machine.Cons;
          when Tok_Start_Bytevector =>
             Scan;
-            Machine.Push (Lith.Symbols.Get_Symbol ("bytevector"));
+            Machine.Push (Lith.Objects.Symbols.Get_Symbol ("bytevector"));
             Parse_Rest_Of_List;
             Machine.Cons;
 
@@ -151,7 +153,7 @@ package body Lith.Parser is
                  (Tok_Character_Value));
             Scan;
          when Tok_String =>
-            Machine.Push (Lith.Symbols.String_Atom);
+            Machine.Push (Lith.Objects.String_Value);
             for Ch of Tok_Text loop
                Machine.Push (Lith.Objects.To_Object (Ch));
             end loop;

@@ -2,7 +2,7 @@ with Ada.Containers.Vectors;
 
 with Lith.Environment;
 with Lith.Parser;
-with Lith.Symbols;
+with Lith.Objects.Symbols;
 
 package body Lith.Objects.Interfaces is
 
@@ -93,7 +93,7 @@ package body Lith.Objects.Interfaces is
    begin
       Defs.Append (Rec);
       Lith.Environment.Define
-        (Name  => Lith.Symbols.Get_Symbol (Name),
+        (Name  => Lith.Objects.Symbols.Get_Symbol (Name),
          Value => To_Object (Function_Type (Defs.Last_Index)));
    end New_Def;
 
@@ -125,7 +125,7 @@ package body Lith.Objects.Interfaces is
                                    & "))");
             begin
                Lith.Environment.Define
-                 (Lith.Symbols.Get_Symbol (Is_Type_Name), Is_Type_Fn);
+                 (Lith.Objects.Symbols.Get_Symbol (Is_Type_Name), Is_Type_Fn);
             end;
          end if;
       end Create_Standard_Objects;
