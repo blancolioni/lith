@@ -122,6 +122,8 @@ package body Lith.Parser is
                Machine.Push (Lith.Objects.True_Value);
             elsif Tok_Text = "#f" then
                Machine.Push (Lith.Objects.False_Value);
+            elsif Tok_Text = "#no-value" then
+               Machine.Push (Lith.Objects.No_Value);
             elsif Quasiquote then
                Machine.Push (Get_Symbol ("quote"));
                Machine.Push (Get_Symbol (Tok_Text));
