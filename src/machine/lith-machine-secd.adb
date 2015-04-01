@@ -472,8 +472,11 @@ package body Lith.Machine.SECD is
                Ada.Wide_Wide_Text_IO.Put_Line
                  ("Eval: "
                   & Show (Machine, Machine.Current_Context)
-                  & ": "
+                  & " "
                   & Machine.Show (C));
+               Ada.Wide_Wide_Text_IO.Put_Line
+                 ("Env: "
+                  & Machine.Show (Machine.Environment));
                --  Machine.Report_State;
             end if;
 
@@ -609,7 +612,7 @@ package body Lith.Machine.SECD is
                begin
 
                   Machine.R1 := C;
-                  Machine.R2 := Nil;
+                  Machine.R2 := F;
 
                   Machine.Control := Cs;
                   C_Updated := True;
@@ -1012,6 +1015,7 @@ package body Lith.Machine.SECD is
                            end if;
                            It := Machine.Cdr (It);
                         end loop;
+
                      end;
                      Machine.Dump := Machine.Cdr (Machine.Dump);
                   end if;
