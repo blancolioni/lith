@@ -660,7 +660,7 @@ package body Lith.Primitives is
       else
          Put (Char);
       end if;
-      return Arguments (Arguments'First);
+      return Lith.Objects.No_Value;
    end Evaluate_Write_Char;
 
 end Lith.Primitives;

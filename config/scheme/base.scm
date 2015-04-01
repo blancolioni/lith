@@ -42,7 +42,7 @@
 (define (number? x) (or (integer? x) (real? x)))  ; the only numbers we have :(
 
 (define (complex? x) #f)
-(define (rational? x) #f)
+(define (rational? x) (and (pair? x) (eq? (car x) '#rational)))
 
 (define (exact? x) (or (integer? x) (rational? x)))
 (define (inexact? x) (or (real? x) (complex? x)))
@@ -100,6 +100,10 @@
 (define let (macro (bindings expr)
   (cons (list 'lambda (map car bindings) expr) (map cadr bindings))))
 
+(define let* (macro (bindings . exprs)
+                    (if (null? bindings) (append (list 'let '()) exprs)
+                        (list 'let (list (car bindings)) (append (list 'let* (cdr bindings)) exprs)))))
+  
 (define (member . args)
    (let ((obj (car args))
          (xs (cadr args))
@@ -124,12 +128,6 @@
 
 (define (list-copy xs) (if (pair? xs) (cons (car xs) (list-copy (cdr xs))) xs))
 
-(define (let*2let bindings expr)
-  (if (null? bindings) expr
-    (list 'let (list (car bindings)) (let*2let (cdr bindings) expr))))
-
-(define let* (macro (bindings expr) (let*2let bindings expr)))
-  
 (define (if2cond clauses)
   (if (null? clauses) nil
     (if (eq? (caar clauses) 'else) (car (cdar clauses))
@@ -137,14 +135,63 @@
 
 (define cond (macro clauses (if2cond clauses)))
 
+(define (lith-merge-numbers x y)
+   (cond ((or (inexact? x) (inexact? y)) (list (inexact x) (inexact y)))
+         ((and (integer? x) (integer? y)) (list x y))
+         ((and (integer? x) (rational? y)) (list (make-rat x) y))
+         ((and (rational? x) (integer? y)) (list x (make-rat y)))
+         ((and (rational? x) (rational? y)) (list x y))))
+
+;(define fold-alu (macro (op identity) `((lambda (xs) (display xs)) ,identity)))
+(define fold-alu (macro (op app identity)
+   `(define ,op 
+       (lambda xs (if (null? xs) 
+                      ,identity
+                      (if (null? (cdr xs)) 
+                          (fold-op ,identity (quote ,op) ,app (list ,identity (car xs)))
+                          (fold-op ,identity (quote ,op) ,app xs)))))))
+
+(define (fold-op identity op app xs)
+  (let* ((x-1 (car xs))
+         (x-2 (cadr xs))
+         (merge (lith-merge-numbers x-1 x-2))
+         (x (car merge))
+         (y (cadr merge))
+         (z (app op x y)))
+         (if (null? (cddr xs))
+             z
+             (fold-op identity op app (cons z (cddr xs))))))
+           
+(define (apply-op op x y) 
+   (cond ((inexact? x) (#alu op (list x y)))
+         ((integer? x) (#alu op (list x y)))
+         ((rational? x) (apply-rat op x y))))
+         
+(define (apply-/ op x y) 
+   (cond ((inexact? x) (#alu op (list x y)))
+         ((integer? x) (make-rat x y))
+         ((rational? x) (div-rat x y))))
+         
+(define (#alu-rat op x y)
+   (cond ((eq? op '+) (add-rat x y))
+         ((eq? op '-) (sub-rat x y))
+         ((eq? op '*) (mul-rat x y))
+         ((eq? op '/) (div-rat x y))
+         (else (error "bad operation"))))
+         
 (define alu (macro (op) `(define ,op (lambda x (#alu (quote ,op) x)))))
 (define alu2 (macro (op) `(define ,op (lambda (x y) (#alu (quote ,op) (list x y))))))
 (define char-alu (macro (op) 
   `(define ,(string->symbol (string-append "char" (symbol->string op) "?")) (lambda x (#alu (quote ,op) (map char->integer x))))))
 
-(alu +)
-(alu -)
-(alu *)
+(fold-alu + apply-op 0)
+(fold-alu - apply-op 0)
+(fold-alu * apply-op 1)
+(fold-alu / apply-/ 1)
+
+;(alu +)
+;(alu -)
+;(alu *)
 (alu mod)
 (alu <)
 (alu >)
@@ -152,6 +199,47 @@
 (alu >=)
 (alu =)
 (alu2 floor/)
+
+(define (plus-2 x y)
+   (cond ((or (inexact? x) (inexact? y)) (+ x y))
+         ((and (integer? x) (integer? y)) (+ x y))
+         (else (add-rat (make-rat x) (make-rat y)))))
+
+(define (make-rat . rs)
+   (cond ((null? rs) (list '#rational 1 1))
+         ((null? (cdr rs)) (list '#rational (car rs) 1))
+         (else (rat-simplify (list '#rational (car rs) (cadr rs))))))
+         
+(define (rat-simplify r)
+   (let ((n (numerator r)) (d (denominator r)))
+     (let ((g (gcd n d)))
+       (if (eqv? g d) (floor-quotient n g)
+         (list '#rational (floor-quotient n g) (floor-quotient d g))))))
+   
+(define (print-rat r) (display (numerator r)) (write-char #\/) (display (denominator r)))
+
+(define (add-rat x y)
+   (make-rat 
+     (+ 
+       (* (numerator x) (denominator y))
+       (* (numerator y) (denominator x)))
+     (* (denominator x) (denominator y))))
+
+(define (sub-rat x y)
+   (make-rat 
+     (-
+       (* (numerator x) (denominator y))
+       (* (numerator y) (denominator x)))
+     (* (denominator x) (denominator y))))
+
+(define (mul-rat x y)
+   (make-rat (* (numerator x) (numerator y)) (* (denominator x) (denominator y))))
+   
+(define (div-rat x y)
+   (make-rat (* (numerator x) (denominator y)) (* (denominator x) (numerator y))))
+   
+(define (numerator r) (if (integer? r) r (cadr r)))
+(define (denominator r) (if (integer? r) 1 (car (cddr r))))
 
 (define (floor-quotient x y) (car (floor/ x y)))
 (define (floor-remainder x y) (cadr (floor/ x y)))
@@ -281,11 +369,12 @@
           
 (define (display x)
   (cond ((string? x) (write-string x))
-    ((pair? x) (write-list x))
-    (else (write-string (symbol->string x)))))
+        ((rational? x) (print-rat x))
+        ((pair? x) (write-list x))
+        (else (write-string (symbol->string x)))))
 
 (define (write-string x)
-   (define (wchars xs) (if (null? xs) nil
+   (define (wchars xs) (if (null? xs) #no-value
                            (begin (write-char (car xs))
                                   (wchars (cdr xs)))))
    (wchars (cdr x)))
