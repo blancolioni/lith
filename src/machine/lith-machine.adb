@@ -4,6 +4,7 @@ with Ada.Exceptions;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Strings.Wide_Wide_Unbounded;
 with Ada.Unchecked_Deallocation;
+with Ada.Wide_Wide_Characters.Handling;
 with Ada.Wide_Wide_Text_IO;
 
 with Lith.Environment;
@@ -755,6 +756,10 @@ package body Lith.Machine is
         (Current : Object)
          return Wide_Wide_String;
 
+      function Hex_Image
+        (Value : Natural)
+         return Wide_Wide_String;
+
       function Large_Integer_Image
         (Value : Object)
          return Wide_Wide_String;
@@ -762,6 +767,28 @@ package body Lith.Machine is
       function String_Image
         (Start : Object)
          return Wide_Wide_String;
+
+      ---------------
+      -- Hex_Image --
+      ---------------
+
+      function Hex_Image
+        (Value : Natural)
+         return Wide_Wide_String
+      is
+         Hex_Ds : constant Wide_Wide_String :=
+                    "0123456789abcdef";
+
+         function Hex (D : Natural) return Wide_Wide_Character
+         is (Hex_Ds (D + 1));
+
+      begin
+         if Value < 256 then
+            return Hex (Value / 16) & Hex (Value mod 16);
+         else
+            return Hex_Image (Value / 256) & Hex_Image (Value mod 256);
+         end if;
+      end Hex_Image;
 
       -------------
       -- Is_List --
@@ -877,7 +904,18 @@ package body Lith.Machine is
       elsif Is_Symbol (Value) then
          return Lith.Symbols.Get_Name (To_Symbol (Value));
       elsif Is_Character (Value) then
-         return "#\" & To_Character (Value);
+         declare
+            Ch : constant Wide_Wide_Character :=
+                   To_Character (Value);
+         begin
+            if Ada.Wide_Wide_Characters.Handling.Is_Graphic (Ch) then
+               return "#\" & Ch;
+            else
+               return "#\x"
+                 & Hex_Image
+                 (Wide_Wide_Character'Pos (Ch));
+            end if;
+         end;
       elsif Is_Function (Value) then
          return Ada.Characters.Conversions.To_Wide_Wide_String
            (Lith.Objects.Hex_Image (Value));
