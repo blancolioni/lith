@@ -9,7 +9,7 @@ with Ada.Wide_Wide_Text_IO;
 
 with Lith.Environment;
 with Lith.Parser;
-with Lith.Symbols;
+with Lith.Objects.Symbols;
 
 with Lith.Machine.SECD;
 
@@ -247,7 +247,7 @@ package body Lith.Machine is
 
          Machine.Make_List
            ((Lith.Objects.To_Object
-            (Lith.Symbols.Get_Symbol
+            (Lith.Objects.Symbols.Get_Symbol
                  ("global-error-handler")),
             Lith.Objects.Nil, Lith.Objects.Nil));
          Machine.Push (Lith.Objects.Nil);
@@ -522,9 +522,10 @@ package body Lith.Machine is
      (Machine : in out Root_Lith_Machine;
       Symbol_Name : Wide_Wide_String)
    is
+      use Lith.Objects, Lith.Objects.Symbols;
    begin
       Machine.Push
-        (Lith.Objects.To_Object (Lith.Symbols.Get_Symbol (Symbol_Name)));
+        (To_Object (Get_Symbol (Symbol_Name)));
    end Push;
 
    -------------------
@@ -902,7 +903,7 @@ package body Lith.Machine is
            (Integer'Wide_Wide_Image (To_Integer (Value)),
             Ada.Strings.Left);
       elsif Is_Symbol (Value) then
-         return Lith.Symbols.Get_Name (To_Symbol (Value));
+         return Lith.Objects.Symbols.Get_Name (To_Symbol (Value));
       elsif Is_Character (Value) then
          declare
             Ch : constant Wide_Wide_Character :=
@@ -917,17 +918,16 @@ package body Lith.Machine is
             end if;
          end;
       elsif Is_Function (Value) then
-         return Ada.Characters.Conversions.To_Wide_Wide_String
-           (Lith.Objects.Hex_Image (Value));
+         return Lith.Objects.Hex_Image (Value);
       elsif Is_Apply (Value) then
          return "apply" & Integer'Wide_Wide_Image (-Argument_Count (Value));
       elsif Is_External_Object (Value) then
          return Machine.Get_External_Object (Value).Print (Machine);
       elsif Is_Pair (Value) then
-         if Machine.Car (Value) = Lith.Symbols.String_Atom then
+         if Machine.Car (Value) = String_Value then
             return '"' & String_Image (Machine.Cdr (Value)) & '"';
          elsif True
-           and then Machine.Car (Value) = Lith.Symbols.Large_Integer_Atom
+           and then Machine.Car (Value) = Large_Integer_Value
          then
             return Large_Integer_Image (Value);
          elsif Is_List then
@@ -943,8 +943,7 @@ package body Lith.Machine is
          end if;
       else
          return "<error: unknown object type ["
-           & Ada.Characters.Conversions.To_Wide_Wide_String
-           (Hex_Image (Value))
+           & Hex_Image (Value)
            & "]";
       end if;
    end Show;

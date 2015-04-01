@@ -6,7 +6,7 @@ with WL.Random;
 with Lith.Objects.Interfaces;
 with Lith.Objects.Numbers;
 with Lith.Primitives.ALU;
-with Lith.Symbols;
+with Lith.Objects.Symbols;
 
 package body Lith.Primitives is
 
@@ -356,7 +356,7 @@ package body Lith.Primitives is
                          Store.Get_External_Object
                            (Arguments (Arguments'First));
             Name_Sym : constant Wide_Wide_String :=
-                         Lith.Symbols.Get_Name
+                         Lith.Objects.Symbols.Get_Name
                            (To_Symbol (Arguments (Arguments'First + 1)));
          begin
             return To_Object (X_Object.Name = Name_Sym);
@@ -380,7 +380,7 @@ package body Lith.Primitives is
    begin
       Next_Gensym_Index := Next_Gensym_Index + 1;
       return Lith.Objects.To_Object
-        (Lith.Symbols.Get_Symbol
+        (Lith.Objects.Symbols.Get_Symbol
            ("#:g" & Integer'Wide_Wide_Image (-Next_Gensym_Index)));
    end Evaluate_Gensym;
 
@@ -446,7 +446,7 @@ package body Lith.Primitives is
    begin
       if Is_Integer (A)
         or else (Is_Pair (A)
-                 and then Store.Car (A) = Lith.Symbols.Large_Integer_Atom)
+                 and then Store.Car (A) = Large_Integer_Value)
       then
          return True_Value;
       else
@@ -505,7 +505,7 @@ package body Lith.Primitives is
    begin
       if Is_Pair (Arguments (Arguments'First))
         and then Store.Car (Arguments (Arguments'First))
-          = Lith.Symbols.Floating_Point_Atom
+          = Floating_Point_Value
       then
          return True_Value;
       else
@@ -612,7 +612,7 @@ package body Lith.Primitives is
                Store.To_String (Arguments (Arguments'First));
    begin
       return Lith.Objects.To_Object
-        (Lith.Symbols.Get_Symbol (Name));
+        (Lith.Objects.Symbols.Get_Symbol (Name));
    end Evaluate_String_To_Symbol;
 
    -------------------------------
@@ -632,7 +632,7 @@ package body Lith.Primitives is
       for Ch of reverse Text loop
          Result := Store.Cons (To_Object (Ch), Result);
       end loop;
-      Result := Store.Cons (Lith.Symbols.String_Atom, Result);
+      Result := Store.Cons (String_Value, Result);
       return Result;
    end Evaluate_Symbol_To_String;
 

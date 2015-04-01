@@ -25,11 +25,6 @@ package Lith.Objects.Numbers is
      (Store : Object_Store'Class;
       Item  : Object) return Boolean;
 
-   function Is_Rational_Number
-     (Store : Object_Store'Class;
-      Item  : Object)
-      return Boolean;
-
    function Is_Integral_Number
      (Store : Object_Store'Class;
       Item  : Object)

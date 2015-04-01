@@ -6,7 +6,7 @@ with Ada.Wide_Wide_Text_IO;
 with Lith.Environment;
 with Lith.Objects;
 with Lith.Parser;
-with Lith.Symbols;
+with Lith.Objects.Symbols;
 
 with Lith.Paths;
 
@@ -31,7 +31,7 @@ package body Lith.Repl is
       end if;
 
       while Lith.Environment.Get
-        (Lith.Symbols.Get_Symbol ("__exit")) = False_Value
+        (Lith.Objects.Symbols.Get_Symbol ("__exit")) = False_Value
       loop
          Put ("Lith> ");
          Flush;

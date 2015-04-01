@@ -5,7 +5,7 @@ with Ada.Wide_Wide_Text_IO;
 with Lith.Environment;
 with Lith.Objects.Interfaces;
 with Lith.Parser;
-with Lith.Symbols;
+with Lith.Objects.Symbols;
 
 with Lith.Paths;
 
@@ -80,13 +80,14 @@ package body Lith.Machine.SECD is
       procedure Apply (Env  : Object;
                        Code : Object)
       is
+         use Lith.Objects.Symbols;
       begin
          if Is_Pair (Code) then
             if Is_Pair (Machine.Cdr (Code))
-              and then Machine.Cadr (Code) = Lith.Symbols.Ellipsis_Atom
+              and then Machine.Cadr (Code) = Ellipsis_Symbol
             then
                Machine.Push
-                 (Binding (Env, Lith.Symbols.Ellipsis_Atom, Nil));
+                 (Binding (Env, Ellipsis_Symbol, Nil));
             else
                Apply (Env, Machine.Cdr (Code));
             end if;
@@ -137,8 +138,10 @@ package body Lith.Machine.SECD is
          end if;
 
          while Pat_It /= Nil loop
-            if Machine.Car (Pat_It) = Lith.Symbols.Ellipsis_Atom then
-               Machine.Push (Lith.Symbols.Ellipsis_Atom);
+            if Machine.Car (Pat_It)
+              = Lith.Objects.Symbols.Ellipsis_Symbol
+            then
+               Machine.Push (Lith.Objects.Symbols.Ellipsis_Symbol);
                Machine.Push (Call_It);
                Machine.Push (Nil);
                Machine.Cons;
@@ -150,7 +153,9 @@ package body Lith.Machine.SECD is
                return True;
             elsif Call_It = Nil then
                exit;
-            elsif Machine.Car (Pat_It) = Lith.Symbols.Wildcard_Atom then
+            elsif Machine.Car (Pat_It)
+              = Lith.Objects.Symbols.Wildcard_Symbol
+            then
                Pat_It := Machine.Cdr (Pat_It);
                Call_It := Machine.Cdr (Call_It);
             else
@@ -354,7 +359,7 @@ package body Lith.Machine.SECD is
      (Machine : in out Root_Lith_Machine'Class)
    is
       use Lith.Objects;
-      use Lith.Symbols;
+      use Lith.Objects.Symbols;
 
       procedure Push_Control (C : Object);
       function Pop_Control return Object with Unreferenced;
@@ -459,8 +464,9 @@ package body Lith.Machine.SECD is
                Trace : Object;
                Found : Boolean;
             begin
-               Environment.Get (Lith.Symbols.Get_Symbol ("*trace-eval*"),
-                                Trace, Found);
+               Environment.Get
+                 (Get_Symbol ("*trace-eval*"),
+                  Trace, Found);
 
                if Found and then Trace /= False_Value then
                   Trace_Eval := True;
@@ -503,7 +509,7 @@ package body Lith.Machine.SECD is
             elsif Is_Character (C) then
                Machine.Push (C);
             elsif Is_Symbol (C) then
-               if C = Choice_Atom then
+               if C = Choice then
                   declare
                      Cond : constant Object := Machine.Pop;
                   begin
@@ -518,7 +524,7 @@ package body Lith.Machine.SECD is
                      end if;
                      C_Updated := True;
                   end;
-               elsif C = Lith.Symbols.Stack_To_Control then
+               elsif C = Lith.Objects.Symbols.Stack_To_Control then
                   Machine.Control := Cs;
                   Push_Control (Machine.Pop);
                   C_Updated := True;
@@ -526,9 +532,7 @@ package body Lith.Machine.SECD is
                   Machine.Drop;
                elsif C = Unwind_Protect then
                   null;
-               elsif C = Exception_Handler then
-                  null;
-               elsif C = Internal_Define_Atom then
+               elsif C = Internal_Define then
                   declare
                      Value : constant Object := Machine.Top (1);
                      Name  : constant Object := Machine.Top (2);
@@ -552,7 +556,7 @@ package body Lith.Machine.SECD is
                         Machine.Push (Name);
                      end if;
                   end;
-               elsif C = Lith_Set_Atom then
+               elsif C = Set_Symbol then
                   declare
                      Value : constant Object := Machine.Top (1);
                      Name  : constant Object := Machine.Top (2);
@@ -617,7 +621,7 @@ package body Lith.Machine.SECD is
                   Machine.Control := Cs;
                   C_Updated := True;
 
-                  if Is_Pair (F) and then Machine.Car (F) = Macro then
+                  if Is_Pair (F) and then Machine.Car (F) = Macro_Symbol then
                      for I in reverse Arguments'Range loop
                         Machine.R2 := Machine.Cons (Machine.Pop, Machine.R2);
                         Arguments (I) := Machine.Car (Machine.R2);
@@ -652,15 +656,15 @@ package body Lith.Machine.SECD is
                      end;
 
                   elsif Is_Pair (F)
-                    and then (Machine.Car (F) = Lambda
-                              or else Machine.Car (F) = Macro)
+                    and then (Machine.Car (F) = Lambda_Symbol
+                              or else Machine.Car (F) = Macro_Symbol)
                   then
-                     if Machine.Car (F) = Macro then
+                     if Machine.Car (F) = Macro_Symbol then
                         if Trace_Eval then
                            Ada.Wide_Wide_Text_IO.Put_Line
                              ("macro: pushing post-macro");
                         end if;
-                        Push_Control (Lith.Symbols.Stack_To_Control);
+                        Push_Control (Lith.Objects.Symbols.Stack_To_Control);
                      end if;
 
                      if Trace_Eval and then Is_Tail_Context then
@@ -724,16 +728,16 @@ package body Lith.Machine.SECD is
                   F : constant Object := Machine.Car (C);
                   Args : constant Object := Machine.Cdr (C);
                begin
-                  if F = Quote then
+                  if F = Quote_Symbol then
                      if Machine.Cdr (Args) /= Nil then
                         raise Evaluation_Error with
                           "quote: too many arguments";
                      end if;
                      Machine.Push (Machine.Car (Args));
-                  elsif F = If_Atom then
+                  elsif F = If_Symbol then
                      Machine.Push (Args, Secondary);
                      Machine.Control :=
-                       Machine.Cons (Choice_Atom, Cs);
+                       Machine.Cons (Choice, Cs);
                      Machine.Control :=
                        Machine.Cons (Machine.Car (Args),
                                      Machine.Control);
@@ -761,14 +765,14 @@ package body Lith.Machine.SECD is
 
                      Machine.Drop (1, Secondary);
                      C_Updated := True;
-                  elsif F = Set_Atom then
+                  elsif F = Set_Symbol then
                      Machine.Control :=
-                       Machine.Cons (Lith_Set_Atom, Cs);
+                       Machine.Cons (Set_Symbol, Cs);
                      Machine.Control :=
                        Machine.Cons (Machine.Cadr (Args), Machine.Control);
                      Machine.Push (Machine.Car (Args));
                      C_Updated := True;
-                  elsif F = Define_Atom then
+                  elsif F = Lith_Define_Symbol then
                      declare
                         Name : constant Object :=
                                  Machine.Car (Args);
@@ -784,7 +788,7 @@ package body Lith.Machine.SECD is
                         end if;
 
                         Machine.Push (Value);
-                        Machine.Push (Internal_Define_Atom);
+                        Machine.Push (Internal_Define);
                         Machine.Push (Cs);
                         Machine.Cons;
                         Machine.Cons;
@@ -793,7 +797,7 @@ package body Lith.Machine.SECD is
                         Machine.Push (Name);
                         C_Updated := True;
                      end;
-                  elsif F = Apply_Syntax_Atom then
+                  elsif F = Apply_Syntax_Symbol then
                      declare
                         Syntax : constant Object := Machine.Cadr (Args);
                         Call   : Object;
@@ -816,7 +820,7 @@ package body Lith.Machine.SECD is
                           Machine.Cons (Machine.Pop, Cs);
                         C_Updated := True;
                      end;
-                  elsif F = Dynamic_Wind then
+                  elsif F = Dynamic_Wind_Symbol then
                      Machine.Make_List
                        ((Unwind_Protect,
                         Machine.Car (Machine.Cddr (Args)),
@@ -834,7 +838,7 @@ package body Lith.Machine.SECD is
                      Machine.Cons;
                      Machine.Control := Machine.Pop;
                      C_Updated := True;
-                  elsif F = With_Exception_Handler_Atom then
+                  elsif F = With_Exception_Handler_Symbol then
                      Machine.Push (Machine.Cadr (Args));
                      Machine.Push (Nil);
                      Machine.Cons;
@@ -847,7 +851,7 @@ package body Lith.Machine.SECD is
                      Machine.Cons;
                      Machine.Handlers := Machine.Pop;
                      C_Updated := True;
-                  elsif F = Raise_Exception_Atom then
+                  elsif F = Raise_Symbol then
                      declare
                         Handler : Object;
                         Ex      : Object;
@@ -894,7 +898,7 @@ package body Lith.Machine.SECD is
                      Machine.Handlers := Machine.Cdr (Machine.Handlers);
 
                      Machine.Make_List
-                       ((Raise_Exception_Atom, Machine.Car (Args), Nil));
+                       ((Raise_Symbol, Machine.Car (Args), Nil));
                      Machine.Push (Nil);
                      Machine.Cons;
                      if Machine.Control = Nil then
@@ -918,15 +922,15 @@ package body Lith.Machine.SECD is
                   elsif F = Unwind_Dump then
                      Restore_State (Machine.Car (Args));
                      C_Updated := True;
-                  elsif F = Lambda or else F = Macro then
+                  elsif F = Lambda_Symbol or else F = Macro_Symbol then
                      Machine.Push (C);
-                  elsif F = String_Atom then
+                  elsif F = String_Value then
                      Machine.Push (C);
-                  elsif F = Large_Integer_Atom then
+                  elsif F = Large_Integer_Value then
                      Machine.Push (C);
-                  elsif F = Floating_Point_Atom then
+                  elsif F = Floating_Point_Value then
                      Machine.Push (C);
-                  elsif F = Import_Atom then
+                  elsif F = Import_Symbol then
 
                      Machine.Push (Args);
 
@@ -939,7 +943,7 @@ package body Lith.Machine.SECD is
                         Machine.Push
                           ((if Result then True_Value else False_Value));
                      end;
-                  elsif F = Begin_Atom then
+                  elsif F = Begin_Symbol then
 
                      if Trace_Eval then
                         Ada.Wide_Wide_Text_IO.Put_Line
@@ -980,7 +984,7 @@ package body Lith.Machine.SECD is
                      C_Updated := True;
 
                      if (Is_Pair (F) and then
-                         Machine.Car (F) = Lambda)
+                         Machine.Car (F) = Lambda_Symbol)
                        or else Is_Macro (Machine, F)
                      then
                         Is_Tail_Context := False;
@@ -1129,7 +1133,7 @@ package body Lith.Machine.SECD is
                Symbol : constant Symbol_Type :=
                           To_Symbol (Machine.Car (Library_Name));
                Name   : constant String :=
-                          To_String (Lith.Symbols.Get_Name (Symbol));
+                          To_String (Lith.Objects.Symbols.Get_Name (Symbol));
             begin
                return "/" & Name
                  & Get_Library_Path (Machine.Cdr (Library_Name));
@@ -1176,16 +1180,16 @@ package body Lith.Machine.SECD is
       use Lith.Objects;
    begin
       if Is_Pair (F)
-        and then Machine.Car (F) = Lith.Symbols.Macro
+        and then Machine.Car (F) = Lith.Objects.Symbols.Macro_Symbol
       then
          return True;
 --        elsif Is_Pair (F)
---          and then Machine.Car (F) = Lith.Symbols.Lambda
+--          and then Machine.Car (F) = Lith.Objects.Symbols.Lambda
 --          and then Is_Pair (Machine.Cdr (F))
 --          and then Is_Pair (Machine.Cddr (F))
 --          and then Is_Pair (Machine.Car (Machine.Cddr (F)))
 --          and then Machine.Car (Machine.Car (Machine.Cddr (F)))
---          = Lith.Symbols.Apply_Syntax_Atom
+--          = Lith.Objects.Symbols.Apply_Syntax_Atom
 --        then
 --           return True;
       elsif Is_Symbol (F) then

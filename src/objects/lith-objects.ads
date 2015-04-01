@@ -6,10 +6,13 @@ package Lith.Objects is
 
    type Object is private;
 
-   Nil         : constant Object;
-   True_Value  : constant Object;
-   False_Value : constant Object;
-   No_Value    : constant Object;
+   Nil                  : constant Object;
+   True_Value           : constant Object;
+   False_Value          : constant Object;
+   No_Value             : constant Object;
+   String_Value         : constant Object;
+   Floating_Point_Value : constant Object;
+   Large_Integer_Value  : constant Object;
 
    function To_Object (X : Boolean) return Object
    is (if X then True_Value else False_Value);
@@ -64,7 +67,7 @@ package Lith.Objects is
 
    type Array_Of_Objects is array (Positive range <>) of Object;
 
-   function Hex_Image (Item : Object) return String;
+   function Hex_Image (Item : Object) return Wide_Wide_String;
 
    type Stack_Type is (Primary, Secondary);
 
@@ -270,6 +273,16 @@ private
    No_Value : constant Object :=
                 (Payload => 3,
                  Tag     => Internal_Object);
+
+   String_Value : constant Object :=
+                    (Payload => 4,
+                     Tag     => Internal_Object);
+   Floating_Point_Value : constant Object :=
+                            (Payload => 5,
+                             Tag     => Internal_Object);
+   Large_Integer_Value  : constant Object :=
+                            (Payload => 6,
+                             Tag     => Internal_Object);
 
    type Symbol_Type is new Object_Payload;
 

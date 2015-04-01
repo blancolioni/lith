@@ -39,10 +39,10 @@ package body Lith.Objects is
    -- Hex_Image --
    ---------------
 
-   function Hex_Image (Item : Object) return String is
+   function Hex_Image (Item : Object) return Wide_Wide_String is
 
       Payload : Object_Payload := Item.Payload;
-      Tag     : constant Character :=
+      Tag     : constant Wide_Wide_Character :=
                   (case Item.Tag is
                       when Integer_Object   => 'i',
                       when Pair_Object      => 'p',
@@ -53,17 +53,22 @@ package body Lith.Objects is
                       when Internal_Object  => '-',
                       when External_Object  => 'e');
 
-      Result : String (1 .. 8);
+      Result : Wide_Wide_String (1 .. 8);
 
-      function Hex_Digit (Item : Object_Payload) return Character;
+      function Hex_Digit
+        (Item : Object_Payload)
+         return Wide_Wide_Character;
       --  Item should be in range 0 .. 15
 
       ---------------
       -- Hex_Digit --
       ---------------
 
-      function Hex_Digit (Item : Object_Payload) return Character is
-         Hex_Digits : constant String := "0123456789ABCDEF";
+      function Hex_Digit
+        (Item : Object_Payload)
+         return Wide_Wide_Character
+      is
+         Hex_Digits : constant Wide_Wide_String := "0123456789ABCDEF";
       begin
          return Hex_Digits (Positive (Item + 1));
       end Hex_Digit;

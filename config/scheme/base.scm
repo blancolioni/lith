@@ -172,7 +172,7 @@
          ((integer? x) (make-rat x y))
          ((rational? x) (div-rat x y))))
          
-(define (#alu-rat op x y)
+(define (apply-rat op x y)
    (cond ((eq? op '+) (add-rat x y))
          ((eq? op '-) (sub-rat x y))
          ((eq? op '*) (mul-rat x y))
@@ -374,7 +374,7 @@
         (else (write-string (symbol->string x)))))
 
 (define (write-string x)
-   (define (wchars xs) (if (null? xs) #no-value
+   (define (wchars xs) (if (null? xs) #no-value 
                            (begin (write-char (car xs))
                                   (wchars (cdr xs)))))
    (wchars (cdr x)))
