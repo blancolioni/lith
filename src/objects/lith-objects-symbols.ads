@@ -17,6 +17,7 @@ package Lith.Objects.Symbols is
    function Choice return Lith.Objects.Object;
    function Do_Car return Lith.Objects.Object;
    function Do_Cdr return Lith.Objects.Object;
+   function Do_Null return Lith.Objects.Object;
    function Dynamic_Wind_Symbol return Lith.Objects.Object;
    function Ellipsis_Symbol return Lith.Objects.Object;
    function If_Symbol return Lith.Objects.Object;
@@ -25,6 +26,7 @@ package Lith.Objects.Symbols is
    function Lambda_Symbol return Lith.Objects.Object;
    function Lith_Define_Symbol return Lith.Objects.Object;
    function Macro_Symbol return Lith.Objects.Object;
+   function Null_Symbol return Lith.Objects.Object;
    function Quote_Symbol return Lith.Objects.Object;
    function Raise_Symbol return Lith.Objects.Object;
    function Set_Symbol return Lith.Objects.Object;
