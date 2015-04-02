@@ -23,10 +23,18 @@ package Lith.Objects.Symbol_Maps is
                       Key       : Symbol_Type;
                       Value     : Element_Type);
 
+   procedure Clear (Container : in out Map);
+
    procedure Iterate
      (Container : Map;
       Process   : not null access
         procedure (Item : Element_Type));
+
+   procedure Iterate
+     (Container : Map;
+      Process   : not null access
+        procedure (Key : Symbol_Type;
+                   Item : Element_Type));
 
 private
 

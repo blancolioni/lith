@@ -1,5 +1,18 @@
 package body Lith.Objects.Symbol_Maps is
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Container : in out Map) is
+   begin
+      Container.Internal.Clear;
+   end Clear;
+
+   --------------
+   -- Contains --
+   --------------
+
    function Contains
      (Container : Map;
       Key       : Symbol_Type)
@@ -47,6 +60,23 @@ package body Lith.Objects.Symbol_Maps is
    begin
       for Item of Container.Internal loop
          Process (Item);
+      end loop;
+   end Iterate;
+
+   -------------
+   -- Iterate --
+   -------------
+
+   procedure Iterate
+     (Container : Map;
+      Process   : not null access
+        procedure (Key : Symbol_Type;
+                   Item : Element_Type))
+   is
+   begin
+      for Position in Container.Internal.Iterate loop
+         Process (Internal_Symbol_Maps.Key (Position),
+                  Internal_Symbol_Maps.Element (Position));
       end loop;
    end Iterate;
 
