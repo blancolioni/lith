@@ -130,8 +130,10 @@
 
 (define (if2cond clauses)
   (if (null? clauses) nil
-    (if (eq? (caar clauses) 'else) (car (cdar clauses))
-      (list 'if (caar clauses) (car (cdar clauses)) (if2cond (cdr clauses))))))
+    (let ((caar-clauses (caar clauses))
+          (cdar-clauses (cdar clauses)))
+      (if (eq? caar-clauses 'else) (car cdar-clauses)
+          (list 'if caar-clauses (car cdar-clauses) (if2cond (cdr clauses)))))))
 
 (define cond (macro clauses (if2cond clauses)))
 
