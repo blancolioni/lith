@@ -177,6 +177,18 @@ package body Lith.Objects.Symbols is
       return Result;
    end Get_Symbol;
 
+   -------------------
+   -- Is_Predefined --
+   -------------------
+
+   function Is_Predefined
+     (Symbol : Lith.Objects.Symbol_Type)
+      return Boolean
+   is
+   begin
+      return Symbol <= Builtin_Symbol'Pos (Builtin_Symbol'Last) + 1;
+   end Is_Predefined;
+
 begin
    for Sym_Name in Builtin_Symbol loop
       declare

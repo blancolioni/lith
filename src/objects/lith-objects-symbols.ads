@@ -6,6 +6,10 @@ package Lith.Objects.Symbols is
    function Get_Name (Symbol : Lith.Objects.Symbol_Type)
                       return Wide_Wide_String;
 
+   function Is_Predefined
+     (Symbol : Lith.Objects.Symbol_Type)
+      return Boolean;
+
    function Apply_Syntax_Symbol return Lith.Objects.Object;
    function Begin_Symbol return Lith.Objects.Object;
    function Choice return Lith.Objects.Object;
