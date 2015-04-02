@@ -1,4 +1,6 @@
 private with Ada.Calendar;
+private with Ada.Containers.Doubly_Linked_Lists;
+private with Ada.Containers.Ordered_Maps;
 private with Ada.Containers.Vectors;
 private with Ada.Containers.Indefinite_Hashed_Maps;
 private with Ada.Containers.Indefinite_Vectors;
@@ -7,6 +9,8 @@ private with Ada.Strings.Fixed.Hash_Case_Insensitive;
 private with Ada.Strings.Fixed.Equal_Case_Insensitive;
 
 with Lith.Objects;
+
+private with Lith.Objects.Symbol_Maps;
 
 package Lith.Machine is
 
@@ -18,6 +22,17 @@ package Lith.Machine is
    function Create
      (Core_Size : Positive)
       return Lith_Machine;
+
+   procedure Start_Profile
+     (Machine : in out Root_Lith_Machine'Class);
+
+   procedure Finish_Profile
+     (Machine : in out Root_Lith_Machine'Class);
+
+   procedure Report_Profile
+     (Machine           : in out Root_Lith_Machine'Class;
+      Procedure_Profile : Boolean;
+      Max_Lines         : Natural := 20);
 
    overriding procedure Push
      (Machine : in out Root_Lith_Machine;
@@ -163,6 +178,11 @@ private
       end record
      with Pack, Size => 32;
 
+   function "<" (Left, Right : Source_Reference) return Boolean
+   is (Left.File < Right.File
+       or else (Left.File = Right.File
+                and then Left.Line < Right.Line));
+
    function Show (Machine : Root_Lith_Machine'Class;
                   Ref     : Source_Reference)
                   return Wide_Wide_String;
@@ -178,6 +198,28 @@ private
      new Ada.Containers.Indefinite_Vectors
        (Index_Type   => Real_File_Id,
         Element_Type => Wide_Wide_String);
+
+   type Profile_Info_Record is
+      record
+         Hit_Count : Natural := 0;
+      end record;
+
+   package Profile_Source_Maps is
+     new Ada.Containers.Ordered_Maps
+       (Source_Reference, Profile_Info_Record);
+
+   package Procedure_Profile_Maps is
+     new Lith.Objects.Symbol_Maps (Profile_Info_Record);
+
+   type Profile_Result_Record is
+      record
+         Reference : Source_Reference;
+         Proc      : Lith.Objects.Object;
+         Info      : Profile_Info_Record;
+      end record;
+
+   package Profile_Result_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Profile_Result_Record);
 
    type Memory_Source_Reference_Type is
      array (Lith.Objects.Cell_Address range <>) of Source_Reference
@@ -210,6 +252,11 @@ private
          Source_Files      : Source_File_Maps.Map;
          Source_File_Names : Source_File_Vectors.Vector;
          Current_Context   : Source_Reference;
+         Source_Profile    : Profile_Source_Maps.Map;
+         Procedure_Profile : Procedure_Profile_Maps.Map;
+         Source_Result     : Profile_Result_Lists.List;
+         Procedure_Result  : Profile_Result_Lists.List;
+         Profiling         : Boolean := False;
       end record;
 
    function Allocate
@@ -223,5 +270,9 @@ private
    procedure Set_Context
      (Machine : in out Root_Lith_Machine'Class;
       Item    : Lith.Objects.Object);
+
+   procedure Hit
+     (Machine  : in out Root_Lith_Machine'Class;
+      Item     : Lith.Objects.Object);
 
 end Lith.Machine;

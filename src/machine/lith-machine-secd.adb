@@ -460,6 +460,10 @@ package body Lith.Machine.SECD is
 
             Set_Context (Machine, C);
 
+            if Machine.Profiling then
+               Machine.Hit (C);
+            end if;
+
             declare
                Trace : Object;
                Found : Boolean;
@@ -509,6 +513,7 @@ package body Lith.Machine.SECD is
             elsif Is_Character (C) then
                Machine.Push (C);
             elsif Is_Symbol (C) then
+               Machine.Hit (C);
                if C = Choice then
                   declare
                      Cond : constant Object := Machine.Pop;

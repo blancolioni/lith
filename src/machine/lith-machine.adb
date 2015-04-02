@@ -267,6 +267,93 @@ package body Lith.Machine is
       return Machine.Pop;
    end Evaluate;
 
+   --------------------
+   -- Finish_Profile --
+   --------------------
+
+   procedure Finish_Profile
+     (Machine : in out Root_Lith_Machine'Class)
+   is
+
+      procedure Process (Key  : Lith.Objects.Symbol_Type;
+                         Info : Profile_Info_Record);
+
+      -------------
+      -- Process --
+      -------------
+
+      procedure Process (Key  : Lith.Objects.Symbol_Type;
+                         Info : Profile_Info_Record)
+      is
+         Target : Profile_Result_Lists.Cursor :=
+                    Machine.Procedure_Result.First;
+      begin
+         while Profile_Result_Lists.Has_Element (Target) loop
+            declare
+               Result_Item : Profile_Result_Record renames
+                               Profile_Result_Lists.Element (Target);
+            begin
+               if Result_Item.Info.Hit_Count < Info.Hit_Count then
+                  Machine.Procedure_Result.Insert
+                    (Before   => Target,
+                     New_Item => ((0, 0),
+                                  Lith.Objects.To_Object (Key),
+                                  Info));
+                  exit;
+               end if;
+               Profile_Result_Lists.Next (Target);
+            end;
+         end loop;
+
+         if not Profile_Result_Lists.Has_Element (Target) then
+            Machine.Procedure_Result.Append
+              (((0, 0),
+               Lith.Objects.To_Object (Key),
+               Info));
+         end if;
+      end Process;
+
+   begin
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Profile complete");
+      Machine.Profiling := False;
+
+      Machine.Procedure_Profile.Iterate (Process'Access);
+
+      for Position in Machine.Source_Profile.Iterate loop
+         declare
+            Info : Profile_Info_Record renames
+                     Profile_Source_Maps.Element (Position);
+            Target : Profile_Result_Lists.Cursor :=
+                       Machine.Source_Result.First;
+         begin
+            while Profile_Result_Lists.Has_Element (Target) loop
+               declare
+                  Result_Item : Profile_Result_Record renames
+                                  Profile_Result_Lists.Element (Target);
+               begin
+                  if Result_Item.Info.Hit_Count < Info.Hit_Count then
+                     Machine.Source_Result.Insert
+                       (Before   => Target,
+                        New_Item => (Profile_Source_Maps.Key (Position),
+                                     Lith.Objects.No_Value,
+                                     Info));
+                     exit;
+                  end if;
+                  Profile_Result_Lists.Next (Target);
+               end;
+            end loop;
+
+            if not Profile_Result_Lists.Has_Element (Target) then
+               Machine.Source_Result.Append
+                 ((Profile_Source_Maps.Key (Position),
+                  Lith.Objects.No_Value,
+                  Info));
+            end if;
+         end;
+      end loop;
+   end Finish_Profile;
+
    --------
    -- GC --
    --------
@@ -376,6 +463,59 @@ package body Lith.Machine is
    begin
       return Machine.External_Objects (Address).External_Object;
    end Get_External_Object;
+
+   ---------
+   -- Hit --
+   ---------
+
+   procedure Hit
+     (Machine  : in out Root_Lith_Machine'Class;
+      Item     : Lith.Objects.Object)
+   is
+      use Lith.Objects;
+   begin
+      if Is_Address (Item) then
+         if Machine.Source_Refs (To_Address (Item)).Line /= 0 then
+            declare
+               use Profile_Source_Maps;
+               Ref : constant Source_Reference :=
+                       Machine.Source_Refs (To_Address (Item));
+               Position : constant Cursor := Machine.Source_Profile.Find (Ref);
+            begin
+               if Has_Element (Position) then
+                  Machine.Source_Profile.Replace_Element
+                    (Position,
+                     (Hit_Count => Element (Position).Hit_Count + 1));
+               else
+                  Machine.Source_Profile.Insert (Ref, (Hit_Count => 1));
+               end if;
+            end;
+         end if;
+      elsif Is_Symbol (Item)
+        and then (Is_Function (Item)
+                  or else Lith.Objects.Symbols.Is_Predefined
+                    (To_Symbol (Item))
+                  or else Lith.Environment.Get (To_Symbol (Item), No_Value)
+                  /= No_Value)
+      then
+         declare
+            use Procedure_Profile_Maps;
+            Ref      : constant Symbol_Type := To_Symbol (Item);
+         begin
+            if Machine.Procedure_Profile.Contains (Ref) then
+               declare
+                  Elem : Profile_Info_Record :=
+                           Machine.Procedure_Profile.Element (Ref);
+               begin
+                  Elem.Hit_Count := Elem.Hit_Count + 1;
+                  Machine.Procedure_Profile.Replace (Ref, Elem);
+               end;
+            else
+               Machine.Procedure_Profile.Insert (Ref, (Hit_Count => 1));
+            end if;
+         end;
+      end if;
+   end Hit;
 
    ----------
    -- Load --
@@ -584,6 +724,42 @@ package body Lith.Machine is
            (Natural (Machine.Core'Length
             - Machine.Alloc_Count)));
    end Report_Memory;
+
+   --------------------
+   -- Report_Profile --
+   --------------------
+
+   procedure Report_Profile
+     (Machine           : in out Root_Lith_Machine'Class;
+      Procedure_Profile : Boolean;
+      Max_Lines         : Natural := 20)
+   is
+      Count : Natural := 0;
+   begin
+      if Procedure_Profile then
+         for Rec of Machine.Procedure_Result loop
+            Count := Count + 1;
+            exit when Count > Max_Lines;
+
+            Ada.Wide_Wide_Text_IO.Put_Line
+              (Natural'Wide_Wide_Image
+                 (Rec.Info.Hit_Count)
+               & "    "
+               & Machine.Show (Rec.Proc));
+         end loop;
+      else
+         for Rec of Machine.Source_Result loop
+            Count := Count + 1;
+            exit when Count > Max_Lines;
+
+            Ada.Wide_Wide_Text_IO.Put_Line
+              (Natural'Wide_Wide_Image
+                 (Rec.Info.Hit_Count)
+               & "    "
+               & Machine.Show (Rec.Reference));
+         end loop;
+      end if;
+   end Report_Profile;
 
    ------------------
    -- Report_State --
@@ -947,6 +1123,23 @@ package body Lith.Machine is
            & "]";
       end if;
    end Show;
+
+   -------------------
+   -- Start_Profile --
+   -------------------
+
+   procedure Start_Profile
+     (Machine : in out Root_Lith_Machine'Class)
+   is
+   begin
+      Ada.Wide_Wide_Text_IO.Put_Line
+        ("Start profiling ...");
+      Machine.Source_Profile.Clear;
+      Machine.Procedure_Profile.Clear;
+      Machine.Source_Result.Clear;
+      Machine.Procedure_Result.Clear;
+      Machine.Profiling := True;
+   end Start_Profile;
 
    ---------
    -- Top --
