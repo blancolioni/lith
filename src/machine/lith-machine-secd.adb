@@ -533,6 +533,8 @@ package body Lith.Machine.SECD is
                   Machine.Push (Machine.Car (Machine.Pop));
                elsif C = Do_Cdr then
                   Machine.Push (Machine.Cdr (Machine.Pop));
+               elsif C = Do_Null then
+                  Machine.Push (To_Object (Machine.Pop = Nil));
                elsif C = Lith.Objects.Symbols.Stack_To_Control then
                   Machine.Control := Cs;
                   Push_Control (Machine.Pop);
@@ -750,7 +752,12 @@ package body Lith.Machine.SECD is
                          Cs));
                      Machine.Control := Machine.Pop;
                      C_Updated := True;
-
+                  elsif F = Null_Symbol then
+                     Machine.Make_List ((Machine.Car (Args),
+                                        Do_Null,
+                                        Cs));
+                     Machine.Control := Machine.Pop;
+                     C_Updated := True;
                   elsif F = If_Symbol then
                      Machine.Push (Args, Secondary);
                      Machine.Control :=

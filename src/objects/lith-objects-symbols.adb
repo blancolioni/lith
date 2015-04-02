@@ -21,14 +21,15 @@ package body Lith.Objects.Symbols is
    Name_To_Symbol_Map : Symbol_Maps.Map;
 
    type Builtin_Symbol is
-     (Sym_Choice, Sym_Do_Car, Sym_Do_Cdr,
+     (Sym_Choice, Sym_Do_Car, Sym_Do_Cdr, Sym_Do_Null,
       Sym_Internal_Define, Sym_Stack_To_Control,
       Sym_Stack_Drop, Sym_Tail_Context, Sym_Unwind_Continue, Sym_Unwind_Dump,
       Sym_Unwind_Protect,
       Sym_Apply_Syntax, Sym_Begin, Sym_Car, Sym_Cdr, Sym_Dynamic_Wind,
-      Sym_Ellipsis, Sym_If, Sym_Import, Sym_Lambda, Sym_Lith_Define, Sym_Macro,
-      Sym_Quote, Sym_Raise, Sym_Set, Sym_Unquote_Splicing, Sym_Unquote,
-      Sym_Wildcard, Sym_With_Exception_Handler);
+      Sym_Ellipsis, Sym_If, Sym_Import, Sym_Lambda, Sym_Lith_Define,
+      Sym_Macro, Sym_Null, Sym_Quote, Sym_Raise, Sym_Set,
+      Sym_Unquote_Splicing, Sym_Unquote, Sym_Wildcard,
+      Sym_With_Exception_Handler);
 
    subtype Anonymous_Builtin_Symbol is
      Builtin_Symbol range Sym_Choice .. Sym_Unwind_Protect;
@@ -96,6 +97,9 @@ package body Lith.Objects.Symbols is
    function Do_Cdr return Object
    is (Get_Builtin_Symbol (Sym_Do_Cdr));
 
+   function Do_Null return Object
+   is (Get_Builtin_Symbol (Sym_Do_Null));
+
    function Dynamic_Wind_Symbol return Object
    is (Get_Builtin_Symbol (Sym_Dynamic_Wind));
 
@@ -119,6 +123,9 @@ package body Lith.Objects.Symbols is
 
    function Macro_Symbol return Object
    is (Get_Builtin_Symbol (Sym_Macro));
+
+   function Null_Symbol return Object
+   is (Get_Builtin_Symbol (Sym_Null));
 
    function Quote_Symbol return Object
    is (Get_Builtin_Symbol (Sym_Quote));
@@ -218,6 +225,8 @@ begin
                    then "_"
                    elsif Sym_Name = Sym_Set
                    then "set!"
+                   elsif Sym_Name = Sym_Null
+                   then "null?"
                    else Builtin_Symbol_To_String (Sym_Name));
       begin
          Symbol_To_Name_Map.New_Element (Name, New_Value);
