@@ -12,7 +12,11 @@ package Lith.Objects.Symbols is
 
    function Apply_Syntax_Symbol return Lith.Objects.Object;
    function Begin_Symbol return Lith.Objects.Object;
+   function Car_Symbol return Object;
+   function Cdr_Symbol return Object;
    function Choice return Lith.Objects.Object;
+   function Do_Car return Lith.Objects.Object;
+   function Do_Cdr return Lith.Objects.Object;
    function Dynamic_Wind_Symbol return Lith.Objects.Object;
    function Ellipsis_Symbol return Lith.Objects.Object;
    function If_Symbol return Lith.Objects.Object;
