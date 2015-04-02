@@ -21,10 +21,11 @@ package body Lith.Objects.Symbols is
    Name_To_Symbol_Map : Symbol_Maps.Map;
 
    type Builtin_Symbol is
-     (Sym_Choice, Sym_Internal_Define, Sym_Stack_To_Control,
+     (Sym_Choice, Sym_Do_Car, Sym_Do_Cdr,
+      Sym_Internal_Define, Sym_Stack_To_Control,
       Sym_Stack_Drop, Sym_Tail_Context, Sym_Unwind_Continue, Sym_Unwind_Dump,
       Sym_Unwind_Protect,
-      Sym_Apply_Syntax, Sym_Begin, Sym_Dynamic_Wind,
+      Sym_Apply_Syntax, Sym_Begin, Sym_Car, Sym_Cdr, Sym_Dynamic_Wind,
       Sym_Ellipsis, Sym_If, Sym_Import, Sym_Lambda, Sym_Lith_Define, Sym_Macro,
       Sym_Quote, Sym_Raise, Sym_Set, Sym_Unquote_Splicing, Sym_Unquote,
       Sym_Wildcard, Sym_With_Exception_Handler);
@@ -80,8 +81,20 @@ package body Lith.Objects.Symbols is
    function Begin_Symbol return Object
    is (Get_Builtin_Symbol (Sym_Begin));
 
+   function Car_Symbol return Object
+   is (Get_Builtin_Symbol (Sym_Car));
+
+   function Cdr_Symbol return Object
+   is (Get_Builtin_Symbol (Sym_Cdr));
+
    function Choice return Object
    is (Get_Builtin_Symbol (Sym_Choice));
+
+   function Do_Car return Object
+   is (Get_Builtin_Symbol (Sym_Do_Car));
+
+   function Do_Cdr return Object
+   is (Get_Builtin_Symbol (Sym_Do_Cdr));
 
    function Dynamic_Wind_Symbol return Object
    is (Get_Builtin_Symbol (Sym_Dynamic_Wind));

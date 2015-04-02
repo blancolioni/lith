@@ -529,6 +529,10 @@ package body Lith.Machine.SECD is
                      end if;
                      C_Updated := True;
                   end;
+               elsif C = Do_Car then
+                  Machine.Push (Machine.Car (Machine.Pop));
+               elsif C = Do_Cdr then
+                  Machine.Push (Machine.Cdr (Machine.Pop));
                elsif C = Lith.Objects.Symbols.Stack_To_Control then
                   Machine.Control := Cs;
                   Push_Control (Machine.Pop);
@@ -739,6 +743,14 @@ package body Lith.Machine.SECD is
                           "quote: too many arguments";
                      end if;
                      Machine.Push (Machine.Car (Args));
+                  elsif F = Car_Symbol or else F = Cdr_Symbol then
+                     Machine.Make_List
+                       ((Machine.Car (Args),
+                        (if F = Car_Symbol then Do_Car else Do_Cdr),
+                         Cs));
+                     Machine.Control := Machine.Pop;
+                     C_Updated := True;
+
                   elsif F = If_Symbol then
                      Machine.Push (Args, Secondary);
                      Machine.Control :=

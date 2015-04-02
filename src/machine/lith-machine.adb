@@ -631,6 +631,18 @@ package body Lith.Machine is
       return Result;
    end Pop;
 
+   ---------------
+   -- Profiling --
+   ---------------
+
+   overriding function Profiling
+     (Machine : Root_Lith_Machine)
+      return Boolean
+   is
+   begin
+      return Machine.Profiling;
+   end Profiling;
+
    ----------
    -- Push --
    ----------

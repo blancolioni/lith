@@ -204,6 +204,8 @@ package Lith.Objects is
       Line_Number : Natural)
    is abstract;
 
+   function Profiling (Store : Object_Store) return Boolean is abstract;
+
    procedure Report_State (Store : in out Object_Store) is abstract;
 
    function Get_External_Object

@@ -34,6 +34,10 @@ package Lith.Machine is
       Procedure_Profile : Boolean;
       Max_Lines         : Natural := 20);
 
+   overriding function Profiling
+     (Machine : Root_Lith_Machine)
+      return Boolean;
+
    overriding procedure Push
      (Machine : in out Root_Lith_Machine;
       Value   : Lith.Objects.Object;

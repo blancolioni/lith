@@ -15,7 +15,7 @@ procedure Lith.Driver is
    Core_Size : constant := 256 * 1024;
    Machine   : constant Lith.Machine.Lith_Machine :=
                  Lith.Machine.Create (Core_Size);
-   Profile   : constant Boolean := True;
+   Profile   : constant Boolean := False;
 begin
 
    Lith.Primitives.Add_Primitives;
