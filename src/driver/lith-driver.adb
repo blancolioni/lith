@@ -2,6 +2,7 @@ with Ada.Wide_Wide_Text_IO;
 
 with Lith.IO;
 with Lith.Machine;
+with Lith.Machine.Profiling;
 
 with Lith.Parser;
 with Lith.Paths;
@@ -12,10 +13,12 @@ with Lith.Vectors;
 with Lith.Bytevectors;
 
 procedure Lith.Driver is
-   Core_Size : constant := 256 * 1024;
-   Machine   : constant Lith.Machine.Lith_Machine :=
-                 Lith.Machine.Create (Core_Size);
-   Profile   : constant Boolean := False;
+   Core_Size       : constant := 256 * 1024;
+   Machine         : constant Lith.Machine.Lith_Machine :=
+                       Lith.Machine.Create (Core_Size);
+   Profile         : constant Boolean := False;
+   Exit_Statistics : constant Boolean := False;
+   Profiler        : Lith.Machine.Profiling.Profile_Type;
 begin
 
    Lith.Primitives.Add_Primitives;
@@ -28,6 +31,7 @@ begin
       Lith.Paths.Config_Path & "/lith.l");
 
    if Profile then
+      Profiler.Start (Machine);
       Machine.Start_Profile;
    end if;
 
@@ -36,14 +40,18 @@ begin
    end if;
 
    if Profile then
+      Profiler.Finish;
       Machine.Finish_Profile;
    end if;
 
-   Machine.Report_State;
-   Machine.Report_Memory;
+   if Exit_Statistics then
+      Machine.Report_State;
+      Machine.Report_Memory;
+   end if;
 
    if Profile then
-      Machine.Report_Profile (True, 100);
+      Profiler.Report;
+      Machine.Report_Profile (True);
    end if;
 
 exception
