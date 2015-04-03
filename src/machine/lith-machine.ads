@@ -34,10 +34,6 @@ package Lith.Machine is
       Procedure_Profile : Boolean;
       Max_Lines         : Natural := 20);
 
-   overriding function Profiling
-     (Machine : Root_Lith_Machine)
-      return Boolean;
-
    overriding procedure Push
      (Machine : in out Root_Lith_Machine;
       Value   : Lith.Objects.Object;
@@ -138,6 +134,17 @@ package Lith.Machine is
                              Path    : Wide_Wide_String)
                              return Boolean;
 
+   overriding procedure Add_Hook
+     (Machine : in out Root_Lith_Machine;
+      Name    : Wide_Wide_String;
+      Hook    : Lith.Objects.Evaluation_Hook);
+
+   overriding function Call_Hook
+     (Machine   : in out Root_Lith_Machine;
+      Name      : Wide_Wide_String;
+      Arguments : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
 private
 
    type Object_Pair is
@@ -229,6 +236,14 @@ private
      array (Lith.Objects.Cell_Address range <>) of Source_Reference
      with Pack;
 
+   package Evaluation_Hook_Maps is
+     new Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Lith.Objects.Evaluation_Hook,
+        Hash            => Ada.Strings.Fixed.Hash_Case_Insensitive,
+        Equivalent_Keys => Ada.Strings.Fixed.Equal_Case_Insensitive,
+        "="             => Lith.Objects."=");
+
    type Root_Lith_Machine is limited new Lith.Objects.Object_Store with
       record
          Core              : access Core_Memory_Type;
@@ -256,6 +271,7 @@ private
          Source_Files      : Source_File_Maps.Map;
          Source_File_Names : Source_File_Vectors.Vector;
          Current_Context   : Source_Reference;
+         Evaluation_Hooks  : Evaluation_Hook_Maps.Map;
          Source_Profile    : Profile_Source_Maps.Map;
          Procedure_Profile : Procedure_Profile_Maps.Map;
          Source_Result     : Profile_Result_Lists.List;

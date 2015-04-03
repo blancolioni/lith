@@ -33,6 +33,20 @@ package body Lith.Machine is
         External_Object_Access);
 
    --------------
+   -- Add_Hook --
+   --------------
+
+   overriding procedure Add_Hook
+     (Machine : in out Root_Lith_Machine;
+      Name    : Wide_Wide_String;
+      Hook    : Lith.Objects.Evaluation_Hook)
+   is
+   begin
+      Machine.Evaluation_Hooks.Insert
+        (Ada.Characters.Conversions.To_String (Name), Hook);
+   end Add_Hook;
+
+   --------------
    -- Allocate --
    --------------
 
@@ -71,6 +85,26 @@ package body Lith.Machine is
          return Result;
       end;
    end Allocate;
+
+   ---------------
+   -- Call_Hook --
+   ---------------
+
+   overriding function Call_Hook
+     (Machine   : in out Root_Lith_Machine;
+      Name      : Wide_Wide_String;
+      Arguments : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      Key : constant String :=
+              Ada.Characters.Conversions.To_String (Name);
+   begin
+      if Machine.Evaluation_Hooks.Contains (Key) then
+         return Machine.Evaluation_Hooks.Element (Key).Call (Arguments);
+      else
+         return Lith.Objects.No_Value;
+      end if;
+   end Call_Hook;
 
    ---------
    -- Car --
@@ -630,18 +664,6 @@ package body Lith.Machine is
       end case;
       return Result;
    end Pop;
-
-   ---------------
-   -- Profiling --
-   ---------------
-
-   overriding function Profiling
-     (Machine : Root_Lith_Machine)
-      return Boolean
-   is
-   begin
-      return Machine.Profiling;
-   end Profiling;
 
    ----------
    -- Push --

@@ -204,8 +204,6 @@ package Lith.Objects is
       Line_Number : Natural)
    is abstract;
 
-   function Profiling (Store : Object_Store) return Boolean is abstract;
-
    procedure Report_State (Store : in out Object_Store) is abstract;
 
    function Get_External_Object
@@ -238,6 +236,28 @@ package Lith.Objects is
      (Store : in out Object_Store'Class;
       List  : Object)
       return Array_Of_Objects;
+
+   type Evaluation_Hook_Interface is interface;
+
+   function Call
+     (Hook      : in out Evaluation_Hook_Interface;
+      Arguments : Array_Of_Objects)
+      return Object
+      is abstract;
+
+   type Evaluation_Hook is access all Evaluation_Hook_Interface'Class;
+
+   procedure Add_Hook (Store : in out Object_Store;
+                       Name    : Wide_Wide_String;
+                       Hook    : Evaluation_Hook)
+   is abstract;
+
+   function Call_Hook
+     (Store     : in out Object_Store;
+      Name      : Wide_Wide_String;
+      Arguments : Array_Of_Objects)
+      return Object
+      is abstract;
 
 private
 
