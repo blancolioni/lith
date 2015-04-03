@@ -132,7 +132,7 @@
       )
       
 (define (unit-test-exceptions)
-      (test (eqv? (dynamic-wind 1 2 3) 2))
+      (test (eqv? (dynamic-wind (lambda () 1) (lambda () 2) (lambda () 3)) 2))
    )
    
 (define (unit-test-functions)
