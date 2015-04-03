@@ -1,3 +1,4 @@
+with Ada.Calendar;
 with Ada.Characters.Conversions;
 with Ada.Wide_Wide_Text_IO;
 
@@ -11,6 +12,9 @@ with Lith.Objects.Symbols;
 package body Lith.Primitives is
 
    Next_Gensym_Index : Natural := 0;
+   Jiffy_Start_Time : constant Ada.Calendar.Time :=
+                         Ada.Calendar.Clock;
+   Jiffies_Per_Second : constant := 1000.0;
 
    function Evaluate_ALU
      (Store       : in out Lith.Objects.Object_Store'Class;
@@ -33,6 +37,11 @@ package body Lith.Primitives is
       return Lith.Objects.Object;
 
    function Evaluate_Cons
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Current_Jiffy
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
@@ -111,7 +120,22 @@ package body Lith.Primitives is
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
 
+   function Evaluate_Jiffies_Per_Second
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
    function Evaluate_Load
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Profile_Start_Cost_Centre
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object;
+
+   function Evaluate_Profile_Finish_Cost_Centre
      (Store       : in out Lith.Objects.Object_Store'Class;
       Arguments   : Lith.Objects.Array_Of_Objects)
       return Lith.Objects.Object;
@@ -158,6 +182,7 @@ package body Lith.Primitives is
       Define_Function ("cdr", 1, Evaluate_Cdr'Access);
       Define_Function ("char->integer", 1, Evaluate_Char_To_Integer'Access);
       Define_Function ("cons", 2, Evaluate_Cons'Access);
+      Define_Function ("current-jiffy", 2, Evaluate_Current_Jiffy'Access);
       Define_Function ("eq?", 2, Evaluate_Eq'Access);
       Define_Function ("eval", 1, Evaluate_Eval'Access);
       Define_Function ("exact", 1, Evaluate_Exact'Access);
@@ -168,9 +193,15 @@ package body Lith.Primitives is
       Define_Function ("inexact", 1, Evaluate_Inexact'Access);
       Define_Function ("integer->char", 1, Evaluate_Integer_To_Char'Access);
       Define_Function ("lith-external?", 1, Evaluate_Is_External'Access);
+      Define_Function ("jiffies-per-second", 1,
+                       Evaluate_Jiffies_Per_Second'Access);
       Define_Function ("load", 1, Evaluate_Load'Access);
       Define_Function ("null?", 1, Evaluate_Is_Null'Access);
       Define_Function ("pair?", 1, Evaluate_Is_Pair'Access);
+      Define_Function ("profile-start-cost-centre", 1,
+                       Evaluate_Profile_Start_Cost_Centre'Access);
+      Define_Function ("profile-finish-cost-centre", 1,
+                       Evaluate_Profile_Finish_Cost_Centre'Access);
       Define_Function ("real?", 1, Evaluate_Is_Real'Access);
       Define_Function ("symbol?", 1, Evaluate_Is_Symbol'Access);
       Define_Function ("integer?", 1, Evaluate_Is_Integer'Access);
@@ -273,6 +304,25 @@ package body Lith.Primitives is
    begin
       return Store.Cons (Car, Cdr);
    end Evaluate_Cons;
+
+   ----------------------------
+   -- Evaluate_Current_Jiffy --
+   ----------------------------
+
+   function Evaluate_Current_Jiffy
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      pragma Unreferenced (Store);
+      pragma Unreferenced (Arguments);
+      use type Ada.Calendar.Time;
+      Now : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Seconds : constant Duration := Now - Jiffy_Start_Time;
+   begin
+      return Lith.Objects.To_Object
+        (Natural (Seconds * Jiffies_Per_Second));
+   end Evaluate_Current_Jiffy;
 
    -----------------
    -- Evaluate_Eq --
@@ -532,6 +582,21 @@ package body Lith.Primitives is
       end if;
    end Evaluate_Is_Symbol;
 
+   ---------------------------------
+   -- Evaluate_Jiffies_Per_Second --
+   ---------------------------------
+
+   function Evaluate_Jiffies_Per_Second
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      pragma Unreferenced (Store);
+      pragma Unreferenced (Arguments);
+   begin
+      return Lith.Objects.To_Object (Integer (Jiffies_Per_Second));
+   end Evaluate_Jiffies_Per_Second;
+
    -------------------
    -- Evaluate_Load --
    -------------------
@@ -550,6 +615,38 @@ package body Lith.Primitives is
          return Lith.Objects.False_Value;
       end if;
    end Evaluate_Load;
+
+   -----------------------------------------
+   -- Evaluate_Profile_Finish_Cost_Centre --
+   -----------------------------------------
+
+   function Evaluate_Profile_Finish_Cost_Centre
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects, Lith.Objects.Symbols;
+   begin
+      return Store.Call_Hook ("cost-centre",
+                              To_Object (Get_Symbol ("finish"))
+                              & Arguments);
+   end Evaluate_Profile_Finish_Cost_Centre;
+
+   ----------------------------------------
+   -- Evaluate_Profile_Start_Cost_Centre --
+   ----------------------------------------
+
+   function Evaluate_Profile_Start_Cost_Centre
+     (Store       : in out Lith.Objects.Object_Store'Class;
+      Arguments   : Lith.Objects.Array_Of_Objects)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects, Lith.Objects.Symbols;
+   begin
+      return Store.Call_Hook ("cost-centre",
+                              To_Object (Get_Symbol ("start"))
+                              & Arguments);
+   end Evaluate_Profile_Start_Cost_Centre;
 
    ---------------------
    -- Evaluate_Random --
