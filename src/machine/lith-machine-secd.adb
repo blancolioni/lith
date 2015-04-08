@@ -31,11 +31,12 @@ package body Lith.Machine.SECD is
       Found   : out Boolean);
 
    procedure Get
-     (Machine : Root_Lith_Machine'Class;
-      Symbol  : Lith.Objects.Symbol_Type;
-      Result  : out Lith.Objects.Object;
-      Found   : out Boolean;
-      Global  : out Boolean);
+     (Machine   : Root_Lith_Machine'Class;
+      Symbol    : Lith.Objects.Symbol_Type;
+      Result    : out Lith.Objects.Object;
+      Found_Env : out Lith.Objects.Object;
+      Found     : out Boolean;
+      Global    : out Boolean);
 
    function Length
      (Machine : Root_Lith_Machine'Class;
@@ -580,11 +581,12 @@ package body Lith.Machine.SECD is
                      Value : constant Object := Machine.Top (1);
                      Name  : constant Object := Machine.Top (2);
                      Old_Value : Object;
+                     Found_Env : Object;
                      Found     : Boolean;
                      Global    : Boolean;
                   begin
                      Get (Machine, To_Symbol (Name), Old_Value,
-                          Found, Global);
+                          Found_Env, Found, Global);
 
                      if (not Found and then Machine.Environment = Nil)
                        or else (Found and then Global)
@@ -596,16 +598,22 @@ package body Lith.Machine.SECD is
                            Lith.Environment.Define
                              (To_Symbol (Name), Value);
                         end if;
-                        Machine.Drop (2);
                      else
-                        --  name and value are still on the stack,
-                        --  in the right order.
-                        Machine.Cons;
-                        Machine.Push (Nil);
-                        Machine.Cons;
-                        Machine.Environment :=
-                          Machine.Cons (Machine.Pop, Machine.Environment);
+                        declare
+                           It : Object := Found_Env;
+                        begin
+                           while It /= Nil
+                             and then Machine.Caar (It) /= Name
+                           loop
+                              It := Machine.Cdr (It);
+                           end loop;
+                           pragma Assert (It /= Nil and then
+                                          Machine.Caar (It) = Name);
+
+                           Machine.Set_Cdr (Machine.Car (It), Value);
+                        end;
                      end if;
+                     Machine.Drop (2);
                      Machine.Push (Name);
                   end;
                else
@@ -1103,9 +1111,11 @@ package body Lith.Machine.SECD is
       Found   : out Boolean)
    is
       Global : Boolean;
+      Found_Env : Lith.Objects.Object;
       pragma Unreferenced (Global);
+      pragma Unreferenced (Found_Env);
    begin
-      Get (Machine, Symbol, Result, Found, Global);
+      Get (Machine, Symbol, Result, Found_Env, Found, Global);
    end Get;
 
    ---------
@@ -1113,11 +1123,12 @@ package body Lith.Machine.SECD is
    ---------
 
    procedure Get
-     (Machine : Root_Lith_Machine'Class;
-      Symbol  : Lith.Objects.Symbol_Type;
-      Result  : out Lith.Objects.Object;
-      Found   : out Boolean;
-      Global  : out Boolean)
+     (Machine   : Root_Lith_Machine'Class;
+      Symbol    : Lith.Objects.Symbol_Type;
+      Result    : out Lith.Objects.Object;
+      Found_Env : out Lith.Objects.Object;
+      Found     : out Boolean;
+      Global    : out Boolean)
    is
       use Lith.Objects;
       Outer : Object := Machine.Environment;
@@ -1132,6 +1143,7 @@ package body Lith.Machine.SECD is
                begin
                   if To_Symbol (Machine.Car (Item)) = Symbol then
                      Result := Machine.Cdr (Item);
+                     Found_Env := Machine.Car (Outer);
                      Found := True;
                      Global := False;
                      return;
@@ -1145,7 +1157,7 @@ package body Lith.Machine.SECD is
 
       Lith.Environment.Get (Symbol, Result, Found);
       Global := Found;
-
+      Found_Env := Nil;
    end Get;
 
    ----------------------
