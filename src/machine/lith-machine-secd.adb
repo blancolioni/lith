@@ -1028,10 +1028,7 @@ package body Lith.Machine.SECD is
                      Machine.Control := Cs;
                      C_Updated := True;
 
-                     if (Is_Pair (F) and then
-                         Machine.Car (F) = Lambda_Symbol)
-                       or else Is_Macro (Machine, F)
-                     then
+                     if Is_Macro (Machine, F) then
                         Is_Tail_Context := False;
                      end if;
 
