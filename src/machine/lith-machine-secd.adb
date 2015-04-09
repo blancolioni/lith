@@ -616,6 +616,29 @@ package body Lith.Machine.SECD is
                      Machine.Drop (2);
                      Machine.Push (Name);
                   end;
+               elsif C = Internal_Apply then
+                  Machine.R1 := Machine.Pop;  --  proc
+                  Machine.R2 := Machine.Pop;  --  args
+
+                  Ada.Wide_Wide_Text_IO.Put_Line
+                    ("apply: " & Machine.Show (Machine.R1)
+                     & " " & Machine.Show (Machine.R2));
+
+                  declare
+                     Args : constant Array_Of_Objects :=
+                              Machine.To_Object_Array (Machine.R2);
+                  begin
+                     for Arg of reverse Args loop
+                        Machine.Push (Arg);
+                     end loop;
+                     Machine.Push (Machine.R1);
+                     Machine.Push (Apply_Object (Args'Length));
+                     Machine.Push (Cs);
+                     Machine.Cons;
+                     Machine.Control := Machine.Pop;
+                     Machine.R1 := Nil;
+                     Machine.R2 := Nil;
+                  end;
                else
                   declare
                      Value : Lith.Objects.Object;

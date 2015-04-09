@@ -81,6 +81,12 @@
     (if (null? xs) ys (cons (car xs) (append-2 (cdr xs) ys))))
   (do-append lists))
 
+(define (apply proc . xs)
+   (define (join acc ys) (display acc) (newline) (display ys) (newline)
+           (if (null? (cdr ys)) (append (reverse acc) (car ys))
+                 (join (cons (car ys) acc) (cdr ys))))
+   (internal-apply proc (join '() xs)))
+   
 (define (reverse xs) 
   (define (reverse-acc xs acc) (if (null? xs) acc (reverse-acc (cdr xs) (cons (car xs) acc))))
   (reverse-acc xs '()))
