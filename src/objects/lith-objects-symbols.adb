@@ -26,9 +26,9 @@ package body Lith.Objects.Symbols is
       Sym_Stack_Drop, Sym_Tail_Context, Sym_Unwind_Continue, Sym_Unwind_Dump,
       Sym_Unwind_Protect,
       Sym_Apply_Syntax, Sym_Begin, Sym_Car, Sym_Cdr, Sym_Dynamic_Wind,
-      Sym_Ellipsis, Sym_If, Sym_Import, Sym_Lambda, Sym_Lith_Define,
-      Sym_Macro, Sym_Null, Sym_Quote, Sym_Raise, Sym_Set,
-      Sym_Unquote_Splicing, Sym_Unquote, Sym_Wildcard,
+      Sym_Ellipsis, Sym_Eval, Sym_If, Sym_Import, Sym_Internal_Apply,
+      Sym_Lambda, Sym_Lith_Define, Sym_Macro, Sym_Null, Sym_Quote, Sym_Raise,
+      Sym_Set, Sym_Unquote_Splicing, Sym_Unquote, Sym_Wildcard,
       Sym_With_Exception_Handler);
 
    subtype Anonymous_Builtin_Symbol is
@@ -106,11 +106,17 @@ package body Lith.Objects.Symbols is
    function Ellipsis_Symbol return Object
    is (Get_Builtin_Symbol (Sym_Ellipsis));
 
+   function Eval_Symbol return Object
+   is (Get_Builtin_Symbol (Sym_Eval));
+
    function If_Symbol return Object
    is (Get_Builtin_Symbol (Sym_If));
 
    function Import_Symbol return Object
    is (Get_Builtin_Symbol (Sym_Import));
+
+   function Internal_Apply return Object
+   is (Get_Builtin_Symbol (Sym_Internal_Apply));
 
    function Internal_Define return Object
    is (Get_Builtin_Symbol (Sym_Internal_Define));
@@ -215,10 +221,9 @@ begin
          Sym_Value : constant Symbol_Type :=
                        Symbol_Type'(Builtin_Symbol'Pos (Sym_Name) + 1);
          New_Value : Symbol_Type;
-         Obj_Value : constant Object := To_Object (Sym_Value);
          Name : constant Wide_Wide_String :=
                   (if Sym_Name in Anonymous_Builtin_Symbol
-                   then Hex_Image (Obj_Value)
+                   then "<" & Builtin_Symbol_To_String (Sym_Name) & ">"
                    elsif Sym_Name = Sym_Ellipsis
                    then "..."
                    elsif Sym_Name = Sym_Wildcard

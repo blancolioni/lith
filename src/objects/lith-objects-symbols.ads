@@ -20,8 +20,10 @@ package Lith.Objects.Symbols is
    function Do_Null return Lith.Objects.Object;
    function Dynamic_Wind_Symbol return Lith.Objects.Object;
    function Ellipsis_Symbol return Lith.Objects.Object;
+   function Eval_Symbol return Lith.Objects.Object;
    function If_Symbol return Lith.Objects.Object;
    function Import_Symbol return Lith.Objects.Object;
+   function Internal_Apply return Lith.Objects.Object;
    function Internal_Define return Lith.Objects.Object;
    function Lambda_Symbol return Lith.Objects.Object;
    function Lith_Define_Symbol return Lith.Objects.Object;
