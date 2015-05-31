@@ -7,23 +7,19 @@ with Lith.Objects.Interfaces;
 package body Lith.Bytevectors is
 
    function Evaluate_Bytevector
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Bytevector_Length
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Bytevector_Ref
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Bytevector_Set
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    -----------
@@ -45,31 +41,36 @@ package body Lith.Bytevectors is
    -------------------------
 
    function Evaluate_Bytevector
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
       use Ada.Characters.Conversions;
       Result : Lith_Bytevector_Type;
    begin
-      for Arg of Arguments loop
-         if not Is_Integer (Arg) then
-            raise Constraint_Error with
-              "bytevector: expected an integer but found "
-              & To_String (Store.Show (Arg));
-         elsif To_Integer (Arg) not in 0 .. 255 then
-            raise Constraint_Error with
-              "bytevector: " & To_String (Store.Show (Arg))
-              & " is not in byte range (0 .. 255)";
-         end if;
+      for I in 1 .. Store.Argument_Count loop
+         declare
+            Arg : constant Object := Store.Argument (I);
+         begin
+            if not Is_Integer (Arg) then
+               raise Constraint_Error with
+                 "bytevector: expected an integer but found "
+                 & To_String (Store.Show (Arg));
+            elsif To_Integer (Arg) not in 0 .. 255 then
+               raise Constraint_Error with
+                 "bytevector: " & To_String (Store.Show (Arg))
+                 & " is not in byte range (0 .. 255)";
+            end if;
+         end;
       end loop;
 
-      Result.Bytes := new Array_Of_Bytes (0 .. Arguments'Length - 1);
-      for I in Arguments'Range loop
-         Result.Bytes (I - 1) := Byte (To_Integer (Arguments (I)));
+      Result.Bytes := new Array_Of_Bytes (0 .. Store.Argument_Count - 1);
+
+      for I in 1 .. Store.Argument_Count loop
+         Result.Bytes (I - 1) := Byte (To_Integer (Store.Argument (I)));
       end loop;
       return Store.Create_External_Reference (Result);
+
    end Evaluate_Bytevector;
 
    --------------------------------
@@ -77,15 +78,14 @@ package body Lith.Bytevectors is
    --------------------------------
 
    function Evaluate_Bytevector_Length
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
       BV : constant Array_Of_Bytes_Access :=
              Lith_Bytevector_Type
                (Store.Get_External_Object
-                  (Arguments (Arguments'First)).all).Bytes;
+                  (Store.Argument (1)).all).Bytes;
    begin
       return To_Object (Integer'(BV'Length));
    end Evaluate_Bytevector_Length;
@@ -95,17 +95,16 @@ package body Lith.Bytevectors is
    -----------------------------
 
    function Evaluate_Bytevector_Ref
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
       BV : constant Array_Of_Bytes_Access :=
              Lith_Bytevector_Type
                (Store.Get_External_Object
-                  (Arguments (Arguments'First)).all).Bytes;
+                  (Store.Argument (1)).all).Bytes;
       Index : constant Integer :=
-                To_Integer (Arguments (Arguments'First + 1));
+                To_Integer (Store.Argument (2));
    begin
       return To_Object (Integer (BV (Index)));
    end Evaluate_Bytevector_Ref;
@@ -115,19 +114,18 @@ package body Lith.Bytevectors is
    -----------------------------
 
    function Evaluate_Bytevector_Set
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
       BV : constant Array_Of_Bytes_Access :=
              Lith_Bytevector_Type
                (Store.Get_External_Object
-                  (Arguments (Arguments'First)).all).Bytes;
+                  (Store.Argument (1)).all).Bytes;
       Index : constant Integer :=
-                To_Integer (Arguments (Arguments'First + 1));
+                To_Integer (Store.Argument (2));
       Value : constant Integer :=
-                To_Integer (Arguments (Arguments'First + 2));
+                To_Integer (Store.Argument (3));
    begin
       BV (Index) := Byte (Value);
       return No_Value;

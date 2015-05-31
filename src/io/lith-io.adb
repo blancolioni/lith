@@ -6,13 +6,11 @@ with Lith.IO.Text_IO;
 package body Lith.IO is
 
    function Evaluate_Close_Port
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Port_Attribute
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    -----------
@@ -36,14 +34,13 @@ package body Lith.IO is
    -------------------------
 
    function Evaluate_Close_Port
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       Port : Port_Type'Class :=
                Port_Type'Class
                  (Store.Get_External_Object
-                    (Arguments (Arguments'First)).all);
+                    (Store.Argument (1)).all);
    begin
       Port.Close;
       return Lith.Objects.No_Value;
@@ -54,12 +51,11 @@ package body Lith.IO is
    -----------------------------
 
    function Evaluate_Port_Attribute
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
-      Port_Object : constant Object := Arguments (Arguments'First);
+      Port_Object : constant Object := Store.Argument (1);
       Result : Boolean;
    begin
       if not Is_External_Object (Port_Object) then
@@ -77,8 +73,7 @@ package body Lith.IO is
                                 Port_Type'Class (Ext.all);
                   Attribute : constant Wide_Wide_String :=
                                 Lith.Objects.Symbols.Get_Name
-                                  (To_Symbol
-                                     (Arguments (Arguments'First + 1)));
+                                  (To_Symbol (Store.Argument (2)));
                begin
                   if Attribute = "input" then
                      Result := Port.Input;

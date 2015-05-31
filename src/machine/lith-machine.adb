@@ -13,19 +13,18 @@ with Lith.Objects.Symbols;
 
 with Lith.Machine.SECD;
 
-with Lith.Objects.Numbers;
+with Lith.Memory.Tests;
 
 package body Lith.Machine is
 
    Trace_Machine : constant Boolean := False;
-   Trace_GC      : constant Boolean := False;
 
-   function Get
-     (Machine : Root_Lith_Machine'Class;
-      Pair    : Lith.Objects.Object)
-      return Object_Pair
-     with Pre => Lith.Objects.Is_Pair (Pair)
-     and then not Machine.Free (Lith.Objects.To_Address (Pair));
+--     function Get
+--       (Machine : Root_Lith_Machine'Class;
+--        Pair    : Lith.Objects.Object)
+--        return Object_Pair
+--       with Pre => Lith.Objects.Is_Pair (Pair)
+--       and then not Machine.Is_Free (Lith.Objects.To_Address (Pair));
 
    procedure Free is
      new Ada.Unchecked_Deallocation
@@ -47,44 +46,97 @@ package body Lith.Machine is
    end Add_Hook;
 
    --------------
-   -- Allocate --
+   -- After_GC --
    --------------
 
-   function Allocate
-     (Machine  : in out Root_Lith_Machine'Class;
-      Car, Cdr : Lith.Objects.Object)
+   overriding procedure After_GC (Machine : in out Root_Lith_Machine) is
+   begin
+      for I in 1 .. Machine.External_Objects.Last_Index loop
+         declare
+            Item : External_Object_Record renames
+                     Machine.External_Objects (I);
+         begin
+            if Item.Marked then
+               Item.Marked := False;
+            elsif not Item.Free then
+               Item.External_Object.Finalize (Machine);
+               Free (Item.External_Object);
+               Item.Free := True;
+            end if;
+         end;
+      end loop;
+   end After_GC;
+
+   --------------
+   -- Argument --
+   --------------
+
+   overriding function Argument
+     (Machine : Root_Lith_Machine;
+      Index   : Positive)
       return Lith.Objects.Object
    is
-      use type Lith.Objects.Object;
-      Result : Lith.Objects.Object := Machine.Free_List;
+   begin
+      return Machine.Args (Index);
+   end Argument;
+
+   --------------------
+   -- Argument_Count --
+   --------------------
+
+   overriding function Argument_Count
+     (Machine : Root_Lith_Machine)
+      return Natural
+   is
+   begin
+      return Machine.Arg_Count;
+   end Argument_Count;
+
+   ---------------
+   -- Before_GC --
+   ---------------
+
+   overriding procedure Before_GC
+     (Machine : in out Root_Lith_Machine)
+   is
+      procedure Mark (Value : in out Lith.Objects.Object);
+
+      ----------
+      -- Mark --
+      ----------
+
+      procedure Mark (Value : in out Lith.Objects.Object) is
+      begin
+         Lith.Memory.Mark (Machine.Core, Value);
+      end Mark;
    begin
 
-      if Result = Lith.Objects.Nil then
-         Machine.G1 := Car;
-         Machine.G2 := Cdr;
-         Machine.GC;
-         Result := Machine.Free_List;
-         Machine.G1 := Lith.Objects.Nil;
-         Machine.G2 := Lith.Objects.Nil;
-         if Result = Lith.Objects.Nil then
-            raise Constraint_Error with "out of memory";
-         end if;
-      end if;
+      for I in Machine.R'Range loop
+         Mark (Machine.R (I));
+      end loop;
 
-      declare
-         Address : constant Lith.Objects.Cell_Address :=
-                     Lith.Objects.To_Address (Result);
-      begin
-         pragma Assert (Machine.Free (Address));
-         Machine.Free_List := Machine.Core (Address).Cdr;
-         Machine.Core (Address) := (Car, Cdr);
-         Machine.Free (Address) := False;
-         Machine.Source_Refs (Address) := Machine.Current_Context;
-         Machine.Alloc_Count := Machine.Alloc_Count + 1;
-         Machine.Allocations := Machine.Allocations + 1;
-         return Result;
-      end;
-   end Allocate;
+      for I in Machine.Args'Range loop
+         Mark (Machine.Args (I));
+      end loop;
+
+      Mark (Machine.Stack);
+      Mark (Machine.Environment);
+      Mark (Machine.Control);
+      Mark (Machine.Dump);
+      Mark (Machine.Handlers);
+
+      for I in 1 .. Machine.External_Objects.Last_Index loop
+         declare
+            Item : External_Object_Record renames
+                     Machine.External_Objects (I);
+         begin
+            Item.Marked := False;
+         end;
+      end loop;
+
+      Lith.Environment.Mark (Machine);
+
+   end Before_GC;
 
    ---------------
    -- Call_Hook --
@@ -93,7 +145,7 @@ package body Lith.Machine is
    overriding function Call_Hook
      (Machine   : in out Root_Lith_Machine;
       Name      : Wide_Wide_String;
-      Arguments : Lith.Objects.Array_Of_Objects)
+      Arguments : Lith.Objects.Object)
       return Lith.Objects.Object
    is
       Key : constant String :=
@@ -128,7 +180,9 @@ package body Lith.Machine is
       return Lith.Objects.Object
    is
    begin
-      return Get (Machine, Value).Car;
+      return Lith.Memory.Car
+        (Machine.Core,
+         Lith.Objects.To_Address (Value));
    end Car;
 
    ---------
@@ -153,7 +207,9 @@ package body Lith.Machine is
       return Lith.Objects.Object
    is
    begin
-      return Get (Machine, Value).Cdr;
+      return Lith.Memory.Cdr
+        (Machine.Core,
+         Lith.Objects.To_Address (Value));
    end Cdr;
 
    ----------
@@ -168,6 +224,10 @@ package body Lith.Machine is
       T   : constant Lith.Objects.Object :=
               Machine.Cons (Car, Cdr);
    begin
+      if Trace_Machine then
+         Ada.Wide_Wide_Text_IO.Put_Line
+           ("machine: cons --> " & Machine.Show (T));
+      end if;
       Machine.Push (T);
    end Cons;
 
@@ -181,7 +241,7 @@ package body Lith.Machine is
       return Lith.Objects.Object
    is
    begin
-      return Machine.Allocate (Car, Cdr);
+      return Lith.Memory.Allocate (Machine.Core, Car, Cdr);
    end Cons;
 
    ------------
@@ -197,31 +257,24 @@ package body Lith.Machine is
       Last_Address : constant Cell_Address :=
                        Cell_Address (Core_Size - 1);
    begin
+      Machine.Core_Size := Core_Size;
       Machine.Core :=
-        new Core_Memory_Type (0 .. Last_Address);
-      Machine.Marked :=
-        new Memory_Tag_Type (0 .. Last_Address);
-      Machine.Free :=
-        new Memory_Tag_Type (0 .. Last_Address);
+        Lith.Memory.Create (Lith.Objects.Cell_Address (Core_Size),
+                            Lith.Memory.GC_Callback (Machine));
+
+      if False then
+         Lith.Memory.Tests.Self_Test (Machine.Core);
+      end if;
+
       Machine.Source_Refs :=
         new Memory_Source_Reference_Type (0 .. Last_Address);
 
-      Machine.Free.all := (others => True);
-      Machine.Marked.all := (others => False);
       Machine.Source_Refs.all := (others => (0, 0));
 
-      for I in Machine.Core'Range loop
-         Machine.Core (I) :=
-           (Car => Nil, Cdr => To_Object (I + 1));
-      end loop;
-      Machine.Core (Machine.Core'Last) := (Nil, Nil);
-      Machine.Free_List := To_Object (Cell_Address'(0));
       Machine.Stack := Nil;
       Machine.Control := Nil;
       Machine.Dump := Nil;
       Machine.Handlers := Nil;
-      Machine.Alloc_Count := 0;
-      Machine.Alloc_Limit := Natural (Machine.Core'Length) - 2000;
 
       return Machine;
    end Create;
@@ -279,14 +332,14 @@ package body Lith.Machine is
          Machine.Evaluating := True;
          Machine.Start_Eval := Ada.Calendar.Clock;
 
-         Machine.Make_List
-           ((Lith.Objects.To_Object
-            (Lith.Objects.Symbols.Get_Symbol
-                 ("global-error-handler")),
-            Lith.Objects.Nil, Lith.Objects.Nil));
-         Machine.Push (Lith.Objects.Nil);
-         Machine.Cons;
-         Machine.Handlers := Machine.Pop;
+--           Machine.Make_List
+--             ((Lith.Objects.To_Object
+--              (Lith.Objects.Symbols.Get_Symbol
+--                   ("global-error-handler")),
+--              Lith.Objects.Nil, Lith.Objects.Nil));
+--           Machine.Push (Lith.Objects.Nil);
+--           Machine.Cons;
+--           Machine.Handlers := Machine.Pop;
 
       end if;
 
@@ -388,101 +441,6 @@ package body Lith.Machine is
       end loop;
    end Finish_Profile;
 
-   --------
-   -- GC --
-   --------
-
-   procedure GC
-     (Machine : in out Root_Lith_Machine'Class)
-   is
-   begin
-
-      if Trace_GC then
-         Ada.Wide_Wide_Text_IO.Put_Line ("Garbage collecting ...");
-      end if;
-      declare
-         use Ada.Calendar;
-         Start : constant Time := Clock;
-         Old_Alloc_Count : constant Natural := Machine.Alloc_Count;
-      begin
-         Machine.Alloc_Count := 0;
-         Machine.Free_List := Lith.Objects.Nil;
-         Machine.Free.all := (others => True);
-         for I in 1 .. Machine.External_Objects.Last_Index loop
-            Machine.External_Objects (I).Marked := False;
-         end loop;
-
-         Lith.Environment.Mark (Machine);
-         Machine.Mark (Machine.Stack);
-         Machine.Mark (Machine.Environment);
-         Machine.Mark (Machine.Control);
-         Machine.Mark (Machine.Dump);
-         Machine.Mark (Machine.Handlers);
-         Machine.Mark (Machine.R1);
-         Machine.Mark (Machine.R2);
-         Machine.Mark (Machine.G1);
-         Machine.Mark (Machine.G2);
-
-         for I in Machine.Core'Range loop
-            if Machine.Marked (I) then
-               Machine.Marked (I) := False;
-               Machine.Free (I) := False;
-               Machine.Alloc_Count := Machine.Alloc_Count + 1;
-            else
-               Machine.Core (I).Cdr := Machine.Free_List;
-               Machine.Free_List := Lith.Objects.To_Object (I);
-            end if;
-         end loop;
-
-         for I in 1 .. Machine.External_Objects.Last_Index loop
-            declare
-               Item : External_Object_Record renames
-                        Machine.External_Objects (I);
-            begin
-               if Item.Marked then
-                  Item.Marked := False;
-               elsif not Item.Free then
-                  Item.External_Object.Finalize (Machine);
-                  Free (Item.External_Object);
-                  Item.Free := True;
-               end if;
-            end;
-
-            Machine.External_Objects (I).Marked := False;
-         end loop;
-
-         Machine.Marked.all := (others => False);
-
-         if Trace_GC then
-            Ada.Wide_Wide_Text_IO.Put_Line
-              ("GC freed"
-               & Integer'Wide_Wide_Image
-                 (Old_Alloc_Count - Machine.Alloc_Count)
-               & " cells in"
-               & Duration'Wide_Wide_Image ((Clock - Start) * 1000.0)
-               & "ms");
-         end if;
-
-         Machine.Collections := Machine.Collections +
-           (Old_Alloc_Count - Machine.Alloc_Count);
-         Machine.GC_Time := Machine.GC_Time + (Clock - Start);
-         Machine.GC_Count := Machine.GC_Count + 1;
-      end;
-   end GC;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get
-     (Machine : Root_Lith_Machine'Class;
-      Pair    : Lith.Objects.Object)
-      return Object_Pair
-   is
-   begin
-      return Machine.Core (Lith.Objects.To_Address (Pair));
-   end Get;
-
    -------------------------
    -- Get_External_Object --
    -------------------------
@@ -551,6 +509,18 @@ package body Lith.Machine is
       end if;
    end Hit;
 
+   -------------
+   -- Is_Free --
+   -------------
+
+   function Is_Free (Machine : Root_Lith_Machine'Class;
+                     Address : Lith.Objects.Cell_Address)
+                     return Boolean
+   is
+   begin
+      return not Lith.Memory.Valid (Machine.Core, Address);
+   end Is_Free;
+
    ----------
    -- Load --
    ----------
@@ -582,58 +552,23 @@ package body Lith.Machine is
 
    overriding procedure Mark
      (Machine : in out Root_Lith_Machine;
-      Start   : in     Lith.Objects.Object)
+      Start   : in out Lith.Objects.Object)
    is
-
-      procedure Check (X : Lith.Objects.Object);
-
-      -----------
-      -- Check --
-      -----------
-
-      procedure Check (X : Lith.Objects.Object) is
-      begin
-         if Lith.Objects.Is_Pair (X) then
-            declare
-               Addr : constant Lith.Objects.Cell_Address :=
-                        Lith.Objects.To_Address (X);
-            begin
-               if not Machine.Marked (Addr) then
-                  Machine.Mark (X);
-               end if;
-            end;
-         elsif Lith.Objects.Is_External_Object (X) then
-            declare
-               Addr : constant Real_External_Address :=
-                        Lith.Objects.To_External_Object_Address (X);
-            begin
-               if not Machine.External_Objects (Addr).Marked then
-                  Machine.Mark (X);
-               end if;
-            end;
-         end if;
-      end Check;
-
    begin
-      if Lith.Objects.Is_Pair (Start) then
-         declare
-            Address : constant Lith.Objects.Cell_Address :=
-                        Lith.Objects.To_Address (Start);
-         begin
-            Machine.Marked (Address) := True;
-            Check (Machine.Core (Address).Car);
-            Check (Machine.Core (Address).Cdr);
-         end;
-      elsif Lith.Objects.Is_External_Object (Start) then
-         declare
-            Addr : constant Real_External_Address :=
-                     Lith.Objects.To_External_Object_Address (Start);
-         begin
-            Machine.External_Objects (Addr).Marked := True;
-            Machine.External_Objects (Addr).External_Object.Mark (Machine);
-         end;
-      end if;
+      Lith.Memory.Mark (Machine.Core, Start);
    end Mark;
+
+   --------------------------
+   -- Mark_External_Object --
+   --------------------------
+
+   overriding procedure Mark_External_Object
+     (Machine : in out Root_Lith_Machine;
+      External : Lith.Objects.External_Object_Address)
+   is
+   begin
+      Machine.External_Objects (External).Marked := True;
+   end Mark_External_Object;
 
    ---------
    -- Pop --
@@ -653,8 +588,20 @@ package body Lith.Machine is
                  Machine.Car (SP);
    begin
       if Trace_Machine then
-         Ada.Wide_Wide_Text_IO.Put_Line
-           ("machine: pop " & Machine.Show (Result));
+         declare
+            Stack_Name : constant Wide_Wide_String :=
+                           (case Stack is
+                               when Primary   => "[S]",
+                               when Secondary => "[D]");
+         begin
+            Ada.Wide_Wide_Text_IO.Put_Line
+              ("machine: pop " & Stack_Name & " " & Machine.Show (Result)
+               & " <-- " &
+               (case Stack is
+                     when Primary => Machine.Show (Machine.Stack),
+                     when Secondary => Machine.Show (Machine.Dump)));
+
+         end;
       end if;
       case Stack is
          when Primary =>
@@ -676,16 +623,24 @@ package body Lith.Machine is
    is
       use all type Lith.Objects.Stack_Type;
    begin
-      if Trace_Machine then
-         Ada.Wide_Wide_Text_IO.Put_Line
-           ("machine: push " & Machine.Show (Value));
-      end if;
       case Stack is
          when Primary =>
-            Machine.Stack := Allocate (Machine, Value, Machine.Stack);
+            Machine.Stack := Machine.Cons (Value, Machine.Stack);
          when Secondary =>
-            Machine.Dump := Allocate (Machine, Value, Machine.Dump);
+            Machine.Dump := Machine.Cons (Value, Machine.Dump);
       end case;
+      if Trace_Machine then
+         declare
+            Stack_Name : constant Wide_Wide_String :=
+                           (case Stack is
+                               when Primary   => "[S]",
+                               when Secondary => "[D]");
+         begin
+            Ada.Wide_Wide_Text_IO.Put_Line
+              ("machine: push " & Stack_Name & " " & Machine.Show (Value)
+               & " --> " & Machine.Show (Machine.Stack));
+         end;
+      end if;
    end Push;
 
    ----------
@@ -709,54 +664,8 @@ package body Lith.Machine is
    procedure Report_Memory
      (Machine : Root_Lith_Machine'Class)
    is
-
-      use Lith.Objects;
-
-      function Hex_Image (Addr : Cell_Address) return String;
-      pragma Unreferenced (Hex_Image);
-
-      function Hex_Image (Addr : Cell_Address) return String is
-
-         Tmp     : Cell_Address := Addr;
-         Result  : String (1 .. 8);
-
-         function Hex_Digit (Item : Cell_Address) return Character
-           with Pre => Item <= 15;
-
-         ---------------
-         -- Hex_Digit --
-         ---------------
-
-         function Hex_Digit (Item : Cell_Address) return Character is
-            Hex_Digits : constant String := "0123456789ABCDEF";
-         begin
-            return Hex_Digits (Positive (Item + 1));
-         end Hex_Digit;
-
-      begin
-         for I in reverse Result'Range loop
-            Result (I) := Hex_Digit (Tmp mod 16);
-            Tmp := Tmp / 16;
-         end loop;
-         if Result (1 .. 4) = "0000" then
-            return Result (5 .. 8);
-         else
-            return Result (1 .. 4) & " " & Result (5 .. 8);
-         end if;
-      end Hex_Image;
-
    begin
-      Ada.Wide_Wide_Text_IO.Put_Line
-        ("Total number of cells:"
-         & Cell_Address'Wide_Wide_Image (Machine.Core'Length));
-      Ada.Wide_Wide_Text_IO.Put_Line
-        ("Allocated cell count: "
-         & Natural'Wide_Wide_Image (Machine.Alloc_Count));
-      Ada.Wide_Wide_Text_IO.Put_Line
-        ("Free cell count: "
-         & Natural'Wide_Wide_Image
-           (Natural (Machine.Core'Length
-            - Machine.Alloc_Count)));
+      Lith.Memory.Report (Machine.Core);
    end Report_Memory;
 
    --------------------
@@ -814,23 +723,22 @@ package body Lith.Machine is
       Ada.Wide_Wide_Text_IO.Put_Line
         (" H: " & Machine.Show (Machine.Handlers));
       Ada.Wide_Wide_Text_IO.Put_Line
-        ("GC:"
-         & Natural'Wide_Wide_Image (Machine.GC_Count)
-         & " @"
-         & Natural'Wide_Wide_Image (Natural (Machine.GC_Time * 1000.0))
-         & "ms");
-      Ada.Wide_Wide_Text_IO.Put_Line
         ("Eval:"
          & Natural'Wide_Wide_Image (Natural (Machine.Eval_Time * 1000.0))
          & "ms");
-      Ada.Wide_Wide_Text_IO.Put_Line
-        ("Allocated cells:"
-         & Natural'Wide_Wide_Image (Machine.Allocations));
-      Ada.Wide_Wide_Text_IO.Put_Line
-        ("Reclaimed cells:"
-         & Natural'Wide_Wide_Image (Machine.Collections));
-
    end Report_State;
+
+   --------------------
+   -- Reserve_Memory --
+   --------------------
+
+   overriding procedure Reserve_Memory
+     (Machine : in out Root_Lith_Machine;
+      Minimum : Natural)
+   is
+   begin
+      Lith.Memory.Reserve_Memory (Machine.Core, Minimum);
+   end Reserve_Memory;
 
    -------------
    -- Set_Car --
@@ -844,7 +752,7 @@ package body Lith.Machine is
       Address : constant Lith.Objects.Cell_Address :=
                   Lith.Objects.To_Address (Pair);
    begin
-      Machine.Core (Address).Car := New_Car;
+      Lith.Memory.Set_Car (Machine.Core, Address, New_Car);
    end Set_Car;
 
    -------------
@@ -859,7 +767,7 @@ package body Lith.Machine is
       Address : constant Lith.Objects.Cell_Address :=
                   Lith.Objects.To_Address (Pair);
    begin
-      Machine.Core (Address).Cdr := New_Cdr;
+      Lith.Memory.Set_Cdr (Machine.Core, Address, New_Cdr);
    end Set_Cdr;
 
    -----------------
@@ -936,8 +844,13 @@ package body Lith.Machine is
          File : constant String :=
                   Ada.Directories.Simple_Name (Path);
       begin
-         return Ada.Characters.Conversions.To_Wide_Wide_String
-           (File);
+         if True then
+            return Ada.Characters.Conversions.To_Wide_Wide_String
+              (File);
+         else
+            return Ada.Characters.Conversions.To_Wide_Wide_String
+              (Path);
+         end if;
       end Source_Name;
 
    begin
@@ -962,6 +875,7 @@ package body Lith.Machine is
       use Lith.Objects;
 
       function Is_List return Boolean;
+      function Is_String return Boolean;
 
       function List_Image
         (Current : Object)
@@ -1014,6 +928,29 @@ package body Lith.Machine is
          return It = Nil;
       end Is_List;
 
+      ---------------
+      -- Is_String --
+      ---------------
+
+      function Is_String return Boolean is
+      begin
+         if Machine.Car (Value) /= String_Value then
+            return False;
+         else
+            declare
+               It : Object := Machine.Cdr (Value);
+            begin
+               while Is_Pair (It) loop
+                  if not Is_Character (Machine.Car (It)) then
+                     return False;
+                  end if;
+                  It := Machine.Cdr (It);
+               end loop;
+               return True;
+            end;
+         end if;
+      end Is_String;
+
       -------------------------
       -- Large_Integer_Image --
       -------------------------
@@ -1031,7 +968,7 @@ package body Lith.Machine is
          while Machine.Top /= Stop loop
             Machine.Push (Base);
             Machine.Swap;
-            Lith.Objects.Numbers.Exact_Divide (Machine);
+            --  Lith.Objects.Numbers.Exact_Divide (Machine);
             if not Is_Integer (Machine.Cadr (Machine.Top)) then
                raise Evaluation_Error with
                  "bad large integer: " &
@@ -1095,7 +1032,9 @@ package body Lith.Machine is
               & String_Image (Machine.Cdr (Start));
          else
             raise Constraint_Error
-              with "String contains non-character";
+              with "String contains non-character: "
+              & Ada.Characters.Conversions.To_String
+              (Machine.Show (Start));
          end if;
       end String_Image;
 
@@ -1107,7 +1046,9 @@ package body Lith.Machine is
       elsif Value = False_Value then
          return "#f";
       elsif Value = No_Value then
-         return "";
+         return "<>";
+      elsif Value = String_Value then
+         return "<string>";
       elsif Is_Integer (Value) then
          return Ada.Strings.Wide_Wide_Fixed.Trim
            (Integer'Wide_Wide_Image (To_Integer (Value)),
@@ -1134,7 +1075,7 @@ package body Lith.Machine is
       elsif Is_External_Object (Value) then
          return Machine.Get_External_Object (Value).Print (Machine);
       elsif Is_Pair (Value) then
-         if Machine.Car (Value) = String_Value then
+         if Is_String then
             return '"' & String_Image (Machine.Cdr (Value)) & '"';
          elsif True
            and then Machine.Car (Value) = Large_Integer_Value

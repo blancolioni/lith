@@ -4,7 +4,7 @@ with Lith.Parser.Tokens;             use Lith.Parser.Tokens;
 with Lith.Parser.Lexical;            use Lith.Parser.Lexical;
 with Lith.Parser.Lexical.Identifiers;
 
-with Lith.Objects.Numbers;
+with Lith.Objects.Real;
 with Lith.Objects.Symbols;
 
 package body Lith.Parser is
@@ -75,6 +75,7 @@ package body Lith.Parser is
       ------------------------
 
       procedure Parse_Rest_Of_List is
+         Start_Line : constant Natural := Current_Line;
       begin
          Parse_S_Expression (Machine, Quasiquote);
 
@@ -90,7 +91,8 @@ package body Lith.Parser is
             Machine.Push (Lith.Objects.Nil);
             Scan;
          elsif Tok = Tok_End_Of_File then
-            Error ("Missing ')'");
+            Error ("Missing ')' in expression started on line"
+                   & Natural'Wide_Wide_Image (Start_Line));
             Machine.Push (Lith.Objects.Nil);
          else
             Parse_Rest_Of_List;
@@ -188,7 +190,14 @@ package body Lith.Parser is
               (Machine, Tok_Text);
             Scan;
          when Tok_Float =>
-            Lith.Objects.Numbers.Push_Float (Machine, Tok_Text);
+            declare
+               use Lith.Objects;
+               Real : constant External_Object_Interface'Class :=
+                        Lith.Objects.Real.To_Real (Tok_Text);
+            begin
+               Machine.Push
+                 (Machine.Create_External_Reference (Real));
+            end;
             Scan;
          when others =>
             Error ("bad token");

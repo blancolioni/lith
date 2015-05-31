@@ -4,6 +4,11 @@ package Lith.Objects is
 
    Word_Size : constant := 32;
 
+   Max_Integer : constant := 2 ** 28 - 1;
+   Min_Integer : constant := -2 ** 28;
+
+   type Compare_Result is (LT, EQ, GT);
+
    type Object is private;
 
    Nil                  : constant Object;
@@ -43,6 +48,8 @@ package Lith.Objects is
    function To_Object (Value : Integer) return Object;
    function To_Integer (Item : Object) return Integer
      with Pre => Is_Integer (Item);
+   function In_Object_Range (X : Integer) return Boolean
+   is (X in Min_Integer .. Max_Integer);
 
    function Is_Apply (Item : Object) return Boolean;
    function Apply_Object (Argument_Count : Natural) return Object;
@@ -64,8 +71,6 @@ package Lith.Objects is
 
    function Is_Atom (Item : Object) return Boolean;
    function Is_Pair (Item : Object) return Boolean;
-
-   type Array_Of_Objects is array (Positive range <>) of Object;
 
    function Hex_Image (Item : Object) return Wide_Wide_String;
 
@@ -163,9 +168,14 @@ package Lith.Objects is
    procedure Cons (Store : in out Object_Store) is abstract;
    --  Pop cdr then car off the stack.  Push (cons car cdr).
 
+   procedure Reserve_Memory
+     (Store : in out Object_Store;
+      Minimum : Natural)
+   is abstract;
+
    procedure Mark
      (Store : in out Object_Store;
-      Start : in     Lith.Objects.Object)
+      Start : in out Lith.Objects.Object)
    is abstract;
 
    procedure Push (Store     : in out Object_Store;
@@ -204,6 +214,17 @@ package Lith.Objects is
       Line_Number : Natural)
    is abstract;
 
+   function Argument_Count (Store : Object_Store)
+                            return Natural
+                            is abstract;
+   --  Number of arguments passed to the current function
+
+   function Argument (Store : Object_Store;
+                      Index : Positive)
+                      return Object
+                      is abstract
+     with Pre'Class => Index <= Store.Argument_Count;
+
    procedure Report_State (Store : in out Object_Store) is abstract;
 
    function Get_External_Object
@@ -224,24 +245,22 @@ package Lith.Objects is
 
    procedure Swap (Store : in out Object_Store'Class);
 
-   procedure Make_List
-     (Store : in out Object_Store'Class;
-      Items : Array_Of_Objects);
-   --  Create a (possibly improper) list from the items in the array,
-   --  where each Item is a car except the last.
-   --  The list is proper if and only if the last element of Items
-   --  is nil, or is a proper list itself.
+--     function Push_List
+--       (Store : in out Object_Store'Class;
+--        List  : Object)
+--        return Natural;
+   --  pushes each element of List onto the stack.
+   --  returns the number of objects pushed.
 
-   function To_Object_Array
-     (Store : in out Object_Store'Class;
-      List  : Object)
-      return Array_Of_Objects;
+--     procedure Reverse_List
+--       (Store : in out Object_Store'Class;
+--        List  : in out Object);
 
    type Evaluation_Hook_Interface is interface;
 
    function Call
      (Hook      : in out Evaluation_Hook_Interface;
-      Arguments : Array_Of_Objects)
+      Arguments : Object)
       return Object
       is abstract;
 
@@ -255,7 +274,7 @@ package Lith.Objects is
    function Call_Hook
      (Store     : in out Object_Store;
       Name      : Wide_Wide_String;
-      Arguments : Array_Of_Objects)
+      Arguments : Object)
       return Object
       is abstract;
 

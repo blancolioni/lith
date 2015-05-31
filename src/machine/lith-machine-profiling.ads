@@ -52,7 +52,7 @@ private
 
    overriding function Call
      (Profile   : in out Profile_Type;
-      Arguments : Lith.Objects.Array_Of_Objects)
+      Arguments : Lith.Objects.Object)
       return Lith.Objects.Object;
 
 end Lith.Machine.Profiling;

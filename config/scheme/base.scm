@@ -37,15 +37,18 @@
 
 (define (eqv? x y)
   (cond ((eq? x y) #t)
-        ((and (number? x) (number? y)) (equal? x y))))   ; works because equal numbers have the same list representation
+        ((and (number? x) (number? y)) (equal? x y))))
 
-(define (number? x) (or (integer? x) (real? x)))  ; the only numbers we have :(
+(define (number? x) (or (integer? x) (real? x)))
 
 (define (complex? x) #f)
 (define (rational? x) (and (pair? x) (eq? (car x) '#rational)))
 
 (define (exact? x) (or (integer? x) (rational? x)))
 (define (inexact? x) (or (real? x) (complex? x)))
+
+(define (exact x) (if (real? x) (real-to-integer x) x))
+(define (inexact x) (if (real? x) x (integer-to-real x)))
 
 (define (exact-integer? x) (and (exact? x) (integer? x)))
 (define (exact-integer-sqrt k)
@@ -72,14 +75,14 @@
                             ((f (car xs)) (cons (car xs) (filter f (cdr xs))))
                             (else (filter f (cdr xs)))))
                             
-(define (append . lists) 
-  (define (do-append lists)
-    (cond ((null? lists) '())
-          ((null? (cdr lists)) (car lists))
-          (else (append-2 (car lists) (do-append (cdr lists))))))
-  (define (append-2 xs ys)
-    (if (null? xs) ys (cons (car xs) (append-2 (cdr xs) ys))))
-  (do-append lists))
+(lith-define append (lambda lists
+  (lith-define do-append (lambda (lists)
+    (if (null? lists) '()
+    (if (null? (cdr lists)) (car lists)
+        (append-2 (car lists) (do-append (cdr lists)))))))
+  (lith-define append-2 (lambda (xs ys)
+    (if (null? xs) ys (cons (car xs) (append-2 (cdr xs) ys)))))
+  (do-append lists)))
 
 (define (apply proc . xs)
    (define (join acc ys) (display acc) (newline) (display ys) (newline)
@@ -151,30 +154,24 @@
          ((and (rational? x) (rational? y)) (list x y))))
 
 ;(define fold-alu (macro (op identity) `((lambda (xs) (display xs)) ,identity)))
-(define fold-alu (macro (op app identity)
+(define fold-alu (macro (op identity)
    `(define ,op 
        (lambda xs (if (null? xs) 
                       ,identity
-                      (if (null? (cdr xs)) 
-                          (fold-op ,identity (quote ,op) ,app (list ,identity (car xs)))
-                          (fold-op ,identity (quote ,op) ,app xs)))))))
+                      (if (null? (cdr xs))
+                          (#alu (quote ,op) ,identity (car xs))
+                          (if (null? (cddr xs))
+                              (#alu (quote ,op) (car xs) (cadr xs))
+                              (fold-op ,identity (quote ,op) xs))))))))
 
-(define (fold-op identity op app xs)
+(define (fold-op identity op xs)
   (let* ((x-1 (car xs))
          (x-2 (cadr xs))
-         (merge (lith-merge-numbers x-1 x-2))
-         (x (car merge))
-         (y (cadr merge))
-         (z (app op x y)))
+         (z (#alu op x-1 x-2)))
          (if (null? (cddr xs))
              z
-             (fold-op identity op app (cons z (cddr xs))))))
-           
-(define (apply-op op x y) 
-   (cond ((inexact? x) (#alu op (list x y)))
-         ((integer? x) (#alu op (list x y)))
-         ((rational? x) (apply-rat op x y))))
-         
+             (fold-op identity op (cons z (cddr xs))))))
+                    
 (define (apply-/ op x y) 
    (cond ((inexact? x) (#alu op (list x y)))
          ((integer? x) (make-rat x y))
@@ -187,31 +184,41 @@
          ((eq? op '/) (div-rat x y))
          (else (error "bad operation"))))
          
-(define alu (macro (op) `(define ,op (lambda x (#alu (quote ,op) x)))))
-(define alu2 (macro (op) `(define ,op (lambda (x y) (#alu (quote ,op) (list x y))))))
 (define char-alu (macro (op) 
-  `(define ,(string->symbol (string-append "char" (symbol->string op) "?")) (lambda x (#alu (quote ,op) (map char->integer x))))))
+  `(define ,(string->symbol (string-append "char" (symbol->string op) "?")) (lambda x (fold-compare (quote ,op) (map char->integer x))))))
 
-(fold-alu + apply-op 0)
-(fold-alu - apply-op 0)
-(fold-alu * apply-op 1)
-(fold-alu / apply-/ 1)
+(fold-alu + 0)
+(fold-alu - 0)
+(fold-alu * 1)
+
+(define (floor/ x y) (#alu '/ x y))
+
+
+(define (fold-compare op xs)
+   (cond ((null? xs) #t)
+         ((null? (cdr xs)) #t)
+         ((null? (cddr xs)) (#alu op (car xs) (cadr xs)))
+         (else (and (#alu op (car xs) (cadr xs)) (fold-compare op (cdr xs))))))
+
+(define alu-cmp (macro (op)
+   `(define ,op (lambda xs (fold-compare (quote ,op) xs)))))
+   
+(alu-cmp =)
+(alu-cmp <)
+(alu-cmp >)
+(alu-cmp <=)
+(alu-cmp >=)
 
 ;(alu +)
 ;(alu -)
 ;(alu *)
-(alu mod)
-(alu <)
-(alu >)
-(alu <=)
-(alu >=)
-(alu =)
-(alu2 floor/)
-
-(define (plus-2 x y)
-   (cond ((or (inexact? x) (inexact? y)) (+ x y))
-         ((and (integer? x) (integer? y)) (+ x y))
-         (else (add-rat (make-rat x) (make-rat y)))))
+;(alu mod)
+;(alu <)
+;(alu >)
+;(alu <=)
+;(alu >=)
+;(alu =)
+;(alu2 floor/)
 
 (define (make-rat . rs)
    (cond ((null? rs) (list '#rational 1 1))
@@ -376,9 +383,10 @@
                      (write-string ")")))))
           
 (define (display x)
-  (cond ((string? x) (write-string x))
+  (cond ((string? x) (begin (write-char #\") (write-string x) (write-char #\")))
         ((rational? x) (print-rat x))
         ((pair? x) (write-list x))
+        ((lith-external? x) (write-string (lith-external-print x)))
         (else (write-string (symbol->string x)))))
 
 (define (write-string x)
@@ -396,6 +404,8 @@
       (if (null? (cdr xs)) (car xs)
           (append (car xs) (cdr (go (cdr xs)))))))
   (go xs))
+
+(string-append "x" "y")
 
 (char-alu <=)
 (char-alu >=)
@@ -431,3 +441,6 @@
    
 (define (raise obj) (lith-raise-exception obj))
 (define (error message . xs) (raise (list '#error-object message xs)))
+
+
+

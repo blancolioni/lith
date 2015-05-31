@@ -5,7 +5,8 @@ with Ada.Wide_Wide_Text_IO;
 with WL.Random;
 
 with Lith.Objects.Interfaces;
-with Lith.Objects.Numbers;
+with Lith.Objects.Large_Integers;
+with Lith.Objects.Real;
 with Lith.Primitives.ALU;
 with Lith.Objects.Symbols;
 
@@ -17,157 +18,126 @@ package body Lith.Primitives is
    Jiffies_Per_Second : constant := 1000.0;
 
    function Evaluate_ALU
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Car
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Cdr
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Char_To_Integer
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Cons
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Current_Jiffy
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Eq
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Eval
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
-   is (Arguments (Arguments'First));
-
-   function Evaluate_Exact
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object;
+   is (Store.Argument (1));
 
    function Evaluate_External_Equal
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
-     with Pre => Arguments'Length = 2
+     with Pre => Store.Argument_Count = 2
        and then Lith.Objects.Is_External_Object
-       (Arguments (Arguments'First));
+       (Store.Argument (1));
 
    function Evaluate_External_Is_Type
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
+
+   function Evaluate_External_Print
+     (Store       : in out Lith.Objects.Object_Store'Class)
+      return Lith.Objects.Object
+     with Pre => Store.Argument_Count = 1
+       and then Lith.Objects.Is_External_Object
+       (Store.Argument (1));
 
    function Evaluate_Gensym
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object;
-
-   function Evaluate_Inexact
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Integer_To_Char
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Is_External
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Is_Integer
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Is_Null
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Is_Pair
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Is_Symbol
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Is_Real
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Jiffies_Per_Second
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Load
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Profile_Start_Cost_Centre
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Profile_Finish_Cost_Centre
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Random
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Set_Car
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Set_Cdr
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_String_To_Symbol
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Symbol_To_String
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Write_Char
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    --------------------
@@ -177,7 +147,7 @@ package body Lith.Primitives is
    procedure Add_Primitives is
       use Lith.Objects.Interfaces;
    begin
-      Define_Function ("#alu", 2, Evaluate_ALU'Access);
+      Define_Function ("#alu", 3, Evaluate_ALU'Access);
       Define_Function ("car", 1, Evaluate_Car'Access);
       Define_Function ("cdr", 1, Evaluate_Cdr'Access);
       Define_Function ("char->integer", 1, Evaluate_Char_To_Integer'Access);
@@ -185,12 +155,12 @@ package body Lith.Primitives is
       Define_Function ("current-jiffy", 2, Evaluate_Current_Jiffy'Access);
       Define_Function ("eq?", 2, Evaluate_Eq'Access);
       Define_Function ("eval", 1, Evaluate_Eval'Access);
-      Define_Function ("exact", 1, Evaluate_Exact'Access);
       Define_Function ("lith-external-equal", 2,
                        Evaluate_External_Equal'Access);
       Define_Function ("#extern-is-type", 2, Evaluate_External_Is_Type'Access);
+      Define_Function ("lith-external-print", 1,
+                       Evaluate_External_Print'Access);
       Define_Function ("gensym", 0, Evaluate_Gensym'Access);
-      Define_Function ("inexact", 1, Evaluate_Inexact'Access);
       Define_Function ("integer->char", 1, Evaluate_Integer_To_Char'Access);
       Define_Function ("lith-external?", 1, Evaluate_Is_External'Access);
       Define_Function ("jiffies-per-second", 1,
@@ -219,17 +189,22 @@ package body Lith.Primitives is
    ------------------
 
    function Evaluate_ALU
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      Op : constant Lith.Objects.Symbol_Type :=
-             Lith.Objects.To_Symbol (Arguments (Arguments'First));
-      Args : constant Lith.Objects.Array_Of_Objects :=
-               Store.To_Object_Array
-                 (Arguments (Arguments'First + 1));
    begin
-      return Lith.Primitives.ALU.Apply (Store, Op, Args);
+      return ALU.Apply (Store);
+   exception
+      when others =>
+         Ada.Wide_Wide_Text_IO.Put_Line
+           ("ALU error while evaluting ("
+            & Store.Show (Store.Argument (1))
+            & " "
+            & Store.Show (Store.Argument (2))
+            & " "
+            & Store.Show (Store.Argument (3))
+            & ")");
+         raise;
    end Evaluate_ALU;
 
    ------------------
@@ -237,11 +212,10 @@ package body Lith.Primitives is
    ------------------
 
    function Evaluate_Car
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      Xs : constant Lith.Objects.Object := Arguments (Arguments'First);
+      Xs : constant Lith.Objects.Object := Store.Argument (1);
    begin
       if Lith.Objects.Is_Atom (Xs) then
          raise Constraint_Error with
@@ -257,11 +231,10 @@ package body Lith.Primitives is
    ------------------
 
    function Evaluate_Cdr
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      Xs : constant Lith.Objects.Object := Arguments (Arguments'First);
+      Xs : constant Lith.Objects.Object := Store.Argument (1);
    begin
       if Lith.Objects.Is_Atom (Xs) then
          raise Constraint_Error with
@@ -277,17 +250,15 @@ package body Lith.Primitives is
    ------------------------------
 
    function Evaluate_Char_To_Integer
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      pragma Unreferenced (Store);
       use Lith.Objects;
    begin
       return To_Object
         (Integer'
            (Wide_Wide_Character'Pos
-                (To_Character (Arguments (Arguments'First)))));
+                (To_Character (Store.Argument (1)))));
    end Evaluate_Char_To_Integer;
 
    -------------------
@@ -295,12 +266,11 @@ package body Lith.Primitives is
    -------------------
 
    function Evaluate_Cons
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      Car : constant Lith.Objects.Object := Arguments (Arguments'First);
-      Cdr : constant Lith.Objects.Object := Arguments (Arguments'First + 1);
+      Car : constant Lith.Objects.Object := Store.Argument (1);
+      Cdr : constant Lith.Objects.Object := Store.Argument (1 + 1);
    begin
       return Store.Cons (Car, Cdr);
    end Evaluate_Cons;
@@ -310,12 +280,10 @@ package body Lith.Primitives is
    ----------------------------
 
    function Evaluate_Current_Jiffy
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       pragma Unreferenced (Store);
-      pragma Unreferenced (Arguments);
       use type Ada.Calendar.Time;
       Now : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Seconds : constant Duration := Now - Jiffy_Start_Time;
@@ -329,54 +297,36 @@ package body Lith.Primitives is
    -----------------
 
    function Evaluate_Eq
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      pragma Unreferenced (Store);
       use Lith.Objects;
    begin
-      if Arguments (Arguments'First) = Arguments (Arguments'Last) then
+      if Store.Argument (1) = Store.Argument (2) then
          return True_Value;
       else
          return False_Value;
       end if;
    end Evaluate_Eq;
 
-   --------------------
-   -- Evaluate_Exact --
-   --------------------
-
-   function Evaluate_Exact
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object
-   is
-   begin
-      Store.Push (Arguments (Arguments'First));
-      Lith.Objects.Numbers.Ensure_Exact (Store);
-      return Store.Pop;
-   end Evaluate_Exact;
-
    -----------------------------
    -- Evaluate_External_Equal --
    -----------------------------
 
    function Evaluate_External_Equal
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
    begin
-      if Is_External_Object (Arguments (Arguments'First + 1)) then
+      if Is_External_Object (Store.Argument (1 + 1)) then
          declare
             X_Object : constant access External_Object_Interface'Class :=
                          Store.Get_External_Object
-                           (Arguments (Arguments'First));
+                           (Store.Argument (1));
             Y_Object : constant access External_Object_Interface'Class :=
                          Store.Get_External_Object
-                           (Arguments (Arguments'First + 1));
+                           (Store.Argument (1 + 1));
          begin
             if X_Object.Name = Y_Object.Name then
                return To_Object (X_Object.Equal (Y_Object.all, Store));
@@ -394,20 +344,19 @@ package body Lith.Primitives is
    -------------------------------
 
    function Evaluate_External_Is_Type
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
    begin
-      if Is_External_Object (Arguments (Arguments'First)) then
+      if Is_External_Object (Store.Argument (1)) then
          declare
             X_Object : constant access External_Object_Interface'Class :=
                          Store.Get_External_Object
-                           (Arguments (Arguments'First));
+                           (Store.Argument (1));
             Name_Sym : constant Wide_Wide_String :=
                          Lith.Objects.Symbols.Get_Name
-                           (To_Symbol (Arguments (Arguments'First + 1)));
+                           (To_Symbol (Store.Argument (1 + 1)));
          begin
             return To_Object (X_Object.Name = Name_Sym);
          end;
@@ -416,17 +365,37 @@ package body Lith.Primitives is
       end if;
    end Evaluate_External_Is_Type;
 
+   -----------------------------
+   -- Evaluate_External_Print --
+   -----------------------------
+
+   function Evaluate_External_Print
+     (Store       : in out Lith.Objects.Object_Store'Class)
+      return Lith.Objects.Object
+   is
+      Result : constant Wide_Wide_String :=
+                 Store.Get_External_Object (Store.Argument (1)).Print (Store);
+   begin
+      Store.Push (Lith.Objects.String_Value);
+      for Ch of Result loop
+         Store.Push (Lith.Objects.To_Object (Ch));
+      end loop;
+      Store.Push (Lith.Objects.Nil);
+      for I in 1 .. Result'Length + 1 loop
+         Store.Cons;
+      end loop;
+      return Store.Pop;
+   end Evaluate_External_Print;
+
    ---------------------
    -- Evaluate_Gensym --
    ---------------------
 
    function Evaluate_Gensym
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       pragma Unreferenced (Store);
-      pragma Unreferenced (Arguments);
    begin
       Next_Gensym_Index := Next_Gensym_Index + 1;
       return Lith.Objects.To_Object
@@ -434,36 +403,19 @@ package body Lith.Primitives is
            ("#:g" & Integer'Wide_Wide_Image (-Next_Gensym_Index)));
    end Evaluate_Gensym;
 
-   ----------------------
-   -- Evaluate_Inexact --
-   ----------------------
-
-   function Evaluate_Inexact
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
-      return Lith.Objects.Object
-   is
-   begin
-      Store.Push (Arguments (Arguments'First));
-      Lith.Objects.Numbers.Ensure_Inexact (Store);
-      return Store.Pop;
-   end Evaluate_Inexact;
-
    ------------------------------
    -- Evaluate_Integer_To_Char --
    ------------------------------
 
    function Evaluate_Integer_To_Char
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      pragma Unreferenced (Store);
       use Lith.Objects;
    begin
       return To_Object
         (Wide_Wide_Character'Val
-                (To_Integer (Arguments (Arguments'First))));
+                (To_Integer (Store.Argument (1))));
    end Evaluate_Integer_To_Char;
 
    --------------------------
@@ -471,15 +423,13 @@ package body Lith.Primitives is
    --------------------------
 
    function Evaluate_Is_External
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      pragma Unreferenced (Store);
    begin
       return Lith.Objects.To_Object
         (Lith.Objects.Is_External_Object
-           (Arguments (Arguments'First)));
+           (Store.Argument (1)));
    end Evaluate_Is_External;
 
    -------------------------
@@ -487,16 +437,14 @@ package body Lith.Primitives is
    -------------------------
 
    function Evaluate_Is_Integer
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
-      A : constant Object := Arguments (Arguments'First);
+      A : constant Object := Store.Argument (1);
    begin
       if Is_Integer (A)
-        or else (Is_Pair (A)
-                 and then Store.Car (A) = Large_Integer_Value)
+        or else Lith.Objects.Large_Integers.Is_Large_Integer (Store, A)
       then
          return True_Value;
       else
@@ -509,14 +457,12 @@ package body Lith.Primitives is
    ----------------------
 
    function Evaluate_Is_Null
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      pragma Unreferenced (Store);
       use Lith.Objects;
    begin
-      if Arguments (Arguments'First) = Nil then
+      if Store.Argument (1) = Nil then
          return True_Value;
       else
          return False_Value;
@@ -528,14 +474,12 @@ package body Lith.Primitives is
    ----------------------
 
    function Evaluate_Is_Pair
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      pragma Unreferenced (Store);
       use Lith.Objects;
    begin
-      if Is_Pair (Arguments (Arguments'First)) then
+      if Is_Pair (Store.Argument (1)) then
          return True_Value;
       else
          return False_Value;
@@ -547,20 +491,15 @@ package body Lith.Primitives is
    ----------------------
 
    function Evaluate_Is_Real
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
    begin
-      if Is_Pair (Arguments (Arguments'First))
-        and then Store.Car (Arguments (Arguments'First))
-          = Floating_Point_Value
-      then
-         return True_Value;
-      else
-         return False_Value;
-      end if;
+      return (if Lith.Objects.Real.Is_Real
+              (Store, Store.Argument (1))
+              then True_Value
+              else False_Value);
    end Evaluate_Is_Real;
 
    ------------------------
@@ -568,14 +507,12 @@ package body Lith.Primitives is
    ------------------------
 
    function Evaluate_Is_Symbol
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      pragma Unreferenced (Store);
       use Lith.Objects;
    begin
-      if Is_Symbol (Arguments (Arguments'First)) then
+      if Is_Symbol (Store.Argument (1)) then
          return True_Value;
       else
          return False_Value;
@@ -587,12 +524,10 @@ package body Lith.Primitives is
    ---------------------------------
 
    function Evaluate_Jiffies_Per_Second
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       pragma Unreferenced (Store);
-      pragma Unreferenced (Arguments);
    begin
       return Lith.Objects.To_Object (Integer (Jiffies_Per_Second));
    end Evaluate_Jiffies_Per_Second;
@@ -602,12 +537,11 @@ package body Lith.Primitives is
    -------------------
 
    function Evaluate_Load
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       Path : constant Wide_Wide_String :=
-               Store.To_String (Arguments (Arguments'First));
+               Store.To_String (Store.Argument (1));
    begin
       if Store.Load (Path) then
          return Lith.Objects.True_Value;
@@ -621,15 +555,13 @@ package body Lith.Primitives is
    -----------------------------------------
 
    function Evaluate_Profile_Finish_Cost_Centre
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects, Lith.Objects.Symbols;
    begin
       return Store.Call_Hook ("cost-centre",
-                              To_Object (Get_Symbol ("finish"))
-                              & Arguments);
+                              To_Object (Get_Symbol ("finish")));
    end Evaluate_Profile_Finish_Cost_Centre;
 
    ----------------------------------------
@@ -637,15 +569,13 @@ package body Lith.Primitives is
    ----------------------------------------
 
    function Evaluate_Profile_Start_Cost_Centre
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects, Lith.Objects.Symbols;
    begin
       return Store.Call_Hook ("cost-centre",
-                              To_Object (Get_Symbol ("start"))
-                              & Arguments);
+                              To_Object (Get_Symbol ("start")));
    end Evaluate_Profile_Start_Cost_Centre;
 
    ---------------------
@@ -653,13 +583,11 @@ package body Lith.Primitives is
    ---------------------
 
    function Evaluate_Random
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      pragma Unreferenced (Store);
       Max : constant Integer :=
-              Lith.Objects.To_Integer (Arguments (Arguments'First));
+              Lith.Objects.To_Integer (Store.Argument (1));
       Result : constant Integer :=
                  WL.Random.Random_Number (0, Max - 1);
    begin
@@ -671,14 +599,13 @@ package body Lith.Primitives is
    ----------------------
 
    function Evaluate_Set_Car
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
    begin
-      Store.Set_Car (Arguments (Arguments'First),
-                     Arguments (Arguments'First + 1));
-      return Arguments (Arguments'First);
+      Store.Set_Car (Store.Argument (1),
+                     Store.Argument (1 + 1));
+      return Store.Argument (1);
    end Evaluate_Set_Car;
 
    ----------------------
@@ -686,14 +613,13 @@ package body Lith.Primitives is
    ----------------------
 
    function Evaluate_Set_Cdr
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
    begin
-      Store.Set_Cdr (Arguments (Arguments'First),
-                     Arguments (Arguments'First + 1));
-      return Arguments (Arguments'First);
+      Store.Set_Cdr (Store.Argument (1),
+                     Store.Argument (1 + 1));
+      return Store.Argument (1);
    end Evaluate_Set_Cdr;
 
    -------------------------------
@@ -701,12 +627,11 @@ package body Lith.Primitives is
    -------------------------------
 
    function Evaluate_String_To_Symbol
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       Name : constant Wide_Wide_String :=
-               Store.To_String (Arguments (Arguments'First));
+               Store.To_String (Store.Argument (1));
    begin
       return Lith.Objects.To_Object
         (Lith.Objects.Symbols.Get_Symbol (Name));
@@ -717,13 +642,12 @@ package body Lith.Primitives is
    -------------------------------
 
    function Evaluate_Symbol_To_String
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
       Text : constant Wide_Wide_String :=
-               Store.Show (Arguments (Arguments'First));
+               Store.Show (Store.Argument (1));
       Result : Object := Nil;
    begin
       for Ch of reverse Text loop
@@ -738,14 +662,12 @@ package body Lith.Primitives is
    -------------------------
 
    function Evaluate_Write_Char
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      pragma Unreferenced (Store);
       use Ada.Wide_Wide_Text_IO;
       Char : constant Wide_Wide_Character :=
-               Lith.Objects.To_Character (Arguments (Arguments'First));
+               Lith.Objects.To_Character (Store.Argument (1));
       Code : constant Natural :=
                Wide_Wide_Character'Pos (Char);
    begin

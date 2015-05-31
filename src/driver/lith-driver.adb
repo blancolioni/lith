@@ -13,11 +13,12 @@ with Lith.Vectors;
 with Lith.Bytevectors;
 
 procedure Lith.Driver is
-   Core_Size       : constant := 256 * 1024;
+   --  Core_Size       : constant := 4 * 1024 * 1024;
+   Core_Size       : constant := 64 * 1024;
    Machine         : constant Lith.Machine.Lith_Machine :=
                        Lith.Machine.Create (Core_Size);
    Profile         : constant Boolean := False;
-   Exit_Statistics : constant Boolean := False;
+   Exit_Statistics : constant Boolean := True;
    Profiler        : Lith.Machine.Profiling.Profile_Type;
 begin
 

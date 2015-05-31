@@ -11,18 +11,17 @@ with Lith.Paths;
 
 package body Lith.Machine.SECD is
 
-   Trace_Eval       : Boolean := False;
-   Trace_Patterns   : Boolean := False;
+   Trace_Definitions : constant Boolean := False;
+   Trace_Eval        : Boolean := False;
+   Trace_Patterns    : Boolean := False;
 
    function Import_Libraries
-     (Machine    : in out Root_Lith_Machine'Class;
-      Import_Set : Lith.Objects.Object)
+     (Machine    : in out Root_Lith_Machine'Class)
       return Boolean;
 
    procedure Create_Environment
      (Machine      : in out Root_Lith_Machine'Class;
-      Formals      : Lith.Objects.Object;
-      Actuals      : Lith.Objects.Array_Of_Objects);
+      Formals      : Lith.Objects.Object);
 
    procedure Get
      (Machine : Root_Lith_Machine'Class;
@@ -38,17 +37,18 @@ package body Lith.Machine.SECD is
       Found     : out Boolean;
       Global    : out Boolean);
 
-   function Length
-     (Machine : Root_Lith_Machine'Class;
-      Xs      : Lith.Objects.Object)
-     return Natural;
-
    function Is_Macro
      (Machine : Root_Lith_Machine'Class;
       F       : Lith.Objects.Object)
       return Boolean;
    --  returns True if F ultimately (or immediately) refers to a macro
    --  in the current machine environment
+
+   procedure Check_Argument_Count
+     (Machine  : Root_Lith_Machine'Class;
+      Name     : String;
+      Min      : Natural;
+      Max      : Integer := -1);
 
    procedure Apply_Syntax
      (Machine      : in out Root_Lith_Machine'Class;
@@ -66,6 +66,8 @@ package body Lith.Machine.SECD is
    is
       use Lith.Objects;
 
+      Local_Call : Object renames Machine.R (11);
+
       function Match (Pat : Object) return Boolean;
       procedure Apply (Env  : Object;
                        Code : Object);
@@ -82,23 +84,35 @@ package body Lith.Machine.SECD is
                        Code : Object)
       is
          use Lith.Objects.Symbols;
+         E : Object renames Machine.R (9);
+         C : Object renames Machine.R (10);
       begin
-         if Is_Pair (Code) then
-            if Is_Pair (Machine.Cdr (Code))
-              and then Machine.Cadr (Code) = Ellipsis_Symbol
+
+         E := Env;
+         C := Code;
+
+         if Is_Pair (C) then
+
+            Machine.Push (C, Secondary);
+
+            if Is_Pair (Machine.Cdr (C))
+              and then Machine.Cadr (C) = Ellipsis_Symbol
             then
                Machine.Push
-                 (Binding (Env, Ellipsis_Symbol, Nil));
+                 (Binding (E, Ellipsis_Symbol, Nil));
             else
-               Apply (Env, Machine.Cdr (Code));
+               Apply (E, Machine.Cdr (C));
             end if;
-            Apply (Env, Machine.Car (Code));
+
+            C := Machine.Pop (Secondary);
+
+            Apply (E, Machine.Car (C));
             Machine.Swap;
             Machine.Cons;
-         elsif Is_Symbol (Code) then
-            Machine.Push (Binding (Env, Code, Code));
+         elsif Is_Symbol (C) then
+            Machine.Push (Binding (E, C, C));
          else
-            Machine.Push (Code);
+            Machine.Push (C);
          end if;
       end Apply;
 
@@ -127,15 +141,18 @@ package body Lith.Machine.SECD is
       -----------
 
       function Match (Pat : Object) return Boolean is
-         Pat_It  : Object := Pat;
-         Call_It : Object := Call;
+         Pat_It  : Object renames Machine.R (1);
+         Call_It : Object renames Machine.R (2);
          Count   : Natural := 0;
       begin
+         Pat_It := Pat;
+         Call_It := Local_Call;
+
          if Trace_Patterns then
             Ada.Wide_Wide_Text_IO.Put_Line
               ("Match: pattern = " & Machine.Show (Pat));
             Ada.Wide_Wide_Text_IO.Put_Line
-              ("          call = " & Machine.Show (Call));
+              ("          call = " & Machine.Show (Local_Call));
          end if;
 
          while Pat_It /= Nil loop
@@ -187,37 +204,69 @@ package body Lith.Machine.SECD is
       Keywords : constant Object := Machine.Cadr (Syntax_Rules);
       pragma Unreferenced (Keywords);
 
-      Pats : Object := Machine.Cddr (Syntax_Rules);
+      Pats : Object renames Machine.R (13);
+      Pat  : Object renames Machine.R (14);
+      Code : Object renames Machine.R (15);
+
    begin
+
+      Local_Call := Call;
+      Pats := Machine.Cddr (Syntax_Rules);
+
       while Pats /= Nil loop
-         declare
-            Pat  : constant Object := Machine.Caar (Pats);
-            Code : constant Object := Machine.Car (Machine.Cdar (Pats));
-         begin
-            if Match (Machine.Cdr (Pat)) then
-               if Trace_Patterns then
-                  Ada.Wide_Wide_Text_IO.Put_Line
-                    ("found match: "
-                     & Machine.Show (Machine.Cdr (Pat))
-                     & " --> "
-                     & Machine.Show (Code));
-               end if;
-               Apply (Machine.Top, Code);
-               Machine.Swap;
-               Machine.Drop;
-               if Trace_Patterns then
-                  Ada.Wide_Wide_Text_IO.Put_Line
-                    ("result: "
-                     & Machine.Show (Machine.Top));
-               end if;
-               return;
+         Pat  := Machine.Caar (Pats);
+         Code := Machine.Car (Machine.Cdar (Pats));
+
+         if Match (Machine.Cdr (Pat)) then
+            if Trace_Patterns then
+               Ada.Wide_Wide_Text_IO.Put_Line
+                 ("found match: "
+                  & Machine.Show (Machine.Cdr (Pat))
+                  & " --> "
+                  & Machine.Show (Code));
+               Ada.Wide_Wide_Text_IO.Put_Line
+                 ("applying: "
+                  & Machine.Show (Machine.Top));
             end if;
-         end;
+
+            Apply (Machine.Top, Code);
+            Machine.Swap;
+            Machine.Drop;
+
+            if Trace_Patterns then
+               Machine.Report_State;
+               Ada.Wide_Wide_Text_IO.Put_Line
+                 ("result: "
+                  & Machine.Show (Machine.Top));
+            end if;
+            return;
+         end if;
+
          Pats := Machine.Cdr (Pats);
       end loop;
       raise Evaluation_Error with
         "no matching pattern in syntax rules";
    end Apply_Syntax;
+
+   --------------------------
+   -- Check_Argument_Count --
+   --------------------------
+
+   procedure Check_Argument_Count
+     (Machine  : Root_Lith_Machine'Class;
+      Name     : String;
+      Min      : Natural;
+      Max      : Integer := -1)
+   is
+   begin
+      if Machine.Arg_Count < Min then
+         raise Lith.Objects.Evaluation_Error with
+           "too few arguments to function " & Name;
+      elsif Machine.Arg_Count > Integer'Max (Min, Max) then
+         raise Lith.Objects.Evaluation_Error with
+           "too many arguments to function " & Name;
+      end if;
+   end Check_Argument_Count;
 
    ------------------------
    -- Create_Environment --
@@ -225,16 +274,15 @@ package body Lith.Machine.SECD is
 
    procedure Create_Environment
      (Machine      : in out Root_Lith_Machine'Class;
-      Formals      : Lith.Objects.Object;
-      Actuals      : Lith.Objects.Array_Of_Objects)
+      Formals      : Lith.Objects.Object)
    is
       use Lith.Objects;
-      Formal_It  : Object  := Formals;
+      Env        : Object renames Machine.R (6);
+      Formal_It  : Object renames Machine.R (7);
       Rest       : Boolean := Is_Atom (Formals);
       Rest_Name  : Object  := (if Rest then Formals else Nil);
       Count      : Natural := 0;
       Rest_Count : Natural := 0;
-      Env        : Object := Machine.Car (Machine.Environment);
 
       procedure Save_Binding
         (Name  : Object;
@@ -248,14 +296,23 @@ package body Lith.Machine.SECD is
         (Name  : Object;
          Value : Object)
       is
-         It : Object := Env;
+         It : Object;
       begin
+
+         if Trace_Eval then
+            Ada.Wide_Wide_Text_IO.Put_Line
+              (Machine.Show (Name)
+               & " <-- "
+               & Machine.Show (Value));
+         end if;
+
          --  protect against GC when we push Name
-         Machine.R1 := Value;
-         Machine.Push (Name);
          Machine.Push (Value);
+         Machine.Push (Name);
+         Machine.Swap;
          Machine.Cons;
-         Machine.R1 := Nil;
+
+         It := Env;
 
          while It /= Nil
            and then Machine.Caar (It) /= Name
@@ -271,11 +328,20 @@ package body Lith.Machine.SECD is
             Machine.Environment := Machine.Pop;
             Env := Machine.Car (Machine.Environment);
          else
-            Machine.Set_Cdr (Machine.Car (It), Value);
+            declare
+               B : constant Object := Machine.Pop;
+            begin
+               Machine.Set_Cdr (Machine.Car (It), Machine.Cdr (B));
+            end;
          end if;
+
       end Save_Binding;
 
    begin
+
+      Env := Machine.Car (Machine.Environment);
+      Formal_It := Formals;
+
       if Formals = Nil then
          Machine.Environment := Machine.Cons (Nil, Machine.Environment);
          return;
@@ -294,45 +360,42 @@ package body Lith.Machine.SECD is
          Count := 1;
       end if;
 
-      for Actual of Actuals loop
+      for I in 1 .. Machine.Arg_Count loop
 
-         if Rest then
-            Machine.Push (Actual);
-            Rest_Count := Rest_Count + 1;
-         else
+         declare
+            Actual : constant Object := Machine.Args (I);
+         begin
 
-            if Trace_Eval then
-               Ada.Wide_Wide_Text_IO.Put_Line
-                 (Machine.Show (Machine.Car (Formal_It))
-                  & " <-- "
-                  & Machine.Show (Actual));
+            if Rest then
+               Machine.Push (Actual);
+               Rest_Count := Rest_Count + 1;
+            else
+
+               if Formal_It = Nil then
+                  raise Evaluation_Error with
+                    "too many arguments: "
+                    & Ada.Characters.Conversions.To_String
+                    (Machine.Show (Formals))
+                    & " at actual: "
+                    & Ada.Characters.Conversions.To_String
+                    (Machine.Show (Actual));
+               end if;
+
+               Save_Binding (Machine.Car (Formal_It), Actual);
+
+               Formal_It := Machine.Cdr (Formal_It);
+               Count := Count + 1;
+
             end if;
 
-            if Formal_It = Nil then
-               raise Evaluation_Error with
-                 "too many arguments: "
-                 & Ada.Characters.Conversions.To_String
-                 (Machine.Show (Formals))
-                 & " at actual: "
-                 & Ada.Characters.Conversions.To_String
-                 (Machine.Show (Actual));
+            if not Rest and then Formal_It /= Nil and then
+              not Is_Pair (Formal_It)
+            then
+               Rest_Name := Formal_It;
+               Rest := True;
+               Count := Count + 1;
             end if;
-
-            Save_Binding (Machine.Car (Formal_It), Actual);
-
-            Formal_It := Machine.Cdr (Formal_It);
-            Count := Count + 1;
-
-         end if;
-
-         if not Rest and then Formal_It /= Nil and then
-           not Is_Pair (Formal_It)
-         then
-            Rest_Name := Formal_It;
-            Rest := True;
-            Count := Count + 1;
-         end if;
-
+         end;
       end loop;
 
       if Rest then
@@ -430,17 +493,23 @@ package body Lith.Machine.SECD is
          Machine.Dump := Machine.Cons (Machine.Stack, Machine.Dump);
       end Save_State;
 
+      C    : Object renames Machine.R (3);
+      Cs   : Object renames Machine.R (4);
+      It   : Object renames Machine.R (5);
+      F    : Object renames Machine.R (6);
+      --  Args : Object renames Machine.R (7);
+
    begin
 
       while Machine.Control /= Nil loop
          declare
-            C : Lith.Objects.Object :=
-                  Machine.Car (Machine.Control);
-            Cs : constant Lith.Objects.Object :=
-                   Machine.Cdr (Machine.Control);
-            C_Updated : Boolean := False;
             Is_Tail_Context : Boolean := False;
          begin
+
+            C := Machine.Car (Machine.Control);
+            Cs := Machine.Cdr (Machine.Control);
+
+            Machine.Control := Cs;
 
             Set_Context (Machine, C);
 
@@ -468,10 +537,7 @@ package body Lith.Machine.SECD is
                   & Show (Machine, Machine.Current_Context)
                   & " "
                   & Machine.Show (C));
-               Ada.Wide_Wide_Text_IO.Put_Line
-                 ("Env: "
-                  & Machine.Show (Machine.Environment));
-               --  Machine.Report_State;
+               Machine.Report_State;
             end if;
 
             if Is_Pair (C)
@@ -496,6 +562,8 @@ package body Lith.Machine.SECD is
                Machine.Push (C);
             elsif Is_Character (C) then
                Machine.Push (C);
+            elsif Is_External_Object (C) then
+               Machine.Push (C);
             elsif Is_Symbol (C) then
                Machine.Hit (C);
                if C = Choice then
@@ -511,7 +579,6 @@ package body Lith.Machine.SECD is
                           Machine.Cons (Machine.Pop, Cs);
                         Machine.Drop;
                      end if;
-                     C_Updated := True;
                   end;
                elsif C = Do_Car then
                   Machine.Push (Machine.Car (Machine.Pop));
@@ -520,9 +587,7 @@ package body Lith.Machine.SECD is
                elsif C = Do_Null then
                   Machine.Push (To_Object (Machine.Pop = Nil));
                elsif C = Lith.Objects.Symbols.Stack_To_Control then
-                  Machine.Control := Cs;
                   Push_Control (Machine.Pop);
-                  C_Updated := True;
                elsif C = Stack_Drop then
                   if Trace_Eval then
                      Ada.Wide_Wide_Text_IO.Put_Line
@@ -539,7 +604,6 @@ package body Lith.Machine.SECD is
                   Machine.Cons;
                   Machine.Cons;
                   Machine.Control := Machine.Pop;
-                  C_Updated := True;
                elsif C = Unwind_Continue then
                   Machine.Drop;
                   Machine.Environment := Machine.Pop;
@@ -549,7 +613,7 @@ package body Lith.Machine.SECD is
                      Name  : constant Object := Machine.Top (2);
                   begin
                      if Machine.Environment = Nil then
-                        if Trace_Eval then
+                        if Trace_Definitions then
                            Ada.Wide_Wide_Text_IO.Put_Line
                              (Machine.Show (Name) & " = "
                               & Machine.Show (Value));
@@ -568,6 +632,7 @@ package body Lith.Machine.SECD is
                         end;
 
                         Machine.Drop;
+
                      else
                         Machine.Cons;
                         Machine.Push (Machine.Car (Machine.Environment));
@@ -575,6 +640,7 @@ package body Lith.Machine.SECD is
                         Machine.Set_Car (Machine.Environment, Machine.Pop);
                         Machine.Push (Name);
                      end if;
+
                   end;
                elsif C = Set_Symbol then
                   declare
@@ -617,27 +683,30 @@ package body Lith.Machine.SECD is
                      Machine.Push (Name);
                   end;
                elsif C = Internal_Apply then
-                  Machine.R1 := Machine.Pop;  --  proc
-                  Machine.R2 := Machine.Pop;  --  args
+                  Machine.R (1) := Machine.Pop;  --  proc
+                  Machine.R (2) := Machine.Pop;  --  args
 
                   Ada.Wide_Wide_Text_IO.Put_Line
-                    ("apply: " & Machine.Show (Machine.R1)
-                     & " " & Machine.Show (Machine.R2));
+                    ("apply: " & Machine.Show (Machine.R (1))
+                     & " " & Machine.Show (Machine.R (2)));
 
                   declare
-                     Args : constant Array_Of_Objects :=
-                              Machine.To_Object_Array (Machine.R2);
+                     It : Object := Machine.R (2);
+                     Count : Natural := 0;
                   begin
-                     for Arg of reverse Args loop
-                        Machine.Push (Arg);
+                     while It /= Nil loop
+                        Count := Count + 1;
+                        Machine.Args (Count) := Machine.Car (It);
+                        It := Machine.Cdr (It);
                      end loop;
-                     Machine.Push (Machine.R1);
-                     Machine.Push (Apply_Object (Args'Length));
+
+                     Machine.Push (Machine.R (1));
+                     Machine.Push (Apply_Object (Count));
                      Machine.Push (Cs);
                      Machine.Cons;
                      Machine.Control := Machine.Pop;
-                     Machine.R1 := Nil;
-                     Machine.R2 := Nil;
+                     Machine.R (1) := Nil;
+                     Machine.R (2) := Nil;
                   end;
                else
                   declare
@@ -660,448 +729,449 @@ package body Lith.Machine.SECD is
             elsif Is_Function (C) then
                Machine.Push (C);
             elsif Is_Apply (C) then
-               declare
-                  F : constant Object := Machine.Pop;
-                  Arguments : Array_Of_Objects (1 .. Argument_Count (C));
-               begin
+               F := Machine.Pop;
 
-                  Machine.R1 := C;
-                  Machine.R2 := F;
+               for I in 1 .. Argument_Count (C) loop
+                  Machine.Args (I) := Machine.Pop;
+               end loop;
 
-                  Machine.Control := Cs;
-                  C_Updated := True;
+               Machine.Arg_Count := Argument_Count (C);
 
-                  if Is_Pair (F) and then Machine.Car (F) = Macro_Symbol then
-                     for I in reverse Arguments'Range loop
-                        Machine.R2 := Machine.Cons (Machine.Pop, Machine.R2);
-                        Arguments (I) := Machine.Car (Machine.R2);
-                     end loop;
-                  else
-                     for I in Arguments'Range loop
-                        Machine.R2 := Machine.Cons (Machine.Pop, Machine.R2);
-                        Arguments (I) := Machine.Car (Machine.R2);
-                     end loop;
-                  end if;
-
-                  if Is_Function (F) then
-                     begin
-                        declare
-                           Result : constant Object :=
-                                      Lith.Objects.Interfaces.Evaluate
-                                        (Machine, To_Function (F),
-                                         Arguments, Machine.Environment);
-                        begin
-                           Machine.Push (Result);
-                        end;
-                     exception
-                        when E : others =>
-                           Ada.Wide_Wide_Text_IO.Put_Line
-                             (Ada.Wide_Wide_Text_IO.Standard_Error,
-                              "Error: "
-                              & Show (Machine, Machine.Current_Context)
-                              & " "
-                              & Ada.Characters.Conversions.To_Wide_Wide_String
-                                (Ada.Exceptions.Exception_Message (E)));
-                           raise;
-                     end;
-
-                  elsif Is_Pair (F)
-                    and then (Machine.Car (F) = Lambda_Symbol
-                              or else Machine.Car (F) = Macro_Symbol)
-                  then
-                     if Machine.Car (F) = Macro_Symbol then
-                        if Trace_Eval then
-                           Ada.Wide_Wide_Text_IO.Put_Line
-                             ("macro: pushing post-macro");
-                        end if;
-                        Push_Control (Lith.Objects.Symbols.Stack_To_Control);
-                     end if;
-
-                     if Trace_Eval and then Is_Tail_Context then
-                        Ada.Wide_Wide_Text_IO.Put_Line
-                          ("tail-call: " & Machine.Show (F));
-                     end if;
-
-                     if Is_Tail_Context then
-                        null;
-                     else
-                        Save_State;
-                        Machine.Push (Nil);
-                        Machine.Push (Machine.Environment);
-                        Machine.Cons;
-                        Machine.Environment := Machine.Pop;
-                     end if;
-
-                     Machine.Dump := Machine.Cons (C, Machine.Dump);
-                     Machine.Control := Nil;
-
+               if Is_Function (F) then
+                  begin
                      declare
-                        Arg_Array : constant Array_Of_Objects :=
-                                      Machine.To_Object_Array
-                                        (Machine.Cdr
-                                           (Machine.Cdr (F)));
-                        Last : Boolean := True;
+                        Result : constant Object :=
+                                   Lith.Objects.Interfaces.Evaluate
+                                     (Machine, To_Function (F),
+                                      Machine.Environment);
                      begin
-                        for Arg of reverse Arg_Array loop
-                           Machine.Set_Context (Arg);
-                           if Last then
-                              Machine.Make_List ((Tail_Context, Arg));
-                              Push_Control (Machine.Pop);
-                              Last := False;
-                           else
-                              Push_Control (Arg);
-                           end if;
-                        end loop;
-                        Set_Context (Machine, C);
-                        Machine.Dump := Machine.Cdr (Machine.Dump);
+                        Machine.Push (Result);
                      end;
+                  exception
+                     when E : others =>
+                        Ada.Wide_Wide_Text_IO.Put_Line
+                          (Ada.Wide_Wide_Text_IO.Standard_Error,
+                           "Error: "
+                           & Show (Machine, Machine.Current_Context)
+                           & " "
+                           & Ada.Characters.Conversions.To_Wide_Wide_String
+                             (Ada.Exceptions.Exception_Message (E)));
+                        raise;
+                  end;
 
-                     C_Updated := True;
-
-                     Create_Environment
-                       (Machine      => Machine,
-                        Formals      => Machine.Cadr (F),
-                        Actuals      => Arguments);
-                     Machine.Stack := Nil;
-                  else
-                     raise Evaluation_Error with
-                       "bad application: "
-                       & Ada.Characters.Conversions.To_String
-                       (Machine.Show (F));
+               elsif Is_Pair (F)
+                 and then (Machine.Car (F) = Lambda_Symbol
+                           or else Machine.Car (F) = Macro_Symbol)
+               then
+                  if Machine.Car (F) = Macro_Symbol then
+                     if Trace_Eval then
+                        Ada.Wide_Wide_Text_IO.Put_Line
+                          ("macro: pushing post-macro");
+                     end if;
+                     Push_Control (Lith.Objects.Symbols.Stack_To_Control);
                   end if;
-                  Machine.R1 := Nil;
-                  Machine.R2 := Nil;
-               end;
+
+                  if Trace_Eval and then Is_Tail_Context then
+                     Ada.Wide_Wide_Text_IO.Put_Line
+                       ("tail-call: " & Machine.Show (F));
+                  end if;
+
+                  if Is_Tail_Context then
+                     null;
+                  else
+                     Save_State;
+                     Machine.Push (Nil);
+                     Machine.Push (Machine.Environment);
+                     Machine.Cons;
+                     Machine.Environment := Machine.Pop;
+                  end if;
+
+                  Machine.Control := Nil;
+
+                  It := Machine.Cdr (Machine.Cdr (F));
+
+                  declare
+                     Body_Count : Natural := 0;
+                  begin
+                     while It /= Nil loop
+                        if Machine.Cdr (It) = Nil then
+                           Machine.Push (Tail_Context);
+                           Machine.Push (Machine.Car (It));
+                           Machine.Cons;
+                        else
+                           Machine.Push (Machine.Car (It));
+                        end if;
+                        It := Machine.Cdr (It);
+                        Body_Count := Body_Count + 1;
+                     end loop;
+
+                     for I in 1 .. Body_Count loop
+                        Push_Control (Machine.Pop);
+                     end loop;
+
+                  end;
+
+                  Create_Environment
+                    (Machine      => Machine,
+                     Formals      => Machine.Cadr (F));
+
+                  Machine.Stack := Nil;
+               else
+                  raise Evaluation_Error with
+                    "bad application: "
+                    & Ada.Characters.Conversions.To_String
+                    (Machine.Show (F));
+               end if;
+
             else
                --  a pair
+
+               F := Machine.Car (C);
+
                declare
-                  F : constant Object := Machine.Car (C);
-                  Args : constant Object := Machine.Cdr (C);
+                  It : Object := Machine.Cdr (C);
                begin
-                  if F = Quote_Symbol then
-                     if Machine.Cdr (Args) /= Nil then
-                        raise Evaluation_Error with
-                          "quote: too many arguments";
-                     end if;
-                     Machine.Push (Machine.Car (Args));
-                  elsif F = Car_Symbol or else F = Cdr_Symbol then
-                     Machine.Make_List
-                       ((Machine.Car (Args),
-                        (if F = Car_Symbol then Do_Car else Do_Cdr),
-                         Cs));
-                     Machine.Control := Machine.Pop;
-                     C_Updated := True;
-                  elsif F = Null_Symbol then
-                     Machine.Make_List ((Machine.Car (Args),
-                                        Do_Null,
-                                        Cs));
-                     Machine.Control := Machine.Pop;
-                     C_Updated := True;
-                  elsif F = If_Symbol then
-                     Machine.Push (Args, Secondary);
-                     Machine.Control :=
-                       Machine.Cons (Choice, Cs);
-                     Machine.Control :=
-                       Machine.Cons (Machine.Car (Args),
-                                     Machine.Control);
-                     declare
-                        True_Part  : constant Object :=
-                                       Machine.Cadr (Args);
-                        False_Part : constant Object :=
-                                       (if Machine.Cddr (Args) = Nil
-                                        then No_Value
-                                        else Machine.Car
-                                          (Machine.Cddr (Args)));
-                     begin
-                        if Is_Tail_Context then
-                           Machine.Push (Tail_Context);
-                           Machine.Push (False_Part);
-                           Machine.Cons;
-                           Machine.Push (Tail_Context);
-                           Machine.Push (True_Part);
-                           Machine.Cons;
-                        else
-                           Machine.Push (False_Part);
-                           Machine.Push (True_Part);
-                        end if;
-                     end;
+                  Machine.Arg_Count := 0;
+                  while It /= Nil loop
+                     Machine.Arg_Count := Machine.Arg_Count + 1;
+                     Machine.Args (Machine.Arg_Count) := Machine.Car (It);
+                     It := Machine.Cdr (It);
+                  end loop;
+               end;
 
-                     Machine.Drop (1, Secondary);
-                     C_Updated := True;
-                  elsif F = Set_Symbol then
-                     Machine.Control :=
-                       Machine.Cons (Set_Symbol, Cs);
-                     Machine.Control :=
-                       Machine.Cons (Machine.Cadr (Args), Machine.Control);
-                     Machine.Push (Machine.Car (Args));
-                     C_Updated := True;
-                  elsif F = Lith_Define_Symbol then
-                     declare
-                        Name : constant Object :=
-                                 Machine.Car (Args);
-                        Value : constant Object :=
-                                  Machine.Cadr (Args);
-                     begin
-                        if Trace_Eval then
-                           Ada.Wide_Wide_Text_IO.Put_Line
-                             ("define: "
-                              & Machine.Show (Name)
-                              & " = "
-                              & Machine.Show (Value));
-                        end if;
+               if F = Quote_Symbol then
+                  if Machine.Arg_Count /= 1 then
+                     raise Evaluation_Error with
+                       "quote: too many arguments";
+                  end if;
+                  Machine.Push (Machine.Args (1));
+               elsif F = Car_Symbol or else F = Cdr_Symbol then
+                  if Machine.Arg_Count /= 1 then
+                     raise Evaluation_Error with
+                       (if F = Car_Symbol then "car" else "cdr")
+                       & ": too many arguments";
+                  end if;
 
-                        Machine.Push (Value);
-                        Machine.Push (Internal_Define);
-                        Machine.Push (Cs);
-                        Machine.Cons;
-                        Machine.Cons;
-                        Machine.Control := Machine.Pop;
+                  Machine.Push (Machine.Args (1));
+                  Machine.Push ((if F = Car_Symbol then Do_Car else Do_Cdr));
+                  Machine.Push (Cs);
+                  Machine.Cons;
+                  Machine.Cons;
+                  Machine.Control := Machine.Pop;
 
-                        Machine.Push (Name);
-                        C_Updated := True;
-                     end;
-                  elsif F = Apply_Syntax_Symbol then
-                     declare
-                        Syntax : constant Object := Machine.Cadr (Args);
-                        Call   : Object;
-                        Found  : Boolean;
-                     begin
-                        Get (Machine, To_Symbol (Machine.Car (Args)),
-                             Call, Found);
-                        if not Found then
-                           raise Evaluation_Error with
-                             "syntax arguments not found";
-                        end if;
+               elsif F = Null_Symbol then
+                  Check_Argument_Count (Machine, "null?", 1);
 
-                        if Trace_Patterns then
-                           Ada.Wide_Wide_Text_IO.Put_Line
-                             ("applying syntax: "
-                              & Machine.Show (Syntax));
-                        end if;
-                        Apply_Syntax (Machine, Call, Syntax);
-                        Machine.Control :=
-                          Machine.Cons (Machine.Pop, Cs);
-                        C_Updated := True;
-                     end;
-                  elsif F = Dynamic_Wind_Symbol then
+                  Machine.Push (Machine.Args (1));
+                  Machine.Push (Do_Null);
+                  Machine.Push (Cs);
+                  Machine.Cons;
+                  Machine.Cons;
+                  Machine.Control := Machine.Pop;
 
-                     Machine.Push (Machine.Car (Args));
-                     Machine.Push (Nil);
-                     Machine.Cons;
-                     Machine.Push (Stack_Drop);
-                     Machine.Push (Machine.Cadr (Args));
-                     Machine.Push (Nil);
-                     Machine.Cons;
-                     Machine.Push (Unwind_Protect);
-                     Machine.Push (Machine.Environment);
-                     Machine.Push (Machine.Car (Machine.Cddr (Args)));
-                     Machine.Push (Nil);
-                     Machine.Cons;
-                     Machine.Push (Cs);
-                     Machine.Cons;
-                     Machine.Cons;
-                     Machine.Cons;
-                     Machine.Cons;
-                     Machine.Cons;
-                     Machine.Cons;
-                     Machine.Control := Machine.Pop;
-                     if Trace_Eval then
-                        Ada.Wide_Wide_Text_IO.Put_Line
-                          ("dynamic-wind: control = "
-                           & Machine.Show (Machine.Control));
-                        Ada.Wide_Wide_Text_IO.Put_Line
-                          ("dynamic-wind: dump = "
-                           & Machine.Show (Machine.Dump));
-                     end if;
-                     C_Updated := True;
-                  elsif F = With_Exception_Handler_Symbol then
-                     Machine.Push (Machine.Cadr (Args));
-                     Machine.Push (Nil);
-                     Machine.Cons;
-                     Machine.Push (Cs);
-                     Machine.Cons;
-                     Machine.Control := Machine.Pop;
-                     Machine.Make_List
-                       ((Machine.Car (Args), Machine.Dump, Nil));
-                     Machine.Push (Machine.Handlers);
-                     Machine.Cons;
-                     Machine.Handlers := Machine.Pop;
-                     C_Updated := True;
-                  elsif F = Raise_Symbol then
-                     declare
-                        Handler : Object;
-                        Ex      : Object;
-                        Found   : Boolean;
-                     begin
+               elsif F = If_Symbol then
+                  if Machine.Arg_Count not in 2 .. 3 then
+                     raise Evaluation_Error with
+                       "if: 2 or 3 arguments required";
+                  end if;
 
-                        if Trace_Eval then
-                           Ada.Wide_Wide_Text_IO.Put_Line
-                             ("raise exception");
-                        end if;
+                  Machine.Control :=
+                    Machine.Cons (Choice, Cs);
+                  Machine.Control :=
+                    Machine.Cons (Machine.Args (1),
+                                  Machine.Control);
 
-                        if Machine.Handlers = Nil then
-                           Ada.Wide_Wide_Text_IO.Put_Line
-                           ("Unhandled exception: "
-                            & Machine.Show (Machine.Car (Args)));
-                           Restore_State (Nil);
-                        else
-                           Handler := Machine.Car (Machine.Handlers);
-
-                           --  we happen to know that we are called with one
-                           --  argument, 'obj', which allows as to fetch the
-                           --  actual exception object for the unwind operation
-                           Get (Machine, Get_Symbol ("obj"),
-                                Ex, Found);
-                           pragma Assert (Found);
-                           Machine.Make_List
-                             ((Machine.Car (Handler),
-                              Machine.Car (Args),
-                              Nil));
-                           Machine.Make_List
-                             ((Unwind_Continue, Ex, Nil));
-                           Machine.Push (Nil);
-                           Machine.Cons;
-                           Machine.Cons;
-                           Machine.Control := Machine.Pop;
-                           C_Updated := True;
-                        end if;
-
-                     end;
-                  elsif F = Unwind_Continue then
-                     Machine.Drop;
-                     Restore_State
-                       (Machine.Cadr (Machine.Car (Machine.Handlers)));
-                     Machine.Handlers := Machine.Cdr (Machine.Handlers);
-
-                     Machine.Make_List
-                       ((Raise_Symbol, Machine.Car (Args), Nil));
-                     Machine.Push (Nil);
-                     Machine.Cons;
-                     if Machine.Control = Nil then
-                        Machine.Control := Machine.Pop;
-                     else
-                        declare
-                           It : Object := Machine.Control;
-                        begin
-                           while Machine.Cdr (It) /= Nil loop
-                              It := Machine.Cdr (It);
-                           end loop;
-                           Machine.Set_Cdr (It, Machine.Pop);
-                        end;
-                     end if;
-
-                     if Trace_Eval then
-                        Ada.Wide_Wide_Text_IO.Put_Line
-                          ("unwind-continue");
-                     end if;
-                     C_Updated := True;
-                  elsif F = Unwind_Dump then
-                     Restore_State (Machine.Car (Args));
-                     C_Updated := True;
-                  elsif F = Lambda_Symbol or else F = Macro_Symbol then
-                     Machine.Push (C);
-                  elsif F = String_Value then
-                     Machine.Push (C);
-                  elsif F = Large_Integer_Value then
-                     Machine.Push (C);
-                  elsif F = Floating_Point_Value then
-                     Machine.Push (C);
-                  elsif F = Import_Symbol then
-
-                     Machine.Push (Args);
-
-                     declare
-                        Result : constant Boolean :=
-                                   Import_Libraries (Machine, Args);
-                     begin
-                        Machine.Drop;
-
-                        Machine.Push
-                          ((if Result then True_Value else False_Value));
-                     end;
-                  elsif F = Begin_Symbol then
-
-                     if Trace_Eval then
-                        Ada.Wide_Wide_Text_IO.Put_Line
-                          ("begin: "
-                           & Machine.Show (Args));
-                     end if;
-
-                     Machine.Dump := Machine.Cons (C, Machine.Dump);
-                     Machine.Control := Cs;
-                     C_Updated := True;
-                     declare
-                        Arg_Array : constant Array_Of_Objects :=
-                                      Machine.To_Object_Array (Args);
-                        First     : Boolean := True;
-
-                     begin
-                        for Arg of reverse Arg_Array loop
-                           if First then
-                              if Is_Tail_Context then
-                                 Machine.Push (Tail_Context);
-                                 Machine.Push (Arg);
-                                 Machine.Cons;
-                                 Push_Control (Machine.Pop);
-                              else
-                                 Push_Control (Arg);
-                              end if;
-                              First := False;
-                           else
-                              Push_Control (Stack_Drop);
-                              Push_Control (Arg);
-                           end if;
-                        end loop;
-                        Machine.Dump := Machine.Cdr (Machine.Dump);
-                     end;
-                  else
-                     Machine.Dump := Machine.Cons (C, Machine.Dump);
-                     Machine.Control := Cs;
-                     C_Updated := True;
-
-                     if Is_Macro (Machine, F) then
-                        Is_Tail_Context := False;
-                     end if;
+                  declare
+                     True_Part : Object renames Machine.R (1);
+                     False_Part : Object renames Machine.R (2);
+                  begin
+                     True_Part := Machine.Args (2);
+                     False_Part := (if Machine.Arg_Count = 2
+                                    then No_Value
+                                    else Machine.Args (3));
 
                      if Is_Tail_Context then
                         Machine.Push (Tail_Context);
-                     end if;
-                     Machine.Push (Apply_Object (Length (Machine, Args)));
-                     if Is_Tail_Context then
+                        Machine.Push (False_Part);
                         Machine.Cons;
+                        Machine.Push (Tail_Context);
+                        Machine.Push (True_Part);
+                        Machine.Cons;
+                     else
+                        Machine.Push (False_Part);
+                        Machine.Push (True_Part);
                      end if;
-                     Push_Control (Machine.Pop);
-                     Push_Control (F);
+                  end;
 
+               elsif F = Set_Symbol then
+                  Check_Argument_Count (Machine, "set!", 2);
+                  Machine.Control :=
+                    Machine.Cons (Set_Symbol, Cs);
+                  Machine.Control :=
+                    Machine.Cons (Machine.Args (2), Machine.Control);
+                  Machine.Push (Machine.Args (1));
+
+               elsif F = Lith_Define_Symbol then
+                  Check_Argument_Count (Machine, "lith-define", 2);
+                  declare
+                     Name  : constant Object := Machine.Args (1);
+                     Value : constant Object := Machine.Args (2);
+                  begin
+                     if Trace_Eval then
+                        Ada.Wide_Wide_Text_IO.Put_Line
+                          ("define: "
+                           & Machine.Show (Name)
+                           & " = "
+                           & Machine.Show (Value));
+                     end if;
+
+                     Machine.Push (Value);
+                     Machine.Push (Internal_Define);
+                     Machine.Push (Cs);
+                     Machine.Cons;
+                     Machine.Cons;
+                     Machine.Control := Machine.Pop;
+
+                     Machine.Push (Name);
+
+                  end;
+               elsif F = Apply_Syntax_Symbol then
+                  Check_Argument_Count (Machine, "apply-syntax", 2);
+                  declare
+                     Syntax : constant Object := Machine.Args (2);
+                     Call   : Object;
+                     Found  : Boolean;
+                  begin
+                     Get (Machine, To_Symbol (Machine.Args (1)),
+                          Call, Found);
+                     if not Found then
+                        raise Evaluation_Error with
+                          "syntax arguments not found";
+                     end if;
+
+                     if Trace_Patterns then
+                        Ada.Wide_Wide_Text_IO.Put_Line
+                          ("applying syntax: "
+                           & Machine.Show (Syntax));
+                     end if;
+                     Apply_Syntax (Machine, Call, Syntax);
+                     Machine.Control :=
+                       Machine.Cons (Machine.Pop, Cs);
+                     if Trace_Patterns then
+                        Ada.Wide_Wide_Text_IO.Put_Line
+                          ("control: "
+                           & Machine.Show (Machine.Control));
+                     end if;
+                  end;
+               elsif F = Dynamic_Wind_Symbol then
+
+                  Check_Argument_Count (Machine, "dynamic-wind", 3);
+                  Machine.Push (Machine.Args (1));
+                  Machine.Push (Nil);
+                  Machine.Cons;
+                  Machine.Push (Stack_Drop);
+                  Machine.Push (Machine.Args (2));
+                  Machine.Push (Nil);
+                  Machine.Cons;
+                  Machine.Push (Unwind_Protect);
+                  Machine.Push (Machine.Environment);
+                  Machine.Push (Machine.Car (Machine.Args (3)));
+                  Machine.Push (Nil);
+                  Machine.Cons;
+                  Machine.Push (Cs);
+                  Machine.Cons;
+                  Machine.Cons;
+                  Machine.Cons;
+                  Machine.Cons;
+                  Machine.Cons;
+                  Machine.Cons;
+                  Machine.Control := Machine.Pop;
+                  if Trace_Eval then
+                     Ada.Wide_Wide_Text_IO.Put_Line
+                       ("dynamic-wind: control = "
+                        & Machine.Show (Machine.Control));
+                     Ada.Wide_Wide_Text_IO.Put_Line
+                       ("dynamic-wind: dump = "
+                        & Machine.Show (Machine.Dump));
+                  end if;
+
+               elsif F = With_Exception_Handler_Symbol then
+                  Check_Argument_Count (Machine, "with-exception-handler", 2);
+                  Machine.Push (Machine.Args (2));
+                  Machine.Push (Nil);
+                  Machine.Cons;
+                  Machine.Push (Cs);
+                  Machine.Cons;
+                  Machine.Control := Machine.Pop;
+                  Machine.Push (Machine.Args (1));
+                  Machine.Push (Machine.Dump);
+                  Machine.Push (Nil);
+                  Machine.Cons;
+                  Machine.Cons;
+                  Machine.Push (Machine.Handlers);
+                  Machine.Cons;
+                  Machine.Handlers := Machine.Pop;
+
+               elsif F = Raise_Symbol then
+                  Check_Argument_Count (Machine, "raise", 1);
+                  declare
+                     Handler : Object;
+                     Ex      : Object;
+                     Found   : Boolean;
+                  begin
+
+                     if Trace_Eval then
+                        Ada.Wide_Wide_Text_IO.Put_Line
+                          ("raise exception");
+                     end if;
+
+                     if Machine.Handlers = Nil then
+                        Ada.Wide_Wide_Text_IO.Put_Line
+                          ("Unhandled exception: "
+                           & Machine.Show (Machine.Args (1)));
+                        Restore_State (Nil);
+                     else
+                        Handler := Machine.Car (Machine.Handlers);
+
+                        --  we happen to know that we are called with one
+                        --  argument, 'obj', which allows as to fetch the
+                        --  actual exception object for the unwind operation
+                        Get (Machine, Get_Symbol ("obj"),
+                             Ex, Found);
+                        pragma Assert (Found);
+                        Machine.Push (Machine.Car (Handler));
+                        Machine.Push (Machine.Args (1));
+                        Machine.Push (Nil);
+                        Machine.Cons;
+                        Machine.Cons;
+
+                        Machine.Push (Unwind_Continue);
+                        Machine.Push (Ex);
+                        Machine.Push (Nil);
+                        Machine.Cons;
+                        Machine.Cons;
+
+                        Machine.Push (Nil);
+                        Machine.Cons;
+                        Machine.Cons;
+                        Machine.Control := Machine.Pop;
+
+                     end if;
+
+                  end;
+               elsif F = Unwind_Continue then
+                  Machine.Drop;
+                  Restore_State
+                    (Machine.Cadr (Machine.Car (Machine.Handlers)));
+                  Machine.Handlers := Machine.Cdr (Machine.Handlers);
+
+                  Machine.Push (Raise_Symbol);
+                  Machine.Push (Machine.Args (1));
+                  Machine.Push (Nil);
+                  Machine.Cons;
+                  Machine.Cons;
+
+                  Machine.Push (Nil);
+                  Machine.Cons;
+                  if Machine.Control = Nil then
+                     Machine.Control := Machine.Pop;
+                  else
                      declare
-                        It : Object := Args;
-                        Macro : constant Boolean := Is_Macro (Machine, F);
+                        It : Object := Machine.Control;
                      begin
-                        if Trace_Eval then
-                           Ada.Wide_Wide_Text_IO.Put_Line
-                             ("Is_Macro: " & Machine.Show (F)
-                              & " = "
-                              & (if Macro then "yes" else "no"));
-                        end if;
-
-                        while It /= Nil loop
-                           if Macro then
-                              Machine.Push (Machine.Car (It));
-                           else
-                              Push_Control (Machine.Car (It));
-                           end if;
+                        while Machine.Cdr (It) /= Nil loop
                            It := Machine.Cdr (It);
                         end loop;
-
+                        Machine.Set_Cdr (It, Machine.Pop);
                      end;
-                     Machine.Dump := Machine.Cdr (Machine.Dump);
                   end if;
-               end;
+
+                  if Trace_Eval then
+                     Ada.Wide_Wide_Text_IO.Put_Line
+                       ("unwind-continue");
+                  end if;
+
+               elsif F = Unwind_Dump then
+                  Check_Argument_Count (Machine, "unwind-dump", 1);
+                  Restore_State (Machine.Args (1));
+
+               elsif F = Lambda_Symbol or else F = Macro_Symbol then
+                  Machine.Push (C);
+               elsif F = String_Value then
+                  Machine.Push (C);
+               elsif F = Large_Integer_Value then
+                  Machine.Push (C);
+               elsif F = Floating_Point_Value then
+                  Machine.Push (C);
+               elsif F = Import_Symbol then
+                  declare
+                     Result : constant Boolean :=
+                                Import_Libraries (Machine);
+                  begin
+                     Machine.Push
+                       ((if Result then True_Value else False_Value));
+                  end;
+               elsif F = Begin_Symbol then
+
+                  declare
+                     First     : Boolean := True;
+                  begin
+                     for I in reverse 1 .. Machine.Arg_Count loop
+                        if First then
+                           if Is_Tail_Context then
+                              Machine.Push (Tail_Context);
+                              Machine.Push (Machine.Args (I));
+                              Machine.Cons;
+                              Push_Control (Machine.Pop);
+                           else
+                              Push_Control (Machine.Args (I));
+                           end if;
+                           First := False;
+                        else
+                           Push_Control (Stack_Drop);
+                           Push_Control (Machine.Args (I));
+                        end if;
+                     end loop;
+                  end;
+               else
+
+                  if Is_Macro (Machine, F) then
+                     Is_Tail_Context := False;
+                  end if;
+
+                  if Is_Tail_Context then
+                     Machine.Push (Tail_Context);
+                  end if;
+                  Machine.Push (Apply_Object (Machine.Arg_Count));
+                  if Is_Tail_Context then
+                     Machine.Cons;
+                  end if;
+                  Push_Control (Machine.Pop);
+                  Push_Control (F);
+
+                  declare
+                     Macro : constant Boolean := Is_Macro (Machine, F);
+                  begin
+                     if Trace_Eval then
+                        Ada.Wide_Wide_Text_IO.Put_Line
+                          ("Is_Macro: " & Machine.Show (F)
+                           & " = "
+                           & (if Macro then "yes" else "no"));
+                     end if;
+
+                     if Macro then
+                        for I in reverse 1 .. Machine.Arg_Count loop
+                           Machine.Push (Machine.Args (I));
+                        end loop;
+                     else
+                        for I in 1 .. Machine.Arg_Count loop
+                           Push_Control (Machine.Args (I));
+                        end loop;
+                     end if;
+                  end;
+               end if;
             end if;
 
-            if not C_Updated then
-               Machine.Control := Cs;
-            end if;
          end;
 
          while Machine.Control = Nil and then
@@ -1116,9 +1186,11 @@ package body Lith.Machine.SECD is
             begin
                Restore_State;
                Machine.Push (S);
-
             end;
          end loop;
+
+         Machine.Args := (others => Nil);
+         Machine.Arg_Count := 0;
 
       end loop;
    end Evaluate;
@@ -1188,8 +1260,7 @@ package body Lith.Machine.SECD is
    ----------------------
 
    function Import_Libraries
-     (Machine    : in out Root_Lith_Machine'Class;
-      Import_Set : Lith.Objects.Object)
+     (Machine    : in out Root_Lith_Machine'Class)
       return Boolean
    is
       use Ada.Characters.Conversions;
@@ -1218,12 +1289,12 @@ package body Lith.Machine.SECD is
          end if;
       end Get_Library_Path;
 
-      It : Object := Import_Set;
    begin
-      while It /= Nil loop
+      for I in 1 .. Machine.Arg_Count loop
          declare
+            Arg  : constant Object := Machine.Args (I);
             Path : constant String :=
-                     Get_Library_Path (Machine.Car (It));
+                     Get_Library_Path (Arg);
          begin
             Lith.Parser.Parse_File
               (Machine,
@@ -1233,14 +1304,13 @@ package body Lith.Machine.SECD is
                Ada.Wide_Wide_Text_IO.Put_Line
                  (Ada.Wide_Wide_Text_IO.Standard_Error,
                   "error opening library "
-                  & Machine.Show (Machine.Car (It)));
+                  & Machine.Show (Machine.Args (I)));
                Ada.Wide_Wide_Text_IO.Put_Line
                  (Ada.Wide_Wide_Text_IO.Standard_Error,
                   To_Wide_Wide_String
                     (Ada.Exceptions.Exception_Message (E)));
                return False;
          end;
-         It := Machine.Cdr (It);
       end loop;
       return True;
    end Import_Libraries;
@@ -1289,25 +1359,5 @@ package body Lith.Machine.SECD is
          return False;
       end if;
    end Is_Macro;
-
-   ------------
-   -- Length --
-   ------------
-
-   function Length
-     (Machine : Root_Lith_Machine'Class;
-      Xs      : Lith.Objects.Object)
-      return Natural
-   is
-      use Lith.Objects;
-      It : Object := Xs;
-      Result : Natural := 0;
-   begin
-      while It /= Nil loop
-         Result := Result + 1;
-         It := Machine.Cdr (It);
-      end loop;
-      return Result;
-   end Length;
 
 end Lith.Machine.SECD;

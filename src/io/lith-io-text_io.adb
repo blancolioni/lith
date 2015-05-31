@@ -38,8 +38,7 @@ package body Lith.IO.Text_IO is
    ------------------------------
 
    function Evaluate_Open_Input_File
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       Port : Text_Port_Type;
@@ -48,7 +47,7 @@ package body Lith.IO.Text_IO is
       Ada.Wide_Wide_Text_IO.Open
         (Port.File.all, Ada.Wide_Wide_Text_IO.In_File,
          Ada.Characters.Conversions.To_String
-           (Lith.Objects.To_String (Store, Arguments (Arguments'First))));
+           (Lith.Objects.To_String (Store, Store.Argument (1))));
       Port.Input := True;
       Port.Output := False;
       return Store.Create_External_Reference (Port);
@@ -64,8 +63,7 @@ package body Lith.IO.Text_IO is
    -------------------------------
 
    function Evaluate_Open_Output_File
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       Port : Text_Port_Type;
@@ -74,7 +72,7 @@ package body Lith.IO.Text_IO is
       Ada.Wide_Wide_Text_IO.Create
         (Port.File.all, Ada.Wide_Wide_Text_IO.Out_File,
          Ada.Characters.Conversions.To_String
-           (Lith.Objects.To_String (Store, Arguments (Arguments'First))));
+           (Lith.Objects.To_String (Store, Store.Argument (1))));
       Port.Open := True;
       Port.Input := False;
       Port.Output := True;

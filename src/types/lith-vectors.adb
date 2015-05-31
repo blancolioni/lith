@@ -5,23 +5,19 @@ with Lith.Objects.Interfaces;
 package body Lith.Vectors is
 
    function Evaluate_Vector
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Vector_Length
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Vector_Ref
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    function Evaluate_Vector_Set
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
    -----------
@@ -44,14 +40,13 @@ package body Lith.Vectors is
    ---------------------
 
    function Evaluate_Vector
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       Result : Lith_Vector_Type;
    begin
-      for Arg of Arguments loop
-         Result.V.Append (Arg);
+      for I in 1 .. Store.Argument_Count loop
+         Result.V.Append (Store.Argument (I));
       end loop;
       return Store.Create_External_Reference (Result);
    end Evaluate_Vector;
@@ -61,8 +56,7 @@ package body Lith.Vectors is
    ----------------------------
 
    function Evaluate_Vector_Length
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
@@ -70,7 +64,7 @@ package body Lith.Vectors is
       return To_Object
         (Lith_Vector_Type
            (Store.Get_External_Object
-                (Arguments (Arguments'First)).all).V.Last_Index + 1);
+                (Store.Argument (1)).all).V.Last_Index + 1);
    end Evaluate_Vector_Length;
 
    -------------------------
@@ -78,15 +72,14 @@ package body Lith.Vectors is
    -------------------------
 
    function Evaluate_Vector_Ref
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
       V : Object_Vectors.Vector renames Lith_Vector_Type
         (Store.Get_External_Object
-           (Arguments (Arguments'First)).all).V;
-      Index : constant Integer := To_Integer (Arguments (Arguments'First + 1));
+           (Store.Argument (1)).all).V;
+      Index : constant Integer := To_Integer (Store.Argument (2));
    begin
       return V.Element (Index);
    end Evaluate_Vector_Ref;
@@ -96,16 +89,15 @@ package body Lith.Vectors is
    -------------------------
 
    function Evaluate_Vector_Set
-     (Store       : in out Lith.Objects.Object_Store'Class;
-      Arguments   : Lith.Objects.Array_Of_Objects)
+     (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
       use Lith.Objects;
       V : Object_Vectors.Vector renames Lith_Vector_Type
         (Store.Get_External_Object
-           (Arguments (Arguments'First)).all).V;
-      Index : constant Integer := To_Integer (Arguments (Arguments'First + 1));
-      Value : constant Object := Arguments (Arguments'First + 2);
+           (Store.Argument (1)).all).V;
+      Index : constant Integer := To_Integer (Store.Argument (2));
+      Value : constant Object := Store.Argument (3);
    begin
       V.Replace_Element (Index, Value);
       return No_Value;

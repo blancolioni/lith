@@ -69,16 +69,15 @@ package body Lith.Objects.Interfaces is
    function Evaluate
      (Store       : in out Object_Store'Class;
       Fn          : Function_Type;
-      Arguments   : Array_Of_Objects;
       Environment : Object)
       return Object
    is
       Def : constant Function_Record := Defs (Positive (Fn));
    begin
       if Def.Simple then
-         return Def.Simple_Eval (Store, Arguments);
+         return Def.Simple_Eval (Store);
       else
-         return Def.Env_Eval (Store, Arguments, Environment);
+         return Def.Env_Eval (Store, Environment);
       end if;
    end Evaluate;
 

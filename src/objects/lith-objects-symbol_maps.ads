@@ -30,6 +30,11 @@ package Lith.Objects.Symbol_Maps is
       Process   : not null access
         procedure (Item : Element_Type));
 
+   procedure Update
+     (Container : Map;
+      Process   : not null access
+        procedure (Item : in out Element_Type));
+
    procedure Iterate
      (Container : Map;
       Process   : not null access

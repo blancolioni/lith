@@ -9,14 +9,14 @@ package body Lith.Machine.Profiling is
 
    overriding function Call
      (Profile   : in out Profile_Type;
-      Arguments : Lith.Objects.Array_Of_Objects)
+      Arguments : Lith.Objects.Object)
       return Lith.Objects.Object
    is
       use Lith.Objects, Lith.Objects.Symbols;
       Cost_Centre : constant Symbol_Type :=
-                      To_Symbol (Arguments (Arguments'First + 1));
+                      To_Symbol (Profile.Machine.Cadr (Arguments));
    begin
-      if Get_Name (To_Symbol (Arguments (Arguments'First))) = "start" then
+      if Get_Name (To_Symbol (Profile.Machine.Car (Arguments))) = "start" then
          Profile.Start_Cost_Centre (Cost_Centre);
       else
          Profile.End_Cost_Centre (Cost_Centre);

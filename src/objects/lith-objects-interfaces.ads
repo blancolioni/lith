@@ -2,13 +2,11 @@ package Lith.Objects.Interfaces is
 
    type Evaluator is access
      function (Store       : in out Object_Store'Class;
-               Arguments   : Array_Of_Objects;
                Environment : Object)
                return Object;
 
    type Simple_Evaluator is access
-     function (Store       : in out Object_Store'Class;
-               Arguments   : Array_Of_Objects)
+     function (Store       : in out Object_Store'Class)
      return Object;
 
    procedure Define_Function
@@ -25,7 +23,6 @@ package Lith.Objects.Interfaces is
    function Evaluate
      (Store       : in out Object_Store'Class;
       Fn          : Function_Type;
-      Arguments   : Array_Of_Objects;
       Environment : Object)
       return Object;
 
