@@ -70,19 +70,19 @@ package body Lith.Environment is
    ----------
 
    procedure Mark (Store : in out Lith.Objects.Object_Store'Class) is
-      procedure Set_Mark (Item : Lith.Objects.Object);
+      procedure Set_Mark (Item : in out Lith.Objects.Object);
 
       --------------
       -- Set_Mark --
       --------------
 
-      procedure Set_Mark (Item : Lith.Objects.Object) is
+      procedure Set_Mark (Item : in out Lith.Objects.Object) is
       begin
          Store.Mark (Item);
       end Set_Mark;
 
    begin
-      Top.Iterate (Set_Mark'Access);
+      Top.Update (Set_Mark'Access);
    end Mark;
 
    -------------

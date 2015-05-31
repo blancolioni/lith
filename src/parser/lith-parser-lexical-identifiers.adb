@@ -2,7 +2,7 @@ with Ada.Characters.Conversions;
 with Ada.Strings.Fixed;
 with Ada.Wide_Wide_Characters.Handling;
 
-with Lith.Objects.Numbers;
+with Lith.Objects.Large_Integers;
 
 package body Lith.Parser.Lexical.Identifiers is
 
@@ -120,8 +120,12 @@ package body Lith.Parser.Lexical.Identifiers is
      (Store : in out Lith.Objects.Object_Store'Class;
       Text  : in     Wide_Wide_String)
    is
+      use Lith.Objects.Large_Integers;
+
       Base   : Integer_Base := 10;
       Negate : Boolean := False;
+
+      Acc : Large_Integer_Object'Class := Zero;
 
       procedure On_Character
         (State : State_Type;
@@ -149,12 +153,8 @@ package body Lith.Parser.Lexical.Identifiers is
                end if;
             when Start | Scanning_Integer | Number_Sign =>
                if Is_Base_Digit (Ch, Base) then
-                  Store.Push (Lith.Objects.To_Object (Integer (Base)));
-                  Lith.Objects.Numbers.Exact_Multiply (Store);
-                  Store.Push (Lith.Objects.To_Object
-                              (Base_Digit_Value (Ch,
-                                 Base)));
-                  Lith.Objects.Numbers.Exact_Add (Store);
+                  Acc.Multiply (Integer (Base));
+                  Acc.Add (Base_Digit_Value (Ch, Base));
                elsif Ch = '-' then
                   Negate := True;
                end if;
@@ -164,7 +164,7 @@ package body Lith.Parser.Lexical.Identifiers is
       end On_Character;
 
    begin
-      Store.Push (Lith.Objects.To_Object (Integer'(0)));
+
       declare
          Final_State : constant End_State :=
                          Scan_Identifier (Text, On_Character'Access);
@@ -173,8 +173,15 @@ package body Lith.Parser.Lexical.Identifiers is
       end;
 
       if Negate then
-         Lith.Objects.Numbers.Exact_Negate (Store);
+         Acc.Negate;
       end if;
+
+      if Acc.In_Integer_Range then
+         Store.Push (Acc.To_Integer);
+      else
+         Store.Push (Store.Create_External_Reference (Acc));
+      end if;
+
    end Push_Integer;
 
    ---------------------

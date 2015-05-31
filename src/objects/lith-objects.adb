@@ -158,23 +158,6 @@ package body Lith.Objects is
       return Item.Tag = Symbol_Object;
    end Is_Symbol;
 
-   ---------------
-   -- Make_List --
-   ---------------
-
-   procedure Make_List
-     (Store : in out Object_Store'Class;
-      Items : Array_Of_Objects)
-   is
-   begin
-      for X of Items loop
-         Store.Push (X);
-      end loop;
-      for I in 1 .. Items'Length - 1 loop
-         Store.Cons;
-      end loop;
-   end Make_List;
-
    ----------
    -- Push --
    ----------
@@ -334,45 +317,6 @@ package body Lith.Objects is
    begin
       return (Object_Payload (Address), External_Object);
    end To_Object;
-
-   ---------------------
-   -- To_Object_Array --
-   ---------------------
-
-   function To_Object_Array
-     (Store : in out Object_Store'Class;
-      List  : Object)
-      return Array_Of_Objects
-   is
-      function Go (It : Object) return Array_Of_Objects;
-
-      --------
-      -- Go --
-      --------
-
-      function Go (It : Object) return Array_Of_Objects is
-      begin
-         if It = Nil then
-            declare
-               Result : Array_Of_Objects (1 .. 0);
-            begin
-               return Result;
-            end;
-         else
-            return Store.Car (It)
-              & To_Object_Array (Store, Store.Cdr (It));
-         end if;
-      end Go;
-   begin
-      Store.Push (List);
-      declare
-         Result : constant Array_Of_Objects := Go (List);
-         T      : constant Object := Store.Pop;
-         pragma Unreferenced (T);
-      begin
-         return Result;
-      end;
-   end To_Object_Array;
 
    ---------------
    -- To_String --

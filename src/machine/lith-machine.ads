@@ -8,6 +8,8 @@ private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Fixed.Hash_Case_Insensitive;
 private with Ada.Strings.Fixed.Equal_Case_Insensitive;
 
+with Lith.Memory;
+
 with Lith.Objects;
 
 private with Lith.Objects.Symbol_Maps;
@@ -15,6 +17,7 @@ private with Lith.Objects.Symbol_Maps;
 package Lith.Machine is
 
    type Root_Lith_Machine is limited new Lith.Objects.Object_Store
+     and Lith.Memory.GC_Interface
    with private;
 
    type Lith_Machine is access all Root_Lith_Machine'Class;
@@ -110,6 +113,15 @@ package Lith.Machine is
       Value   : Lith.Objects.Object)
       return Wide_Wide_String;
 
+   overriding function Argument_Count
+     (Machine : Root_Lith_Machine)
+      return Natural;
+
+   overriding function Argument
+     (Machine : Root_Lith_Machine;
+      Index   : Positive)
+      return Lith.Objects.Object;
+
    procedure Report_Memory
      (Machine : Root_Lith_Machine'Class);
 
@@ -128,7 +140,7 @@ package Lith.Machine is
 
    overriding procedure Mark
      (Machine : in out Root_Lith_Machine;
-      Start   : in     Lith.Objects.Object);
+      Start   : in out Lith.Objects.Object);
 
    overriding function Load (Machine : in out Root_Lith_Machine;
                              Path    : Wide_Wide_String)
@@ -142,42 +154,14 @@ package Lith.Machine is
    overriding function Call_Hook
      (Machine   : in out Root_Lith_Machine;
       Name      : Wide_Wide_String;
-      Arguments : Lith.Objects.Array_Of_Objects)
+      Arguments : Lith.Objects.Object)
       return Lith.Objects.Object;
 
+   overriding procedure Reserve_Memory
+     (Machine : in out Root_Lith_Machine;
+      Minimum : Natural);
+
 private
-
-   type Object_Pair is
-      record
-         Car, Cdr : Lith.Objects.Object;
-      end record
-     with Pack, Size => 64;
-
-   type Core_Memory_Type is
-     array (Lith.Objects.Cell_Address range <>) of Object_Pair;
-
-   type Memory_Tag_Type is
-     array (Lith.Objects.Cell_Address range <>) of Boolean
-     with Pack;
-
-   type External_Object_Access is
-     access all Lith.Objects.External_Object_Interface'Class;
-
-   type External_Object_Record is
-      record
-         External_Object : External_Object_Access;
-         Marked          : Boolean;
-         Free            : Boolean;
-      end record;
-
-   subtype Real_External_Address is
-     Lith.Objects.External_Object_Address
-   range 1 .. Lith.Objects.External_Object_Address'Last;
-
-   package External_Object_Vectors is
-     new Ada.Containers.Vectors
-       (Real_External_Address,
-        External_Object_Record);
 
    type File_Id is range 0 .. 255;
    subtype Real_File_Id is File_Id range 1 .. File_Id'Last;
@@ -244,29 +228,51 @@ private
         Equivalent_Keys => Ada.Strings.Fixed.Equal_Case_Insensitive,
         "="             => Lith.Objects."=");
 
-   type Root_Lith_Machine is limited new Lith.Objects.Object_Store with
+   type External_Object_Access is
+     access all Lith.Objects.External_Object_Interface'Class;
+
+   type External_Object_Record is
       record
-         Core              : access Core_Memory_Type;
-         Marked            : access Memory_Tag_Type;
-         Free              : access Memory_Tag_Type;
+         External_Object : External_Object_Access;
+         Marked          : Boolean;
+         Free            : Boolean;
+      end record;
+
+   subtype Real_External_Address is
+     Lith.Objects.External_Object_Address
+   range 1 .. Lith.Objects.External_Object_Address'Last;
+
+   package External_Object_Vectors is
+     new Ada.Containers.Vectors
+       (Real_External_Address,
+        External_Object_Record);
+
+   type Register is range 0 .. 15;
+
+   type Register_Values is array (Register) of Lith.Objects.Object;
+
+   subtype Argument_Index is Positive range 1 .. 32;
+   type Argument_Values is array (Argument_Index) of Lith.Objects.Object;
+
+   type Root_Lith_Machine is limited new Lith.Objects.Object_Store
+     and Lith.Memory.GC_Interface with
+      record
+         Core_Size         : Natural;
+         Core              : Lith.Memory.Lith_Memory;
          Source_Refs       : access Memory_Source_Reference_Type;
          Stack             : Lith.Objects.Object;
          Environment       : Lith.Objects.Object;
          Control           : Lith.Objects.Object;
          Dump              : Lith.Objects.Object;
          Handlers          : Lith.Objects.Object;
-         Free_List         : Lith.Objects.Object;
-         R1, R2            : Lith.Objects.Object := Lith.Objects.Nil;
-         G1, G2            : Lith.Objects.Object := Lith.Objects.Nil;
-         Alloc_Count       : Natural;
-         Alloc_Limit       : Natural;
-         GC_Count          : Natural  := 0;
-         GC_Time           : Duration := 0.0;
+         R                 : Register_Values     :=
+                               (others => Lith.Objects.No_Value);
+         Args              : Argument_Values :=
+                               (others => Lith.Objects.No_Value);
+         Arg_Count         : Natural := 0;
          Eval_Time         : Duration := 0.0;
          Start_Eval        : Ada.Calendar.Time;
          Evaluating        : Boolean := False;
-         Allocations       : Natural := 0;
-         Collections       : Natural := 0;
          External_Objects  : External_Object_Vectors.Vector;
          Source_Files      : Source_File_Maps.Map;
          Source_File_Names : Source_File_Vectors.Vector;
@@ -279,13 +285,15 @@ private
          Profiling         : Boolean := False;
       end record;
 
-   function Allocate
-     (Machine  : in out Root_Lith_Machine'Class;
-      Car, Cdr : Lith.Objects.Object)
-      return Lith.Objects.Object;
+   overriding procedure Before_GC (Machine : in out Root_Lith_Machine);
+   overriding procedure After_GC (Machine : in out Root_Lith_Machine);
+   overriding procedure Mark_External_Object
+     (Machine : in out Root_Lith_Machine;
+      External : Lith.Objects.External_Object_Address);
 
-   procedure GC
-     (Machine : in out Root_Lith_Machine'Class);
+   function Is_Free (Machine : Root_Lith_Machine'Class;
+                     Address : Lith.Objects.Cell_Address)
+                     return Boolean;
 
    procedure Set_Context
      (Machine : in out Root_Lith_Machine'Class;

@@ -93,4 +93,19 @@ package body Lith.Objects.Symbol_Maps is
       Container.Internal.Replace (Key, Value);
    end Replace;
 
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update
+     (Container : Map;
+      Process   : not null access
+        procedure (Item : in out Element_Type))
+   is
+   begin
+      for Item of Container.Internal loop
+         Process (Item);
+      end loop;
+   end Update;
+
 end Lith.Objects.Symbol_Maps;

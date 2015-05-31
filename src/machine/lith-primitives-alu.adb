@@ -1,24 +1,54 @@
-with Ada.Characters.Conversions;
-
-with Lith.Objects.Numbers;
-
 with Lith.Objects.Symbol_Maps;
 with Lith.Objects.Symbols;
+
+with Lith.Objects.Large_Integers;
+with Lith.Objects.Real;
 
 package body Lith.Primitives.ALU is
 
    use Lith.Objects;
 
-   type Stack_Operator_Accumulator is access
-     procedure (Store : in out Object_Store'Class);
+   type Integer_Op_Function is access
+     function
+       (Store   : in out Object_Store'Class;
+        X, Y    : Integer)
+        return Object;
 
-   type Operator_Record is
+   type Large_Integer_Op_Function is access
+     function
+       (Store   : in out Object_Store'Class;
+        X, Y    : Large_Integers.Large_Integer_Object'Class)
+        return Object;
+
+   type Real_Op_Function is access
+     function
+       (Store : in out Object_Store'Class;
+        X, Y  : Lith_Real)
+        return Object;
+
+   type Allowed_Compares is
+     array (Compare_Result) of Boolean;
+
+   Compare_EQ : constant Allowed_Compares := (False, True, False);
+   Compare_NE : constant Allowed_Compares := (True, False, True);
+   Compare_LE : constant Allowed_Compares := (True, True, False);
+   Compare_LT : constant Allowed_Compares := (True, False, False);
+   Compare_GE : constant Allowed_Compares := (False, True, True);
+   Compare_GT : constant Allowed_Compares := (False, False, True);
+
+   type Operator_Class is (Arithmetic, Comparison);
+
+   type Operator_Record (Class : Operator_Class := Arithmetic) is
       record
-         Identity          : Integer;
-         Exact_Unit_Proc   : Stack_Operator_Accumulator;
-         Inexact_Unit_Proc : Stack_Operator_Accumulator;
-         Exact_Proc        : Stack_Operator_Accumulator;
-         Inexact_Proc      : Stack_Operator_Accumulator;
+         case Class is
+            when Arithmetic =>
+               Identity         : Integer;
+               Integer_Op       : Integer_Op_Function;
+               Large_Integer_Op : Large_Integer_Op_Function;
+               Real_Op          : Real_Op_Function;
+            when Comparison =>
+               Allowed           : Allowed_Compares;
+         end case;
       end record;
 
    package Operator_Maps is
@@ -27,71 +57,131 @@ package body Lith.Primitives.ALU is
 
    Ops : Operator_Maps.Map;
 
-   procedure Operator (Symbol            : Wide_Wide_String;
-                       Identity          : Integer;
-                       Exact_Unit_Proc   : Stack_Operator_Accumulator;
-                       Inexact_Unit_Proc : Stack_Operator_Accumulator;
-                       Exact_Proc        : Stack_Operator_Accumulator;
-                       Inexact_Proc      : Stack_Operator_Accumulator);
+   procedure Operator
+     (Symbol               : Wide_Wide_String;
+      Identity             : Integer;
+      Integer_Op           : Integer_Op_Function;
+      Large_Integer_Op     : Large_Integer_Op_Function;
+      Real_Op              : Real_Op_Function);
 
-   procedure Divide_Quotient
-     (Store : in out Object_Store'Class)
-     with Unreferenced;
+   procedure Operator
+     (Symbol               : Wide_Wide_String;
+      Allowed              : Allowed_Compares);
 
-   procedure Divide_Mod
-     (Store : in out Object_Store'Class)
-     with Unreferenced;
-
-   procedure Stack_Identity
-     (Store : in out Object_Store'Class)
-   is null;
-
-   type Allowed_Compares is
-     array (Lith.Objects.Numbers.Compare) of Boolean;
-
-   Compare_EQ : constant Allowed_Compares := (False, True, False);
-   Compare_LE : constant Allowed_Compares := (True, True, False);
-   Compare_LT : constant Allowed_Compares := (True, False, False);
-   Compare_GE : constant Allowed_Compares := (False, True, True);
-   Compare_GT : constant Allowed_Compares := (False, False, True);
-
-   procedure Exact_Compare
+   function Compare_Integer
      (Store   : in out Object_Store'Class;
-      Allowed : Allowed_Compares);
+      Allowed : Allowed_Compares;
+      X, Y    : Integer)
+      return Boolean;
 
-   procedure Inexact_Compare
+   function Compare_Large_Integer
+     (Store   : in out Object_Store'Class;
+      Allowed : Allowed_Compares;
+      X, Y    : Large_Integers.Large_Integer_Object'Class)
+      return Boolean;
+
+   function Compare_Real
+     (Allowed : Allowed_Compares;
+      X, Y  : Lith_Real)
+      return Boolean;
+
+   function Add_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Integer)
+      return Object;
+
+   function Add_Large_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Large_Integers.Large_Integer_Object'Class)
+      return Object;
+
+   function Add_Real
      (Store : in out Object_Store'Class;
-      Allowed : Allowed_Compares);
+      X, Y  : Lith_Real)
+      return Object;
 
-   procedure Exact_Stack_EQ
-     (Store : in out Object_Store'Class);
+   function Subtract_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Integer)
+      return Object;
 
-   procedure Exact_Stack_LT
-     (Store : in out Object_Store'Class);
+   function Subtract_Large_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Large_Integers.Large_Integer_Object'Class)
+      return Object;
 
-   procedure Exact_Stack_LE
-     (Store : in out Object_Store'Class);
+   function Subtract_Real
+     (Store : in out Object_Store'Class;
+      X, Y  : Lith_Real)
+      return Object;
 
-   procedure Exact_Stack_GT
-     (Store : in out Object_Store'Class);
+   function Multiply_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Integer)
+      return Object;
 
-   procedure Exact_Stack_GE
-     (Store : in out Object_Store'Class);
+   function Multiply_Large_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Large_Integers.Large_Integer_Object'Class)
+      return Object
+     with Pre => Large_Integers.In_Integer_Range (X)
+     or else Large_Integers.In_Integer_Range (Y);
 
-   procedure Inexact_Stack_EQ
-     (Store : in out Object_Store'Class);
+   function Multiply_Real
+     (Store : in out Object_Store'Class;
+      X, Y  : Lith_Real)
+      return Object;
 
-   procedure Inexact_Stack_LT
-     (Store : in out Object_Store'Class);
+   function Divide_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Integer)
+      return Object;
 
-   procedure Inexact_Stack_LE
-     (Store : in out Object_Store'Class);
+   function Divide_Large_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Large_Integers.Large_Integer_Object'Class)
+      return Object
+     with Pre => Large_Integers.In_Integer_Range (Y);
 
-   procedure Inexact_Stack_GT
-     (Store : in out Object_Store'Class);
+   function Divide_Real
+     (Store : in out Object_Store'Class;
+      X, Y  : Lith_Real)
+      return Object;
 
-   procedure Inexact_Stack_GE
-     (Store : in out Object_Store'Class);
+   -----------------
+   -- Add_Integer --
+   -----------------
+
+   function Add_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Integer)
+      return Object
+   is
+      Z : constant Integer := X + Y;
+   begin
+      if Lith.Objects.In_Object_Range (Z) then
+         return Lith.Objects.To_Object (Z);
+      else
+         return Large_Integers.To_Object
+           (Store, Large_Integers.To_Large_Integer (Z));
+      end if;
+   end Add_Integer;
+
+   -----------------------
+   -- Add_Large_Integer --
+   -----------------------
+
+   function Add_Large_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Large_Integers.Large_Integer_Object'Class)
+      return Object
+   is
+      use Lith.Objects.Large_Integers;
+      Z : Large_Integer_Object'Class := X;
+   begin
+      Z.Add (Y);
+      return To_Object (Store, Z);
+   end Add_Large_Integer;
 
    -------------------
    -- Add_Operators --
@@ -99,283 +189,390 @@ package body Lith.Primitives.ALU is
 
    procedure Add_Operators is
    begin
-      Operator ("+", 0, Stack_Identity'Access, Stack_Identity'Access,
-                Lith.Objects.Numbers.Exact_Add'Access,
-                Lith.Objects.Numbers.Inexact_Add'Access);
+      Operator ("+", 0,
+                Add_Integer'Access,
+                Add_Large_Integer'Access,
+                Add_Real'Access);
+
       Operator ("-", 0,
-                Lith.Objects.Numbers.Exact_Negate'Access,
-                Lith.Objects.Numbers.Inexact_Negate'Access,
-                Lith.Objects.Numbers.Exact_Subtract'Access,
-                Lith.Objects.Numbers.Inexact_Subtract'Access);
+                Subtract_Integer'Access,
+                Subtract_Large_Integer'Access,
+                Subtract_Real'Access);
 
-      Operator ("*", 0, Stack_Identity'Access, Stack_Identity'Access,
-                Lith.Objects.Numbers.Exact_Multiply'Access,
-                Lith.Objects.Numbers.Inexact_Multiply'Access);
+      Operator ("*", 1,
+                Multiply_Integer'Access,
+                Multiply_Large_Integer'Access,
+                Multiply_Real'Access);
 
-      Operator ("floor/", 0, null, null,
-                Lith.Objects.Numbers.Exact_Divide'Access,
-                null);
+      Operator ("/", 1,
+                Divide_Integer'Access,
+                Divide_Large_Integer'Access,
+                Divide_Real'Access);
 
-      Operator ("<=", 0, Stack_Identity'Access, Stack_Identity'Access,
-                Exact_Stack_LE'Access, Inexact_Stack_LE'Access);
-      Operator (">=", 0, Stack_Identity'Access, Stack_Identity'Access,
-                Exact_Stack_GE'Access, Inexact_Stack_GE'Access);
-      Operator ("<", 0, Stack_Identity'Access, Stack_Identity'Access,
-                Exact_Stack_LT'Access, Inexact_Stack_LT'Access);
-      Operator (">", 0, Stack_Identity'Access, Stack_Identity'Access,
-                Exact_Stack_GT'Access, Inexact_Stack_GT'Access);
-      Operator ("=", 0, Stack_Identity'Access, Stack_Identity'Access,
-                Exact_Stack_EQ'Access, Inexact_Stack_EQ'Access);
+      Operator ("<", Compare_LT);
+      Operator (">", Compare_GT);
+      Operator ("<=", Compare_LE);
+      Operator (">=", Compare_GE);
+      Operator ("/=", Compare_NE);
+      Operator ("=", Compare_EQ);
+
+--        Operator ("-", 0,
+--                  Numbers.Exact_Negate'Access,
+--                  Numbers.Inexact_Negate'Access,
+--                  Lith.Objects.Numbers.Exact_Subtract'Access,
+--                  Lith.Objects.Numbers.Inexact_Subtract'Access);
+--
+--        Operator ("*", 0, Stack_Identity'Access, Stack_Identity'Access,
+--                  Lith.Objects.Numbers.Exact_Multiply'Access,
+--                  Lith.Objects.Numbers.Inexact_Multiply'Access);
+--
+--        Operator ("floor/", 0, null, null,
+--                  Lith.Objects.Numbers.Exact_Divide'Access,
+--                  null);
+--
+--        Operator ("<=", 0, Stack_Identity'Access, Stack_Identity'Access,
+--                  Exact_Stack_LE'Access, Inexact_Stack_LE'Access);
+--        Operator (">=", 0, Stack_Identity'Access, Stack_Identity'Access,
+--                  Exact_Stack_GE'Access, Inexact_Stack_GE'Access);
+--        Operator ("<", 0, Stack_Identity'Access, Stack_Identity'Access,
+--                  Exact_Stack_LT'Access, Inexact_Stack_LT'Access);
+--        Operator (">", 0, Stack_Identity'Access, Stack_Identity'Access,
+--                  Exact_Stack_GT'Access, Inexact_Stack_GT'Access);
+--        Operator ("=", 0, Stack_Identity'Access, Stack_Identity'Access,
+--                  Exact_Stack_EQ'Access, Inexact_Stack_EQ'Access);
 
    end Add_Operators;
+
+   --------------
+   -- Add_Real --
+   --------------
+
+   function Add_Real
+     (Store : in out Object_Store'Class;
+      X, Y  : Lith_Real)
+      return Object
+   is
+      use Lith.Objects.Real;
+      Z : constant Lith_Real := X + Y;
+   begin
+      return To_Object (Store, Z);
+   end Add_Real;
 
    -----------
    -- Apply --
    -----------
 
    function Apply
-     (Store : in out Lith.Objects.Object_Store'Class;
-      Op    : Lith.Objects.Symbol_Type;
-      Args  : Lith.Objects.Array_Of_Objects)
+     (Store : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      use Lith.Objects.Numbers;
+      Op : constant Symbol_Type := To_Symbol (Store.Argument (1));
+      X  : constant Object := Store.Argument (2);
+      Y  : constant Object := Store.Argument (3);
+      Op_Info : constant Operator_Record := Ops.Element (Op);
    begin
-      if Ops.Contains (Op) then
+      if Is_Integer (X) and then Is_Integer (Y) then
+         case Op_Info.Class is
+            when Arithmetic =>
+               return Op_Info.Integer_Op
+                 (Store, To_Integer (X), To_Integer (Y));
+            when Comparison =>
+               return To_Object
+                 (Compare_Integer
+                    (Store, Op_Info.Allowed,
+                     To_Integer (X), To_Integer (Y)));
+         end case;
+      elsif Real.Is_Real (Store, X) or else Real.Is_Real (Store, Y) then
          declare
-            Rec : Operator_Record renames Ops.Element (Op);
+            Real_X : constant Lith_Real := Real.To_Real (Store, X);
+            Real_Y : constant Lith_Real := Real.To_Real (Store, Y);
          begin
-            if Args'Length = 0 then
-               return To_Object (Rec.Identity);
-            elsif Args'Length = 1 then
-               Store.Push (Args (Args'First));
-               if Is_Exact_Number (Store, Store.Top) then
-                  Rec.Exact_Unit_Proc (Store);
-               else
-                  Rec.Inexact_Unit_Proc (Store);
-               end if;
-               return Store.Pop;
-            else
-               for Arg of reverse Args loop
-                  Store.Push (Arg);
-               end loop;
-
-               for I in 1 .. Args'Length - 1 loop
-                  if Store.Top = False_Value then
-                     Store.Drop (Args'Length - I);
-                     Store.Push (False_Value);
-                     exit;
-                  elsif Is_Exact_Number (Store, Store.Top (1))
-                    and then Is_Exact_Number (Store, Store.Top (2))
-                  then
-                     Rec.Exact_Proc (Store);
-                  else
-                     Ensure_Inexact (Store);
-                     Store.Swap;
-                     Ensure_Inexact (Store);
-                     Store.Swap;
-                     Rec.Inexact_Proc (Store);
-                  end if;
-               end loop;
-
-               return Store.Pop;
-            end if;
+            case Op_Info.Class is
+               when Arithmetic =>
+                  return Op_Info.Real_Op (Store, Real_X, Real_Y);
+               when Comparison =>
+                  return To_Object
+                    (Compare_Real (Op_Info.Allowed, Real_X, Real_Y));
+            end case;
+         end;
+      elsif Large_Integers.Is_Large_Integer (Store, X)
+        or else Large_Integers.Is_Large_Integer (Store, Y)
+      then
+         declare
+            Large_X : constant Large_Integers.Large_Integer_Object'Class :=
+                        Large_Integers.To_Large_Integer (Store, X);
+            Large_Y : constant Large_Integers.Large_Integer_Object'Class :=
+                        Large_Integers.To_Large_Integer (Store, Y);
+         begin
+            case Op_Info.Class is
+               when Arithmetic =>
+                  return Op_Info.Large_Integer_Op
+                    (Store, Large_X, Large_Y);
+               when Comparison =>
+                  return To_Object
+                    (Compare_Large_Integer
+                       (Store, Op_Info.Allowed,
+                        Large_X, Large_Y));
+            end case;
          end;
       else
          raise Constraint_Error with
-           "no such ALU function: "
-           & Ada.Characters.Conversions.To_String
-           (Lith.Objects.Symbols.Get_Name (Op));
+           "bad objects for numeric application";
       end if;
    end Apply;
 
-   ----------------
-   -- Divide_Mod --
-   ----------------
-
-   procedure Divide_Mod
-     (Store : in out Object_Store'Class)
-   is
-   begin
-      Lith.Objects.Numbers.Exact_Divide (Store);
-      Store.Push (Store.Pop, Lith.Objects.Secondary);
-      Store.Drop;
-      Store.Push (Store.Pop (Lith.Objects.Secondary));
-   end Divide_Mod;
-
    ---------------------
-   -- Divide_Quotient --
+   -- Compare_Integer --
    ---------------------
 
-   procedure Divide_Quotient
-     (Store : in out Object_Store'Class)
+   function Compare_Integer
+     (Store   : in out Object_Store'Class;
+      Allowed : Allowed_Compares;
+      X, Y    : Integer)
+      return Boolean
+   is
+      pragma Unreferenced (Store);
+      Result : constant Compare_Result :=
+                 (if X < Y then LT
+                  elsif X > Y then GT
+                  else EQ);
+   begin
+      return Allowed (Result);
+   end Compare_Integer;
+
+   ---------------------------
+   -- Compare_Large_Integer --
+   ---------------------------
+
+   function Compare_Large_Integer
+     (Store   : in out Object_Store'Class;
+      Allowed : Allowed_Compares;
+      X, Y    : Large_Integers.Large_Integer_Object'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Store);
+   begin
+      return Allowed (X.Compare (Y));
+   end Compare_Large_Integer;
+
+   ------------------
+   -- Compare_Real --
+   ------------------
+
+   function Compare_Real
+     (Allowed : Allowed_Compares;
+      X, Y  : Lith_Real)
+      return Boolean
+   is
+      Result : constant Compare_Result :=
+                 (if X < Y then LT
+                  elsif X > Y then GT
+                  else EQ);
+   begin
+      return Allowed (Result);
+   end Compare_Real;
+
+   --------------------
+   -- Divide_Integer --
+   --------------------
+
+   function Divide_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Integer)
+      return Object
    is
    begin
-      Lith.Objects.Numbers.Exact_Divide (Store);
-      Store.Drop;
-   end Divide_Quotient;
+      Store.Push (X / Y);
+      Store.Push (X mod Y);
+      Store.Push (Nil);
+      Store.Cons;
+      Store.Cons;
+      return Store.Pop;
+   end Divide_Integer;
+
+   --------------------------
+   -- Divide_Large_Integer --
+   --------------------------
+
+   function Divide_Large_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Large_Integers.Large_Integer_Object'Class)
+      return Object
+   is
+      use Large_Integers;
+      Z : Large_Integer_Object'Class := X;
+      R : Integer;
+   begin
+      Z.Divide (To_Integer (Y), R);
+      Store.Push (To_Object (Store, Z));
+      Store.Push (To_Object (R));
+      Store.Push (Nil);
+      Store.Cons;
+      Store.Cons;
+      return Store.Pop;
+   end Divide_Large_Integer;
+
+   -----------------
+   -- Divide_Real --
+   -----------------
+
+   function Divide_Real
+     (Store : in out Object_Store'Class;
+      X, Y  : Lith_Real)
+      return Object
+   is
+      use Lith.Objects.Real;
+      Z : constant Lith_Real := X * Y;
+   begin
+      return To_Object (Store, Z);
+   end Divide_Real;
+
+   ----------------------
+   -- Multiply_Integer --
+   ----------------------
+
+   function Multiply_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Integer)
+      return Object
+   is
+   begin
+      if X = 0 or else Y = 0 then
+         return To_Object (Integer'(0));
+      elsif Integer'Last / abs X <= Y
+        or else not In_Object_Range (X * Y)
+      then
+         declare
+            Large_X : Large_Integers.Large_Integer_Object'Class :=
+                        Large_Integers.To_Large_Integer (X);
+         begin
+            Large_X.Multiply (Y);
+            return Large_Integers.To_Object
+              (Store, Large_X);
+         end;
+      else
+         return To_Object (X * Y);
+      end if;
+   end Multiply_Integer;
+
+   ----------------------------
+   -- Multiply_Large_Integer --
+   ----------------------------
+
+   function Multiply_Large_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Large_Integers.Large_Integer_Object'Class)
+      return Object
+   is
+      use Lith.Objects.Large_Integers;
+      A : Large_Integer_Object'Class := X;
+      B : Integer;
+   begin
+      if not Y.In_Integer_Range then
+         A := Y;
+         B := X.To_Integer;
+      else
+         B := Y.To_Integer;
+      end if;
+      A.Multiply (B);
+      return To_Object (Store, A);
+   end Multiply_Large_Integer;
 
    -------------------
-   -- Exact_Compare --
+   -- Multiply_Real --
    -------------------
 
-   procedure Exact_Compare
+   function Multiply_Real
      (Store : in out Object_Store'Class;
-      Allowed : Allowed_Compares)
+      X, Y  : Lith_Real)
+      return Object
    is
-      use Lith.Objects.Numbers;
-      Result : constant Compare :=
-                 Exact_Compare (Store);
+      use Lith.Objects.Real;
+      Z : constant Lith_Real := X * Y;
    begin
-      if not Allowed (Result) then
-         Store.Drop;
-         Store.Push (False_Value);
-      end if;
-   end Exact_Compare;
-
-   --------------------
-   -- Exact_Stack_EQ --
-   --------------------
-
-   procedure Exact_Stack_EQ
-     (Store : in out Object_Store'Class)
-   is
-   begin
-      Exact_Compare (Store, Compare_EQ);
-   end Exact_Stack_EQ;
-
-   --------------------
-   -- Exact_Stack_GE --
-   --------------------
-
-   procedure Exact_Stack_GE
-     (Store : in out Object_Store'Class)
-   is
-   begin
-      Exact_Compare (Store, Compare_GE);
-   end Exact_Stack_GE;
-
-   --------------------
-   -- Exact_Stack_GT --
-   --------------------
-
-   procedure Exact_Stack_GT
-     (Store : in out Object_Store'Class)
-   is
-   begin
-      Exact_Compare (Store, Compare_GT);
-   end Exact_Stack_GT;
-
-   --------------------
-   -- Exact_Stack_LE --
-   --------------------
-
-   procedure Exact_Stack_LE
-     (Store : in out Object_Store'Class)
-   is
-   begin
-      Exact_Compare (Store, Compare_LE);
-   end Exact_Stack_LE;
-
-   --------------------
-   -- Exact_Stack_LT --
-   --------------------
-
-   procedure Exact_Stack_LT
-     (Store : in out Object_Store'Class)
-   is
-   begin
-      Exact_Compare (Store, Compare_LT);
-   end Exact_Stack_LT;
-
-   ---------------------
-   -- Inexact_Compare --
-   ---------------------
-
-   procedure Inexact_Compare
-     (Store : in out Object_Store'Class;
-      Allowed : Allowed_Compares)
-   is
-      use Lith.Objects.Numbers;
-      Result : constant Compare :=
-                 Inexact_Compare (Store);
-   begin
-      if not Allowed (Result) then
-         Store.Drop;
-         Store.Push (False_Value);
-      end if;
-   end Inexact_Compare;
-
-   ----------------------
-   -- Inexact_Stack_EQ --
-   ----------------------
-
-   procedure Inexact_Stack_EQ
-     (Store : in out Object_Store'Class)
-   is
-   begin
-      Inexact_Compare (Store, Compare_EQ);
-   end Inexact_Stack_EQ;
-
-   ----------------------
-   -- Inexact_Stack_GE --
-   ----------------------
-
-   procedure Inexact_Stack_GE
-     (Store : in out Object_Store'Class)
-   is
-   begin
-      Inexact_Compare (Store, Compare_GE);
-   end Inexact_Stack_GE;
-
-   ----------------------
-   -- Inexact_Stack_GT --
-   ----------------------
-
-   procedure Inexact_Stack_GT
-     (Store : in out Object_Store'Class)
-   is
-   begin
-      Inexact_Compare (Store, Compare_GT);
-   end Inexact_Stack_GT;
-
-   ----------------------
-   -- Inexact_Stack_LE --
-   ----------------------
-
-   procedure Inexact_Stack_LE
-     (Store : in out Object_Store'Class)
-   is
-   begin
-      Inexact_Compare (Store, Compare_LE);
-   end Inexact_Stack_LE;
-
-   ----------------------
-   -- Inexact_Stack_LT --
-   ----------------------
-
-   procedure Inexact_Stack_LT
-     (Store : in out Object_Store'Class)
-   is
-   begin
-      Inexact_Compare (Store, Compare_LT);
-   end Inexact_Stack_LT;
+      return To_Object (Store, Z);
+   end Multiply_Real;
 
    --------------
    -- Operator --
    --------------
 
-   procedure Operator (Symbol            : Wide_Wide_String;
-                       Identity          : Integer;
-                       Exact_Unit_Proc   : Stack_Operator_Accumulator;
-                       Inexact_Unit_Proc : Stack_Operator_Accumulator;
-                       Exact_Proc        : Stack_Operator_Accumulator;
-                       Inexact_Proc      : Stack_Operator_Accumulator)
+   procedure Operator
+     (Symbol           : Wide_Wide_String;
+      Identity         : Integer;
+      Integer_Op       : Integer_Op_Function;
+      Large_Integer_Op : Large_Integer_Op_Function;
+      Real_Op          : Real_Op_Function)
    is
    begin
       Ops.Insert (Lith.Objects.Symbols.Get_Symbol (Symbol),
-                  (Identity, Exact_Unit_Proc, Inexact_Unit_Proc,
-                   Exact_Proc, Inexact_Proc));
+                  (Arithmetic, Identity, Integer_Op, Large_Integer_Op,
+                   Real_Op));
    end Operator;
+
+   --------------
+   -- Operator --
+   --------------
+
+   procedure Operator
+     (Symbol               : Wide_Wide_String;
+      Allowed              : Allowed_Compares)
+   is
+   begin
+      Ops.Insert (Lith.Objects.Symbols.Get_Symbol (Symbol),
+                  (Comparison, Allowed));
+   end Operator;
+
+   ----------------------
+   -- Subtract_Integer --
+   ----------------------
+
+   function Subtract_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Integer)
+      return Object
+   is
+      Z : constant Integer := X - Y;
+   begin
+      if Lith.Objects.In_Object_Range (Z) then
+         return Lith.Objects.To_Object (Z);
+      else
+         return Large_Integers.To_Object
+           (Store, Large_Integers.To_Large_Integer (Z));
+      end if;
+   end Subtract_Integer;
+
+   ----------------------------
+   -- Subtract_Large_Integer --
+   ----------------------------
+
+   function Subtract_Large_Integer
+     (Store   : in out Object_Store'Class;
+      X, Y    : Large_Integers.Large_Integer_Object'Class)
+      return Object
+   is
+      use Lith.Objects.Large_Integers;
+      A : Large_Integer_Object'Class := X;
+      B : Large_Integer_Object'Class := Y;
+   begin
+      B.Negate;
+      A.Add (B);
+      return To_Object (Store, A);
+   end Subtract_Large_Integer;
+
+   -------------------
+   -- Subtract_Real --
+   -------------------
+
+   function Subtract_Real
+     (Store : in out Object_Store'Class;
+      X, Y  : Lith_Real)
+      return Object
+   is
+      use Lith.Objects.Real;
+      Z : constant Lith_Real := X - Y;
+   begin
+      return To_Object (Store, Z);
+   end Subtract_Real;
 
 end Lith.Primitives.ALU;

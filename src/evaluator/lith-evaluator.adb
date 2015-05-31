@@ -167,7 +167,7 @@ package body Lith.Evaluator is
                return Evaluate (Store, Store.Car (Args), Env, False);
             else
                declare
-                  Eval_Args : Array_Of_Objects :=
+                  Eval_Args : Object :=
                                 To_Object_Array (Store, Args);
                   Result    : Object := Nil;
                begin
@@ -333,7 +333,7 @@ package body Lith.Evaluator is
          end if;
       elsif Is_Function (Expr) then
          declare
-            Args : Array_Of_Objects (1 .. 0);
+            Args : Object (1 .. 0);
          begin
             Result :=
               Lith.Objects.Interfaces.Evaluate

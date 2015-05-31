@@ -109,13 +109,24 @@ package body Lith.Objects.Numbers is
                Push_Float (Store, Lith_Float (To_Integer (Store.Pop)));
             when Large_Integer =>
                declare
-                  Cells : constant Array_Of_Objects :=
-                            Store.To_Object_Array (Store.Cdr (Store.Top));
-                  F     : Lith_Float  := 0.0;
+                  Count : Natural := 0;
+                  It : Object := Store.Cdr (Store.Top);
+                  F  : Lith_Float  := 0.0;
                begin
-                  for X of reverse Cells loop
-                     F := F * Lith_Float (Highest_Small_Integer)
-                       + Lith_Float (To_Integer (X));
+                  while It /= Nil loop
+                     Store.Push (It, Secondary);
+                     Store.Push (Store.Car (Store.Top (1, Secondary)));
+                     Count := Count + 1;
+                     It := Store.Pop (Secondary);
+                  end loop;
+                  for I in 1 .. Count loop
+                     declare
+                        X : constant Integer :=
+                              To_Integer (Store.Pop);
+                     begin
+                        F := F * Lith_Float (Highest_Small_Integer)
+                          + Lith_Float (X);
+                     end;
                   end loop;
                   Store.Drop;
                   Push_Float (Store, F);
@@ -160,9 +171,9 @@ package body Lith.Objects.Numbers is
          when Large_Integer =>
 
             declare
-               Xs : constant Array_Of_Objects :=
+               Xs : constant Object :=
                      Store.To_Object_Array (Store.Cdr (Store.Top (1)));
-               Ys : constant Array_Of_Objects :=
+               Ys : constant Object :=
                       Store.To_Object_Array (Store.Cdr (Store.Top (2)));
                Max_Length : constant Natural :=
                               Natural'Max (Xs'Length, Ys'Length) + 1;
@@ -267,9 +278,9 @@ package body Lith.Objects.Numbers is
          when Large_Integer =>
 
             declare
-               Xs : constant Array_Of_Objects :=
+               Xs : constant Object :=
                      Store.To_Object_Array (Store.Cdr (Store.Top (1)));
-               Ys : constant Array_Of_Objects :=
+               Ys : constant Object :=
                       Store.To_Object_Array (Store.Cdr (Store.Top (2)));
                Result : Compare := EQ;
             begin
@@ -355,7 +366,7 @@ package body Lith.Objects.Numbers is
 
       declare
          Half : constant Integer := 2 ** (Payload_Bits / 2);
-         It : constant Array_Of_Objects :=
+         It : constant Object :=
                 Store.To_Object_Array (Store.Cdr (Store.Top));
          R  : Integer := 0;
          Count : Natural := 0;
