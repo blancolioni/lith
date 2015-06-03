@@ -16,8 +16,7 @@ package Lith.Objects is
    False_Value          : constant Object;
    No_Value             : constant Object;
    String_Value         : constant Object;
-   Floating_Point_Value : constant Object;
-   Large_Integer_Value  : constant Object;
+   End_Of_File_Object   : constant Object;
 
    function To_Object (X : Boolean) return Object
    is (if X then True_Value else False_Value);
@@ -318,12 +317,10 @@ private
    String_Value : constant Object :=
                     (Payload => 4,
                      Tag     => Internal_Object);
-   Floating_Point_Value : constant Object :=
-                            (Payload => 5,
-                             Tag     => Internal_Object);
-   Large_Integer_Value  : constant Object :=
-                            (Payload => 6,
-                             Tag     => Internal_Object);
+
+   End_Of_File_Object  : constant Object :=
+                           (Payload => 5,
+                            Tag     => Internal_Object);
 
    type Symbol_Type is new Object_Payload;
 
