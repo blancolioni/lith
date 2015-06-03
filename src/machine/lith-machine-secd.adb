@@ -1099,10 +1099,6 @@ package body Lith.Machine.SECD is
                   Machine.Push (C);
                elsif F = String_Value then
                   Machine.Push (C);
-               elsif F = Large_Integer_Value then
-                  Machine.Push (C);
-               elsif F = Floating_Point_Value then
-                  Machine.Push (C);
                elsif F = Import_Symbol then
                   declare
                      Result : constant Boolean :=

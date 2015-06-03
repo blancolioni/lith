@@ -2,7 +2,6 @@ with Ada.Characters.Conversions;
 with Ada.Directories;
 with Ada.Exceptions;
 with Ada.Strings.Wide_Wide_Fixed;
-with Ada.Strings.Wide_Wide_Unbounded;
 with Ada.Unchecked_Deallocation;
 with Ada.Wide_Wide_Characters.Handling;
 with Ada.Wide_Wide_Text_IO;
@@ -885,10 +884,6 @@ package body Lith.Machine is
         (Value : Natural)
          return Wide_Wide_String;
 
-      function Large_Integer_Image
-        (Value : Object)
-         return Wide_Wide_String;
-
       function String_Image
         (Start : Object)
          return Wide_Wide_String;
@@ -950,50 +945,6 @@ package body Lith.Machine is
             end;
          end if;
       end Is_String;
-
-      -------------------------
-      -- Large_Integer_Image --
-      -------------------------
-
-      function Large_Integer_Image
-        (Value : Object)
-         return Wide_Wide_String
-      is
-         use Ada.Strings.Wide_Wide_Unbounded;
-         Acc : Unbounded_Wide_Wide_String;
-         Base : constant Object := To_Object (Integer'(10));
-         Stop : constant Object := To_Object (Integer'(0));
-      begin
-         Machine.Push (Value);
-         while Machine.Top /= Stop loop
-            Machine.Push (Base);
-            Machine.Swap;
-            --  Lith.Objects.Numbers.Exact_Divide (Machine);
-            if not Is_Integer (Machine.Cadr (Machine.Top)) then
-               raise Evaluation_Error with
-                 "bad large integer: " &
-                 Ada.Characters.Conversions.To_String
-                 (List_Image (Value))
-                 & "; expected an integer element but found "
-                 & Ada.Characters.Conversions.To_String
-                 (List_Image (Machine.Top));
-
-            end if;
-            declare
-               Partial : constant Object := Machine.Pop;
-               Ch_Pos : constant Natural :=
-                          To_Integer (Machine.Cadr (Partial));
-            begin
-               Acc := Wide_Wide_Character'Val (Ch_Pos + 48) & Acc;
-               Machine.Push (Machine.Car (Partial));
-            end;
-         end loop;
-
-         Machine.Drop;
-
-         return To_Wide_Wide_String (Acc);
-
-      end Large_Integer_Image;
 
       ----------------
       -- List_Image --
@@ -1077,10 +1028,6 @@ package body Lith.Machine is
       elsif Is_Pair (Value) then
          if Is_String then
             return '"' & String_Image (Machine.Cdr (Value)) & '"';
-         elsif True
-           and then Machine.Car (Value) = Large_Integer_Value
-         then
-            return Large_Integer_Image (Value);
          elsif Is_List then
             return "(" & List_Image (Value) & ")";
          else
