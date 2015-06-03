@@ -110,6 +110,18 @@ package body Lith.IO is
       end if;
    end Finalize;
 
+   --------------
+   -- Get_Port --
+   --------------
+
+   function Get_Port (Store : Lith.Objects.Object_Store'Class;
+                      Item  : Lith.Objects.Object)
+                      return Port_Type'Class
+   is
+   begin
+      return Port_Type'Class (Store.Get_External_Object (Item).all);
+   end Get_Port;
+
    -------------------
    -- Initialise_IO --
    -------------------
@@ -125,6 +137,33 @@ package body Lith.IO is
       Define_Function ("port-attribute?", 2,
                        Evaluate_Port_Attribute'Access);
    end Initialise_IO;
+
+   --------------
+   -- Is_Input --
+   --------------
+
+   function Is_Input (Item : Port_Type'Class) return Boolean is
+   begin
+      return Item.Input;
+   end Is_Input;
+
+   -------------
+   -- Is_Open --
+   -------------
+
+   function Is_Open (Item : Port_Type'Class) return Boolean is
+   begin
+      return Item.Open;
+   end Is_Open;
+
+   ---------------
+   -- Is_Output --
+   ---------------
+
+   function Is_Output (Item : Port_Type'Class) return Boolean is
+   begin
+      return Item.Output;
+   end Is_Output;
 
    -----------
    -- Print --
