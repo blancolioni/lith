@@ -26,6 +26,8 @@ package body Lith.Parser.Lexical is
          Tok_Text   : Unbounded_Wide_Wide_String;
          Tok_Char   : Wide_Wide_Character;
          EOF        : Boolean;
+         Is_Port    : Boolean;
+         Port       : access Lith.IO.Text_IO.Text_Port_Type'Class;
       end record;
 
    Empty_Stream : constant Source_Stream_Record :=
@@ -39,7 +41,9 @@ package body Lith.Parser.Lexical is
                      Tok           => Tok_None,
                      Tok_Text      => Null_Unbounded_Wide_Wide_String,
                      Tok_Char      => ' ',
-                     EOF           => True);
+                     EOF           => True,
+                     Is_Port       => False,
+                     Port          => null);
 
    Max_Source_Files : constant := 10;
 
@@ -85,6 +89,10 @@ package body Lith.Parser.Lexical is
 
    procedure Close_Stream is
    begin
+      if Current_Stream.Is_Port then
+         Current_Stream.Port.Put_Back
+           (To_Wide_Wide_String (Current_Stream.Tok_Text & Current_Stream.Ch));
+      end if;
       Current_Stream.all := Empty_Stream;
       Current_Stream_Index := Current_Stream_Index - 1;
       if Current_Stream_Index > 0 then
@@ -215,23 +223,43 @@ package body Lith.Parser.Lexical is
 
    procedure Next_Character is
    begin
+      Current_Stream.Tok_Text :=
+        Current_Stream.Tok_Text & Current_Stream.Ch;
       if Current_Stream.Line = 0 then
          Current_Stream.Line := 1;
       end if;
-      if Current_Stream.Line > Current_Stream.Lines.Last_Index then
-         Current_Stream.EOF := True;
-         Current_Stream.Ch := ' ';
-      elsif Current_Stream.Column
-        >= Current_Stream.Lines.Element (Current_Stream.Line)'Length
-      then
-         Current_Stream.Line := Current_Stream.Line + 1;
-         Current_Stream.Column := 0;
-         Next_Character;
+
+      if Current_Stream.Is_Port then
+
+         if Current_Stream.Port.End_Of_File then
+            Current_Stream.EOF := True;
+            Current_Stream.Ch := ' ';
+         else
+            Current_Stream.Ch := Current_Stream.Port.Read_Char;
+            Current_Stream.Ch := Current_Stream.Port.Peek_Char;
+            if Current_Stream.Ch = Wide_Wide_Character'Val (10) then
+               Current_Stream.Ch := ' ';
+            else
+               Current_Stream.Line := Current_Stream.Port.Line;
+               Current_Stream.Column := Current_Stream.Port.Col;
+            end if;
+         end if;
       else
-         Current_Stream.Column := Current_Stream.Column + 1;
-         Current_Stream.Ch :=
-           Current_Stream.Lines.Element (Current_Stream.Line)
-           (Current_Stream.Column);
+         if Current_Stream.Line > Current_Stream.Lines.Last_Index then
+            Current_Stream.EOF := True;
+            Current_Stream.Ch := ' ';
+         elsif Current_Stream.Column
+           >= Current_Stream.Lines.Element (Current_Stream.Line)'Length
+         then
+            Current_Stream.Line := Current_Stream.Line + 1;
+            Current_Stream.Column := 0;
+            Current_Stream.Ch := ' ';
+         else
+            Current_Stream.Column := Current_Stream.Column + 1;
+            Current_Stream.Ch :=
+              Current_Stream.Lines.Element (Current_Stream.Line)
+              (Current_Stream.Column);
+         end if;
       end if;
    end Next_Character;
 
@@ -256,6 +284,21 @@ package body Lith.Parser.Lexical is
       Close (File);
       Scan;
    end Open;
+
+   ---------------
+   -- Open_Port --
+   ---------------
+
+   procedure Open_Port
+     (Port : not null access Lith.IO.Text_IO.Text_Port_Type'Class)
+   is
+   begin
+      Open_Stream ("text-input-port");
+      Current_Stream.Is_Port := True;
+      Current_Stream.Port := Port;
+      Current_Stream.Ch := Current_Stream.Port.Peek_Char;
+      Scan;
+   end Open_Port;
 
    -----------------
    -- Open_Stream --
@@ -290,7 +333,10 @@ package body Lith.Parser.Lexical is
 
    function Peek return Wide_Wide_Character is
    begin
-      if Current_Stream.Line > Current_Stream.Lines.Last_Index then
+      if Current_Stream.Is_Port then
+         Current_Stream.Ch := Current_Stream.Port.Read_Char;
+         return Current_Stream.Port.Peek_Char;
+      elsif Current_Stream.Line > Current_Stream.Lines.Last_Index then
          return ' ';
       elsif Current_Stream.Column
         >= Current_Stream.Lines.Element (Current_Stream.Line)'Length
@@ -469,16 +515,17 @@ package body Lith.Parser.Lexical is
                   end if;
                end loop;
 
+               Stop_Token;
+
+               if End_Of_Stream then
+                  Error ("unterminated string constant");
+               else
+                  Next_Character;
+               end if;
+
                Current_Stream.Tok_Text := Result;
-
+               Tok := Tok_String;
             end;
-            if End_Of_Stream then
-               Error ("unterminated string constant");
-            else
-               Next_Character;
-            end if;
-
-            Tok := Tok_String;
 
          when others =>
             declare
@@ -551,6 +598,7 @@ package body Lith.Parser.Lexical is
    begin
       Current_Stream.Tok_Line := Current_Stream.Line;
       Current_Stream.Tok_Column := Current_Stream.Column;
+      Current_Stream.Tok_Text := Null_Unbounded_Wide_Wide_String;
    end Start_Token;
 
    ----------------
@@ -558,18 +606,8 @@ package body Lith.Parser.Lexical is
    ----------------
 
    procedure Stop_Token is
-      Start : constant Positive := Current_Stream.Tok_Column;
-      Col   : constant Natural  := Current_Stream.Column;
-      Line  : constant Wide_Wide_String :=
-                Current_Stream.Lines (Current_Stream.Tok_Line);
    begin
-      if Current_Stream.Tok_Line = Current_Stream.Line then
-         Current_Stream.Tok_Text :=
-           To_Unbounded_Wide_Wide_String (Line (Start .. Col - 1));
-      else
-         Current_Stream.Tok_Text :=
-           To_Unbounded_Wide_Wide_String (Line (Start .. Line'Last));
-      end if;
+      null;
    end Stop_Token;
 
    ---------
