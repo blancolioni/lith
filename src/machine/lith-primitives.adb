@@ -10,6 +10,9 @@ with Lith.Objects.Real;
 with Lith.Primitives.ALU;
 with Lith.Objects.Symbols;
 
+with Lith.IO.Text_IO;
+with Lith.Parser;
+
 package body Lith.Primitives is
 
    Next_Gensym_Index : Natural := 0;
@@ -120,6 +123,16 @@ package body Lith.Primitives is
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
+   function Evaluate_Read
+     (Store       : in out Lith.Objects.Object_Store'Class)
+      return Lith.Objects.Object
+     with Pre => Store.Argument_Count = 1
+     and then Lith.Objects.Is_External_Object (Store.Argument (1))
+     and then Store.Get_External_Object (Store.Argument (1)).all
+       in Lith.IO.Text_IO.Text_Port_Type'Class
+       and then Lith.IO.Get_Port (Store, Store.Argument (1)).Is_Open
+       and then Lith.IO.Get_Port (Store, Store.Argument (1)).Is_Input;
+
    function Evaluate_Set_Car
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
@@ -163,6 +176,7 @@ package body Lith.Primitives is
       Define_Function ("gensym", 0, Evaluate_Gensym'Access);
       Define_Function ("integer->char", 1, Evaluate_Integer_To_Char'Access);
       Define_Function ("lith-external?", 1, Evaluate_Is_External'Access);
+      Define_Function ("lith-read-object", 1, Evaluate_Read'Access);
       Define_Function ("jiffies-per-second", 1,
                        Evaluate_Jiffies_Per_Second'Access);
       Define_Function ("load", 1, Evaluate_Load'Access);
@@ -593,6 +607,18 @@ package body Lith.Primitives is
    begin
       return Lith.Objects.To_Object (Result);
    end Evaluate_Random;
+
+   -------------------
+   -- Evaluate_Read --
+   -------------------
+
+   function Evaluate_Read
+     (Store       : in out Lith.Objects.Object_Store'Class)
+      return Lith.Objects.Object
+   is
+   begin
+      return Lith.Parser.Read_Port (Store, Store.Argument (1));
+   end Evaluate_Read;
 
    ----------------------
    -- Evaluate_Set_Car --
