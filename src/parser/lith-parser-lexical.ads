@@ -1,9 +1,12 @@
 with Lith.Parser.Tokens;             use Lith.Parser.Tokens;
+with Lith.IO.Text_IO;
 
 private package Lith.Parser.Lexical is
 
    procedure Open (File_Name : String);
    procedure Open_String (Expr_String : Wide_Wide_String);
+   procedure Open_Port
+     (Port : not null access Lith.IO.Text_IO.Text_Port_Type'Class);
 
    procedure Close;
 

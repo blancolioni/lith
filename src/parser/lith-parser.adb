@@ -7,10 +7,12 @@ with Lith.Parser.Lexical.Identifiers;
 with Lith.Objects.Real;
 with Lith.Objects.Symbols;
 
+with Lith.IO.Text_IO;
+
 package body Lith.Parser is
 
    procedure Parse_S_Expression
-     (Machine : in out Lith.Objects.Object_Store'Class;
+     (Store : in out Lith.Objects.Object_Store'Class;
       Quasiquote : Boolean);
    --  Parse a single s-expression, leaving the result on the top of the stack
 
@@ -19,15 +21,15 @@ package body Lith.Parser is
    ----------------------
 
    function Parse_Expression
-     (Machine : in out Lith.Objects.Object_Store'Class;
+     (Store : in out Lith.Objects.Object_Store'Class;
       Expr    : Wide_Wide_String)
       return Lith.Objects.Object
    is
    begin
       Open_String (Expr);
-      Parse_S_Expression (Machine, Quasiquote => False);
+      Parse_S_Expression (Store, Quasiquote => False);
       Close;
-      return Machine.Pop;
+      return Store.Pop;
    end Parse_Expression;
 
    ----------------
@@ -35,22 +37,22 @@ package body Lith.Parser is
    ----------------
 
    procedure Parse_File
-     (Machine : in out Lith.Objects.Object_Store'Class;
+     (Store : in out Lith.Objects.Object_Store'Class;
       Path    : String)
    is
    begin
       Open (Path);
       while Tok /= Tok_End_Of_File loop
-         Parse_S_Expression (Machine, Quasiquote => False);
+         Parse_S_Expression (Store, Quasiquote => False);
 
          declare
-            Top : constant Lith.Objects.Object := Machine.Pop;
+            Top : constant Lith.Objects.Object := Store.Pop;
             Result : constant Lith.Objects.Object :=
-                       Machine.Evaluate (Top, Lith.Objects.Nil);
+                       Store.Evaluate (Top, Lith.Objects.Nil);
          begin
             if False then
                Ada.Wide_Wide_Text_IO.Put_Line
-                 (Machine.Show (Result));
+                 (Store.Show (Result));
             end if;
          end;
       end loop;
@@ -62,7 +64,7 @@ package body Lith.Parser is
    ------------------------
 
    procedure Parse_S_Expression
-     (Machine : in out Lith.Objects.Object_Store'Class;
+     (Store : in out Lith.Objects.Object_Store'Class;
       Quasiquote : Boolean)
    is
 
@@ -77,117 +79,121 @@ package body Lith.Parser is
       procedure Parse_Rest_Of_List is
          Start_Line : constant Natural := Current_Line;
       begin
-         Parse_S_Expression (Machine, Quasiquote);
+         Parse_S_Expression (Store, Quasiquote);
 
          if Tok = Tok_Dot then
             Scan;
-            Parse_S_Expression (Machine, Quasiquote);
+            Parse_S_Expression (Store, Quasiquote);
             if Tok = Tok_Right_Paren then
                Scan;
             else
                Error ("missing ')'");
             end if;
          elsif Tok = Tok_Right_Paren then
-            Machine.Push (Lith.Objects.Nil);
+            Store.Push (Lith.Objects.Nil);
             Scan;
          elsif Tok = Tok_End_Of_File then
             Error ("Missing ')' in expression started on line"
                    & Natural'Wide_Wide_Image (Start_Line));
-            Machine.Push (Lith.Objects.Nil);
+            Store.Push (Lith.Objects.Nil);
          else
             Parse_Rest_Of_List;
          end if;
 
-         Machine.Cons;
+         Store.Cons;
 
       end Parse_Rest_Of_List;
 
    begin
 
-      Machine.Set_Context (Current_File_Name, Current_Line);
+      Store.Set_Context (Current_File_Name, Current_Line);
 
       case Tok is
          when Tok_Nil =>
             Scan;
-            Machine.Push (Lith.Objects.Nil);
+            Store.Push (Lith.Objects.Nil);
          when Tok_Left_Paren =>
             Scan;
             if Quasiquote then
-               Machine.Push (Get_Symbol ("list"));
+               Store.Push (Get_Symbol ("list"));
             end if;
             Parse_Rest_Of_List;
             if Quasiquote then
-               Machine.Cons;
+               Store.Cons;
             end if;
          when Tok_Identifier =>
             if Tok_Text = "#t" then
-               Machine.Push (Lith.Objects.True_Value);
+               Store.Push (Lith.Objects.True_Value);
             elsif Tok_Text = "#f" then
-               Machine.Push (Lith.Objects.False_Value);
+               Store.Push (Lith.Objects.False_Value);
             elsif Tok_Text = "#no-value" then
-               Machine.Push (Lith.Objects.No_Value);
+               Store.Push (Lith.Objects.No_Value);
             elsif Tok_Text = "#string" then
-               Machine.Push (Lith.Objects.String_Value);
+               Store.Push (Lith.Objects.String_Value);
             elsif Quasiquote then
-               Machine.Push (Get_Symbol ("quote"));
-               Machine.Push (Get_Symbol (Tok_Text));
-               Machine.Push (Lith.Objects.Nil);
-               Machine.Cons;
-               Machine.Cons;
+               Store.Push (Get_Symbol ("quote"));
+               Store.Push (Get_Symbol (Tok_Text));
+               Store.Push (Lith.Objects.Nil);
+               Store.Cons;
+               Store.Cons;
             else
-               Machine.Push (Get_Symbol (Tok_Text));
+               Store.Push (Get_Symbol (Tok_Text));
             end if;
             Scan;
          when Tok_Start_Vector =>
             Scan;
-            Machine.Push (Lith.Objects.Symbols.Get_Symbol ("vector"));
+            Store.Push (Lith.Objects.Symbols.Get_Symbol ("vector"));
             Parse_Rest_Of_List;
-            Machine.Cons;
+            Store.Cons;
          when Tok_Start_Bytevector =>
             Scan;
-            Machine.Push (Lith.Objects.Symbols.Get_Symbol ("bytevector"));
+            Store.Push (Lith.Objects.Symbols.Get_Symbol ("bytevector"));
             Parse_Rest_Of_List;
-            Machine.Cons;
+            Store.Cons;
 
          when Tok_Character =>
-            Machine.Push
+            Store.Push
               (Lith.Objects.To_Object
                  (Tok_Character_Value));
             Scan;
          when Tok_String =>
-            Machine.Push (Lith.Objects.String_Value);
-            for Ch of Tok_Text loop
-               Machine.Push (Lith.Objects.To_Object (Ch));
-            end loop;
-            Machine.Push (Lith.Objects.Nil);
-            for I in 1 .. Tok_Text'Length + 1 loop
-               Machine.Cons;
-            end loop;
+            Store.Push (Lith.Objects.String_Value);
+            declare
+               S : constant Wide_Wide_String := Tok_Text;
+            begin
+               for Ch of S loop
+                  Store.Push (Lith.Objects.To_Object (Ch));
+               end loop;
+               Store.Push (Lith.Objects.Nil);
+               for I in 1 .. S'Length + 1 loop
+                  Store.Cons;
+               end loop;
+            end;
             Scan;
          when Tok_Quote =>
             Scan;
             if Quasiquote then
-               Machine.Push (Get_Symbol ("quote"));
-               Machine.Push (Get_Symbol ("quote"));
-               Machine.Push (Lith.Objects.Nil);
-               Machine.Cons;
-               Machine.Cons;
+               Store.Push (Get_Symbol ("quote"));
+               Store.Push (Get_Symbol ("quote"));
+               Store.Push (Lith.Objects.Nil);
+               Store.Cons;
+               Store.Cons;
             else
-               Machine.Push (Get_Symbol ("quote"));
+               Store.Push (Get_Symbol ("quote"));
             end if;
-            Parse_S_Expression (Machine, Quasiquote);
-            Machine.Push (Lith.Objects.Nil);
-            Machine.Cons;
-            Machine.Cons;
+            Parse_S_Expression (Store, Quasiquote);
+            Store.Push (Lith.Objects.Nil);
+            Store.Cons;
+            Store.Cons;
          when Tok_Quasiquote =>
             Scan;
-            Parse_S_Expression (Machine, True);
+            Parse_S_Expression (Store, True);
          when Tok_Comma =>
             Scan;
-            Parse_S_Expression (Machine, False);
+            Parse_S_Expression (Store, False);
          when Tok_Integer =>
             Lith.Parser.Lexical.Identifiers.Push_Integer
-              (Machine, Tok_Text);
+              (Store, Tok_Text);
             Scan;
          when Tok_Float =>
             declare
@@ -195,16 +201,34 @@ package body Lith.Parser is
                Real : constant External_Object_Interface'Class :=
                         Lith.Objects.Real.To_Real (Tok_Text);
             begin
-               Machine.Push
-                 (Machine.Create_External_Reference (Real));
+               Store.Push
+                 (Store.Create_External_Reference (Real));
             end;
             Scan;
          when others =>
             Error ("bad token");
-            Machine.Push (Lith.Objects.Nil);
+            Store.Push (Lith.Objects.Nil);
             Scan;
       end case;
 
    end Parse_S_Expression;
+
+   ---------------
+   -- Read_Port --
+   ---------------
+
+   function Read_Port
+     (Store : in out Lith.Objects.Object_Store'Class;
+      Port    : Lith.Objects.Object)
+      return Lith.Objects.Object
+   is
+   begin
+      Open_Port
+        (Lith.IO.Text_IO.Text_Port_Type'Class
+           (Store.Get_External_Object (Port).all)'Access);
+      Parse_S_Expression (Store, Quasiquote => False);
+      Close;
+      return Store.Pop;
+   end Read_Port;
 
 end Lith.Parser;
