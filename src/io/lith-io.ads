@@ -20,8 +20,25 @@ package Lith.IO is
      (Item  : in out Port_Type;
       Store : in out Lith.Objects.Object_Store'Class);
 
+   function Is_Input (Item : Port_Type'Class) return Boolean
+     with Pre => Item.Is_Open;
+
+   function Is_Output (Item : Port_Type'Class) return Boolean
+     with Pre => Item.Is_Open;
+
+   function Is_Open (Item : Port_Type'Class) return Boolean;
+
+   function End_Of_File (Port : Port_Type) return Boolean
+                         is abstract;
+
    procedure Close (Port : in out Port_Type)
    is abstract;
+
+   function Get_Port (Store : Lith.Objects.Object_Store'Class;
+                      Item  : Lith.Objects.Object)
+                      return Port_Type'Class
+     with Pre => Lith.Objects.Is_External_Object (Item)
+     and then Store.Get_External_Object (Item).all in Port_Type'Class;
 
    procedure Initialise_IO;
 
