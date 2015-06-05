@@ -1,6 +1,5 @@
 with Ada.Calendar;
-with Ada.Characters.Conversions;
-with Ada.Wide_Wide_Text_IO;
+with Ada.Text_IO;
 
 with WL.Random;
 
@@ -210,7 +209,7 @@ package body Lith.Primitives is
       return ALU.Apply (Store);
    exception
       when others =>
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("ALU error while evaluting ("
             & Store.Show (Store.Argument (1))
             & " "
@@ -233,8 +232,7 @@ package body Lith.Primitives is
    begin
       if Lith.Objects.Is_Atom (Xs) then
          raise Constraint_Error with
-           "car: not a list: "
-           & Ada.Characters.Conversions.To_String (Store.Show (Xs));
+           "car: not a list: " & Store.Show (Xs);
       else
          return Store.Car (Xs);
       end if;
@@ -252,8 +250,7 @@ package body Lith.Primitives is
    begin
       if Lith.Objects.Is_Atom (Xs) then
          raise Constraint_Error with
-           "cdr: not a list: "
-           & Ada.Characters.Conversions.To_String (Store.Show (Xs));
+           "cdr: not a list: " & Store.Show (Xs);
       else
          return Store.Cdr (Xs);
       end if;
@@ -271,7 +268,7 @@ package body Lith.Primitives is
    begin
       return To_Object
         (Integer'
-           (Wide_Wide_Character'Pos
+           (Character'Pos
                 (To_Character (Store.Argument (1)))));
    end Evaluate_Char_To_Integer;
 
@@ -368,7 +365,7 @@ package body Lith.Primitives is
             X_Object : constant access External_Object_Interface'Class :=
                          Store.Get_External_Object
                            (Store.Argument (1));
-            Name_Sym : constant Wide_Wide_String :=
+            Name_Sym : constant String :=
                          Lith.Objects.Symbols.Get_Name
                            (To_Symbol (Store.Argument (1 + 1)));
          begin
@@ -387,7 +384,7 @@ package body Lith.Primitives is
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      Result : constant Wide_Wide_String :=
+      Result : constant String :=
                  Store.Get_External_Object (Store.Argument (1)).Print (Store);
    begin
       Store.Push (Lith.Objects.String_Value);
@@ -414,7 +411,7 @@ package body Lith.Primitives is
       Next_Gensym_Index := Next_Gensym_Index + 1;
       return Lith.Objects.To_Object
         (Lith.Objects.Symbols.Get_Symbol
-           ("#:g" & Integer'Wide_Wide_Image (-Next_Gensym_Index)));
+           ("#:g" & Integer'Image (-Next_Gensym_Index)));
    end Evaluate_Gensym;
 
    ------------------------------
@@ -428,7 +425,7 @@ package body Lith.Primitives is
       use Lith.Objects;
    begin
       return To_Object
-        (Wide_Wide_Character'Val
+        (Character'Val
                 (To_Integer (Store.Argument (1))));
    end Evaluate_Integer_To_Char;
 
@@ -554,7 +551,7 @@ package body Lith.Primitives is
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      Path : constant Wide_Wide_String :=
+      Path : constant String :=
                Store.To_String (Store.Argument (1));
    begin
       if Store.Load (Path) then
@@ -656,7 +653,7 @@ package body Lith.Primitives is
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      Name : constant Wide_Wide_String :=
+      Name : constant String :=
                Store.To_String (Store.Argument (1));
    begin
       return Lith.Objects.To_Object
@@ -672,7 +669,7 @@ package body Lith.Primitives is
       return Lith.Objects.Object
    is
       use Lith.Objects;
-      Text : constant Wide_Wide_String :=
+      Text : constant String :=
                Store.Show (Store.Argument (1));
       Result : Object := Nil;
    begin
@@ -691,17 +688,17 @@ package body Lith.Primitives is
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      use Ada.Wide_Wide_Text_IO;
-      Char : constant Wide_Wide_Character :=
+      use Ada.Text_IO;
+      Char : constant Character :=
                Lith.Objects.To_Character (Store.Argument (1));
       Code : constant Natural :=
-               Wide_Wide_Character'Pos (Char);
+               Character'Pos (Char);
    begin
       if Code = 10 then
-         Ada.Wide_Wide_Text_IO.New_Line;
+         Ada.Text_IO.New_Line;
       elsif Code in 256 .. 65535 then
-         Put (Wide_Wide_Character'Val (Code / 256));
-         Put (Wide_Wide_Character'Val (Code mod 256));
+         Put (Character'Val (Code / 256));
+         Put (Character'Val (Code mod 256));
       else
          Put (Char);
       end if;

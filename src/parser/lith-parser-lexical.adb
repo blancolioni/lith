@@ -1,9 +1,8 @@
-with Ada.Characters.Conversions;
 with Ada.Containers.Indefinite_Vectors;
-with Ada.Strings.Wide_Wide_Unbounded;  use Ada.Strings.Wide_Wide_Unbounded;
-with Ada.Strings.Wide_Wide_Fixed;
-with Ada.Wide_Wide_Characters.Handling;
-with Ada.Wide_Wide_Text_IO;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Ada.Strings.Fixed;
+with Ada.Characters.Handling;
+with Ada.Text_IO;
 
 with Lith.Parser.Lexical.Characters;
 with Lith.Parser.Lexical.Identifiers;
@@ -11,27 +10,27 @@ with Lith.Parser.Lexical.Identifiers;
 package body Lith.Parser.Lexical is
 
    package Line_Vectors is
-     new Ada.Containers.Indefinite_Vectors (Positive, Wide_Wide_String);
+     new Ada.Containers.Indefinite_Vectors (Positive, String);
 
    type Source_Stream_Record is
       record
-         Identity   : Unbounded_Wide_Wide_String;
+         Identity   : Unbounded_String;
          Lines      : Line_Vectors.Vector;
          Line       : Natural;
          Column     : Natural;
          Tok_Line   : Natural;
          Tok_Column : Natural;
-         Ch         : Wide_Wide_Character;
+         Ch         : Character;
          Tok        : Token;
-         Tok_Text   : Unbounded_Wide_Wide_String;
-         Tok_Char   : Wide_Wide_Character;
+         Tok_Text   : Unbounded_String;
+         Tok_Char   : Character;
          EOF        : Boolean;
          Is_Port    : Boolean;
          Port       : access Lith.IO.Text_IO.Text_Port_Type'Class;
       end record;
 
    Empty_Stream : constant Source_Stream_Record :=
-                    (Identity      => Null_Unbounded_Wide_Wide_String,
+                    (Identity      => Null_Unbounded_String,
                      Lines         => Line_Vectors.Empty_Vector,
                      Line          => 0,
                      Column        => 0,
@@ -39,7 +38,7 @@ package body Lith.Parser.Lexical is
                      Tok_Column    => 0,
                      Ch            => ' ',
                      Tok           => Tok_None,
-                     Tok_Text      => Null_Unbounded_Wide_Wide_String,
+                     Tok_Text      => Null_Unbounded_String,
                      Tok_Char      => ' ',
                      EOF           => True,
                      Is_Port       => False,
@@ -53,26 +52,26 @@ package body Lith.Parser.Lexical is
    Current_Stream_Index : Natural := 0;
    Current_Stream       : access Source_Stream_Record := null;
 
-   procedure Open_Stream (Identity : Wide_Wide_String);
+   procedure Open_Stream (Identity : String);
    procedure Close_Stream;
 
    procedure Next_Character;
    procedure Start_Token;
    procedure Stop_Token;
 
-   function Peek return Wide_Wide_Character;
+   function Peek return Character;
 
    function Is_White_Space return Boolean;
    function Is_Alphanumeric return Boolean;
    function End_Of_Stream return Boolean;
    function End_Of_Line return Boolean;
-   function Hex_Digit (Ch : Wide_Wide_Character) return Natural;
+   function Hex_Digit (Ch : Character) return Natural;
 
    function Hex_To_Character
-     (Hex : Wide_Wide_String)
-      return Wide_Wide_Character;
+     (Hex : String)
+      return Character;
 
-   function Read_Character (Long_Names : Boolean) return Wide_Wide_Character;
+   function Read_Character (Long_Names : Boolean) return Character;
 
    -----------
    -- Close --
@@ -91,7 +90,7 @@ package body Lith.Parser.Lexical is
    begin
       if Current_Stream.Is_Port then
          Current_Stream.Port.Put_Back
-           (To_Wide_Wide_String (Current_Stream.Tok_Text & Current_Stream.Ch));
+           (To_String (Current_Stream.Tok_Text & Current_Stream.Ch));
       end if;
       Current_Stream.all := Empty_Stream;
       Current_Stream_Index := Current_Stream_Index - 1;
@@ -106,9 +105,9 @@ package body Lith.Parser.Lexical is
    -- Current_File_Name --
    -----------------------
 
-   function Current_File_Name return Wide_Wide_String is
+   function Current_File_Name return String is
    begin
-      return To_Wide_Wide_String (Current_Stream.Identity);
+      return To_String (Current_Stream.Identity);
    end Current_File_Name;
 
    ------------------
@@ -143,17 +142,17 @@ package body Lith.Parser.Lexical is
    -- Error --
    -----------
 
-   procedure Error (Message : Wide_Wide_String) is
-      use Ada.Strings, Ada.Strings.Wide_Wide_Fixed;
-      use Ada.Wide_Wide_Text_IO;
+   procedure Error (Message : String) is
+      use Ada.Strings, Ada.Strings.Fixed;
+      use Ada.Text_IO;
    begin
       Put_Line
         (Standard_Error,
-         To_Wide_Wide_String (Current_Stream.Identity)
+         To_String (Current_Stream.Identity)
          & ":"
-         & Trim (Natural'Wide_Wide_Image (Current_Stream.Tok_Line), Left)
+         & Trim (Natural'Image (Current_Stream.Tok_Line), Left)
          & ":"
-         & Trim (Natural'Wide_Wide_Image (Current_Stream.Tok_Column), Left)
+         & Trim (Natural'Image (Current_Stream.Tok_Column), Left)
          & ": "
          & Message);
    end Error;
@@ -162,18 +161,18 @@ package body Lith.Parser.Lexical is
    -- Hex_Digit --
    ---------------
 
-   function Hex_Digit (Ch : Wide_Wide_Character) return Natural is
+   function Hex_Digit (Ch : Character) return Natural is
    begin
       if Ch in '0' .. '9' then
-         return Wide_Wide_Character'Pos (Ch)
-           - Wide_Wide_Character'Pos ('0');
+         return Character'Pos (Ch)
+           - Character'Pos ('0');
       elsif Ch in 'A' .. 'F' then
-         return Wide_Wide_Character'Pos (Ch)
-           - Wide_Wide_Character'Pos ('A')
+         return Character'Pos (Ch)
+           - Character'Pos ('A')
            + 10;
       elsif Ch in 'a' .. 'f' then
-         return Wide_Wide_Character'Pos (Ch)
-           - Wide_Wide_Character'Pos ('a')
+         return Character'Pos (Ch)
+           - Character'Pos ('a')
            + 10;
       else
          raise Constraint_Error with
@@ -186,15 +185,15 @@ package body Lith.Parser.Lexical is
    ----------------------
 
    function Hex_To_Character
-     (Hex : Wide_Wide_String)
-      return Wide_Wide_Character
+     (Hex : String)
+      return Character
    is
       V : Natural := 0;
    begin
       for D of Hex loop
          V := V * 16 + Hex_Digit (D);
       end loop;
-      return Wide_Wide_Character'Val (V);
+      return Character'Val (V);
    end Hex_To_Character;
 
    ---------------------
@@ -203,7 +202,7 @@ package body Lith.Parser.Lexical is
 
    function Is_Alphanumeric return Boolean is
    begin
-      return Ada.Wide_Wide_Characters.Handling.Is_Alphanumeric
+      return Ada.Characters.Handling.Is_Alphanumeric
         (Current_Stream.Ch);
    end Is_Alphanumeric;
 
@@ -213,7 +212,7 @@ package body Lith.Parser.Lexical is
 
    function Is_White_Space return Boolean is
    begin
-      return Ada.Wide_Wide_Characters.Handling.Is_Space
+      return Ada.Characters.Handling.Is_Space
         (Current_Stream.Ch);
    end Is_White_Space;
 
@@ -237,7 +236,7 @@ package body Lith.Parser.Lexical is
          else
             Current_Stream.Ch := Current_Stream.Port.Read_Char;
             Current_Stream.Ch := Current_Stream.Port.Peek_Char;
-            if Current_Stream.Ch = Wide_Wide_Character'Val (10) then
+            if Current_Stream.Ch = Character'Val (10) then
                Current_Stream.Ch := ' ';
             else
                Current_Stream.Line := Current_Stream.Port.Line;
@@ -268,15 +267,14 @@ package body Lith.Parser.Lexical is
    ----------
 
    procedure Open (File_Name : String) is
-      use Ada.Wide_Wide_Text_IO;
+      use Ada.Text_IO;
       File : File_Type;
    begin
-      Open_Stream
-        (Ada.Characters.Conversions.To_Wide_Wide_String (File_Name));
+      Open_Stream (File_Name);
       Open (File, In_File, File_Name);
       while not End_Of_File (File) loop
          declare
-            Line : constant Wide_Wide_String := Get_Line (File);
+            Line : constant String := Get_Line (File);
          begin
             Current_Stream.Lines.Append (Line);
          end;
@@ -304,7 +302,7 @@ package body Lith.Parser.Lexical is
    -- Open_Stream --
    -----------------
 
-   procedure Open_Stream (Identity : Wide_Wide_String) is
+   procedure Open_Stream (Identity : String) is
    begin
       if Current_Stream_Index = Max_Source_Files then
          raise Program_Error with "maximum source file nesting exceeded";
@@ -312,7 +310,7 @@ package body Lith.Parser.Lexical is
       Current_Stream_Index := Current_Stream_Index + 1;
       Current_Stream := Source_Stream_Stack (Current_Stream_Index)'Access;
       Current_Stream.all := Empty_Stream;
-      Current_Stream.Identity := To_Unbounded_Wide_Wide_String (Identity);
+      Current_Stream.Identity := To_Unbounded_String (Identity);
       Current_Stream.EOF := False;
    end Open_Stream;
 
@@ -320,7 +318,7 @@ package body Lith.Parser.Lexical is
    -- Open_String --
    -----------------
 
-   procedure Open_String (Expr_String : Wide_Wide_String) is
+   procedure Open_String (Expr_String : String) is
    begin
       Open_Stream ("user input");
       Current_Stream.Lines.Append (Expr_String);
@@ -331,7 +329,7 @@ package body Lith.Parser.Lexical is
    -- Peek --
    ----------
 
-   function Peek return Wide_Wide_Character is
+   function Peek return Character is
    begin
       if Current_Stream.Is_Port then
          Current_Stream.Ch := Current_Stream.Port.Read_Char;
@@ -353,8 +351,8 @@ package body Lith.Parser.Lexical is
    -- Read_Character --
    --------------------
 
-   function Read_Character (Long_Names : Boolean) return Wide_Wide_Character is
-      Buffer : Wide_Wide_String (1 .. 20);
+   function Read_Character (Long_Names : Boolean) return Character is
+      Buffer : String (1 .. 20);
       Count  : Natural := 0;
    begin
       if Current_Stream.Ch = 'x' then
@@ -399,7 +397,7 @@ package body Lith.Parser.Lexical is
               (Buffer (1 .. Count));
          else
             declare
-               Result : constant Wide_Wide_Character :=
+               Result : constant Character :=
                           Current_Stream.Ch;
             begin
                Next_Character;
@@ -429,7 +427,7 @@ package body Lith.Parser.Lexical is
                   raise Program_Error;
             end case;
             Next_Character;
-            return Wide_Wide_Character'Val (V);
+            return Character'Val (V);
          end;
       end if;
    end Read_Character;
@@ -496,8 +494,8 @@ package body Lith.Parser.Lexical is
             Start_Token;
 
             declare
-               Result : Unbounded_Wide_Wide_String :=
-                          Null_Unbounded_Wide_Wide_String;
+               Result : Unbounded_String :=
+                          Null_Unbounded_String;
             begin
                while not End_Of_Stream
                  and then Current_Stream.Ch /= '"'
@@ -529,8 +527,8 @@ package body Lith.Parser.Lexical is
 
          when others =>
             declare
-               use Ada.Strings.Wide_Wide_Fixed;
-               use Ada.Wide_Wide_Characters.Handling;
+               use Ada.Strings.Fixed;
+               use Ada.Characters.Handling;
 
                function Is_Id return Boolean
                is (not End_Of_Stream
@@ -555,7 +553,7 @@ package body Lith.Parser.Lexical is
                   Stop_Token;
                   Tok := Tok_Start_Vector;
                elsif Current_Stream.Ch = '.'
-                 and then Ada.Wide_Wide_Characters.Handling.Is_Space (Peek)
+                 and then Ada.Characters.Handling.Is_Space (Peek)
                then
                   Next_Character;
                   Stop_Token;
@@ -584,8 +582,8 @@ package body Lith.Parser.Lexical is
             end;
       end case;
 
---        Ada.Wide_Wide_Text_IO.Put_Line
---          (Token'Wide_Wide_Image (Tok) & " ["
+--        Ada.Text_IO.Put_Line
+--          (Token'Image (Tok) & " ["
 --           & Tok_Text & "]");
 
    end Scan;
@@ -598,7 +596,7 @@ package body Lith.Parser.Lexical is
    begin
       Current_Stream.Tok_Line := Current_Stream.Line;
       Current_Stream.Tok_Column := Current_Stream.Column;
-      Current_Stream.Tok_Text := Null_Unbounded_Wide_Wide_String;
+      Current_Stream.Tok_Text := Null_Unbounded_String;
    end Start_Token;
 
    ----------------
@@ -623,7 +621,7 @@ package body Lith.Parser.Lexical is
    -- Tok_Character_Value --
    -------------------------
 
-   function Tok_Character_Value return Wide_Wide_Character is
+   function Tok_Character_Value return Character is
    begin
       return Current_Stream.Tok_Char;
    end Tok_Character_Value;
@@ -634,8 +632,8 @@ package body Lith.Parser.Lexical is
 
    function Tok_Integer_Value return Natural is
    begin
-      return Natural'Wide_Wide_Value
-        (To_Wide_Wide_String
+      return Natural'Value
+        (To_String
            (Current_Stream.Tok_Text));
    end Tok_Integer_Value;
 
@@ -643,9 +641,9 @@ package body Lith.Parser.Lexical is
    -- Tok_Text --
    --------------
 
-   function Tok_Text return Wide_Wide_String is
+   function Tok_Text return String is
    begin
-      return To_Wide_Wide_String (Current_Stream.Tok_Text);
+      return To_String (Current_Stream.Tok_Text);
    end Tok_Text;
 
 end Lith.Parser.Lexical;

@@ -10,13 +10,13 @@ package Lith.Objects.Interfaces is
      return Object;
 
    procedure Define_Function
-     (Name           : Wide_Wide_String;
+     (Name           : String;
       Argument_Count : Natural;
       Strict         : Boolean;
       Eval           : Evaluator);
 
    procedure Define_Function
-     (Name           : Wide_Wide_String;
+     (Name           : String;
       Argument_Count : Natural;
       Eval           : Simple_Evaluator);
 
@@ -27,8 +27,8 @@ package Lith.Objects.Interfaces is
       return Object;
 
    generic
-      Type_Name : Wide_Wide_String;
-      Type_Predicate_Name  : Wide_Wide_String := "?";
+      Type_Name : String;
+      Type_Predicate_Name  : String := "?";
    package Registration is
       procedure Create_Standard_Objects
         (Store : in out Object_Store'Class);

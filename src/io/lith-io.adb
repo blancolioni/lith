@@ -71,7 +71,7 @@ package body Lith.IO is
                declare
                   Port      : constant Port_Type'Class :=
                                 Port_Type'Class (Ext.all);
-                  Attribute : constant Wide_Wide_String :=
+                  Attribute : constant String :=
                                 Lith.Objects.Symbols.Get_Name
                                   (To_Symbol (Store.Argument (2)));
                begin
@@ -172,7 +172,7 @@ package body Lith.IO is
    overriding function Print
      (Item  : Port_Type;
       Store : in out Lith.Objects.Object_Store'Class)
-      return Wide_Wide_String
+      return String
    is
       pragma Unreferenced (Store);
       pragma Unreferenced (Item);

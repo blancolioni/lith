@@ -7,11 +7,11 @@ package Lith.Objects.Large_Integers is
 
    overriding function Name
      (Item : Large_Integer_Object)
-      return Wide_Wide_String;
+      return String;
 
    overriding function Print (Item  : Large_Integer_Object;
                               Store : in out Object_Store'Class)
-                              return Wide_Wide_String;
+                              return String;
 
    overriding function Equal (X, Y  : Large_Integer_Object;
                               Store : Object_Store'Class)

@@ -1,4 +1,4 @@
-with Ada.Wide_Wide_Text_IO;
+with Ada.Text_IO;
 
 with Lith.IO;
 with Lith.Machine;
@@ -59,8 +59,8 @@ exception
    when others =>
       Machine.Report_State;
       Machine.Report_Memory;
-      Ada.Wide_Wide_Text_IO.Put_Line
-        (Ada.Wide_Wide_Text_IO.Standard_Error,
+      Ada.Text_IO.Put_Line
+        (Ada.Text_IO.Standard_Error,
          "exiting because of unhandled exception");
       raise;
 end Lith.Driver;

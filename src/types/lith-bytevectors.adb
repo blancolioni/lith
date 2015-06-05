@@ -1,5 +1,4 @@
-with Ada.Characters.Conversions;
-with Ada.Strings.Wide_Wide_Unbounded;
+with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with Lith.Objects.Interfaces;
@@ -45,7 +44,6 @@ package body Lith.Bytevectors is
       return Lith.Objects.Object
    is
       use Lith.Objects;
-      use Ada.Characters.Conversions;
       Result : Lith_Bytevector_Type;
    begin
       for I in 1 .. Store.Argument_Count loop
@@ -55,10 +53,10 @@ package body Lith.Bytevectors is
             if not Is_Integer (Arg) then
                raise Constraint_Error with
                  "bytevector: expected an integer but found "
-                 & To_String (Store.Show (Arg));
+                 & Store.Show (Arg);
             elsif To_Integer (Arg) not in 0 .. 255 then
                raise Constraint_Error with
-                 "bytevector: " & To_String (Store.Show (Arg))
+                 "bytevector: " & Store.Show (Arg)
                  & " is not in byte range (0 .. 255)";
             end if;
          end;
@@ -153,7 +151,7 @@ package body Lith.Bytevectors is
 
    overriding function Name
      (Item  : Lith_Bytevector_Type)
-      return Wide_Wide_String
+      return String
    is
       pragma Unreferenced (Item);
    begin
@@ -167,19 +165,19 @@ package body Lith.Bytevectors is
    overriding function Print
      (Item  : Lith_Bytevector_Type;
       Store : in out Lith.Objects.Object_Store'Class)
-      return Wide_Wide_String
+      return String
    is
       pragma Unreferenced (Store);
-      use Ada.Strings.Wide_Wide_Unbounded;
-      Result : Unbounded_Wide_Wide_String :=
-                 Null_Unbounded_Wide_Wide_String;
+      use Ada.Strings.Unbounded;
+      Result : Unbounded_String :=
+                 Null_Unbounded_String;
    begin
       for B of Item.Bytes.all loop
-         Result := Result & Byte'Wide_Wide_Image (B);
+         Result := Result & Byte'Image (B);
       end loop;
 
       Result := "#u8(" & Result & ")";
-      return To_Wide_Wide_String (Result);
+      return To_String (Result);
    end Print;
 
    --------------

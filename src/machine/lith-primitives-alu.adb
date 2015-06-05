@@ -58,14 +58,14 @@ package body Lith.Primitives.ALU is
    Ops : Operator_Maps.Map;
 
    procedure Operator
-     (Symbol               : Wide_Wide_String;
+     (Symbol               : String;
       Identity             : Integer;
       Integer_Op           : Integer_Op_Function;
       Large_Integer_Op     : Large_Integer_Op_Function;
       Real_Op              : Real_Op_Function);
 
    procedure Operator
-     (Symbol               : Wide_Wide_String;
+     (Symbol               : String;
       Allowed              : Allowed_Compares);
 
    function Compare_Integer
@@ -498,7 +498,7 @@ package body Lith.Primitives.ALU is
    --------------
 
    procedure Operator
-     (Symbol           : Wide_Wide_String;
+     (Symbol           : String;
       Identity         : Integer;
       Integer_Op       : Integer_Op_Function;
       Large_Integer_Op : Large_Integer_Op_Function;
@@ -515,7 +515,7 @@ package body Lith.Primitives.ALU is
    --------------
 
    procedure Operator
-     (Symbol               : Wide_Wide_String;
+     (Symbol               : String;
       Allowed              : Allowed_Compares)
    is
    begin

@@ -4,7 +4,7 @@ package Lith.Parser is
 
    function Parse_Expression
      (Store : in out Lith.Objects.Object_Store'Class;
-      Expr    : Wide_Wide_String)
+      Expr    : String)
       return Lith.Objects.Object;
 
    function Read_Port

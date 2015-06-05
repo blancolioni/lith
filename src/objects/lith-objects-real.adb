@@ -36,7 +36,7 @@ package body Lith.Objects.Real is
 
    overriding function Name
      (Item : Real_Object)
-      return Wide_Wide_String
+      return String
    is
       pragma Unreferenced (Item);
    begin
@@ -50,11 +50,11 @@ package body Lith.Objects.Real is
    overriding function Print
      (Item  : Real_Object;
       Store : in out Object_Store'Class)
-      return Wide_Wide_String
+      return String
    is
       pragma Unreferenced (Store);
    begin
-      return Lith_Real'Wide_Wide_Image (Item.Value);
+      return Lith_Real'Image (Item.Value);
    end Print;
 
    ---------------
@@ -96,11 +96,11 @@ package body Lith.Objects.Real is
    -------------
 
    function To_Real
-     (Text : Wide_Wide_String)
+     (Text : String)
       return Real_Object'Class
    is
    begin
-      return Real_Object'(Value => Lith_Real'Wide_Wide_Value (Text));
+      return Real_Object'(Value => Lith_Real'Value (Text));
    end To_Real;
 
    --------------------

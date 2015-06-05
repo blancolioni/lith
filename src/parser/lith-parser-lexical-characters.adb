@@ -1,15 +1,14 @@
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Characters.Conversions;
-with Ada.Characters.Wide_Wide_Latin_9;
-with Ada.Strings.Wide_Wide_Fixed.Wide_Wide_Hash;
+with Ada.Characters.Latin_9;
+with Ada.Strings.Fixed.Hash;
 
 package body Lith.Parser.Lexical.Characters is
 
    package Character_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps
-       (Key_Type        => Wide_Wide_String,
-        Element_Type    => Wide_Wide_Character,
-        Hash            => Ada.Strings.Wide_Wide_Fixed.Wide_Wide_Hash,
+       (Key_Type        => String,
+        Element_Type    => Character,
+        Hash            => Ada.Strings.Fixed.Hash,
         Equivalent_Keys => "=");
 
    Name_Map : Character_Maps.Map;
@@ -21,7 +20,7 @@ package body Lith.Parser.Lexical.Characters is
    ---------------------
 
    procedure Create_Name_Map is
-      use Ada.Characters.Wide_Wide_Latin_9;
+      use Ada.Characters.Latin_9;
    begin
       --  standard character names
       Name_Map.Insert ("alarm", BEL);
@@ -43,8 +42,8 @@ package body Lith.Parser.Lexical.Characters is
    -----------------------
 
    function Name_To_Character
-     (Name : Wide_Wide_String)
-      return Wide_Wide_Character
+     (Name : String)
+      return Character
    is
    begin
       if Name_Map.Is_Empty then
@@ -56,8 +55,7 @@ package body Lith.Parser.Lexical.Characters is
          return Name_Map.Element (Name);
       else
          raise Constraint_Error with
-           "undefined character name: "
-           & Ada.Characters.Conversions.To_String (Name);
+           "undefined character name: " & Name;
       end if;
    end Name_To_Character;
 

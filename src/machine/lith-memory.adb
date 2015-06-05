@@ -1,5 +1,5 @@
 with Ada.Calendar;
-with Ada.Wide_Wide_Text_IO;
+with Ada.Text_IO;
 
 package body Lith.Memory is
 
@@ -146,13 +146,13 @@ package body Lith.Memory is
       Memory.Scan := Memory.To_Space;
 
       if Trace_GC then
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("Flip: To_Space = " &
               Hex_Image (To_Object (Memory.To_Space)));
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("Flip: From_Space = " &
               Hex_Image (To_Object (Memory.From_Space)));
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("Flip: free = " &
               Hex_Image (To_Object (Memory.Free)));
       end if;
@@ -187,7 +187,7 @@ package body Lith.Memory is
 
    begin
       if Trace_GC then
-         Ada.Wide_Wide_Text_IO.Put_Line ("Garbage collecting ...");
+         Ada.Text_IO.Put_Line ("Garbage collecting ...");
       end if;
 
       Flip (Memory);
@@ -215,12 +215,12 @@ package body Lith.Memory is
         Natural (Memory.Scan - Memory.To_Space);
 
       if Trace_GC then
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("GC freed"
-            & Integer'Wide_Wide_Image
+            & Integer'Image
               (Old_Alloc_Count - Memory.Alloc_Count)
             & " cells in"
-            & Duration'Wide_Wide_Image ((Clock - Start) * 1000.0)
+            & Duration'Image ((Clock - Start) * 1000.0)
             & "ms");
       end if;
 
@@ -230,8 +230,8 @@ package body Lith.Memory is
       Memory.GC_Count := Memory.GC_Count + 1;
 
 --        if Memory.GC_Count = 16 then
---           Ada.Wide_Wide_Text_IO.Put_Line
---             ("GC number" & Natural'Wide_Wide_Image (Memory.GC_Count)
+--           Ada.Text_IO.Put_Line
+--             ("GC number" & Natural'Image (Memory.GC_Count)
 --              & " complete");
 --        end if;
 
@@ -336,29 +336,29 @@ package body Lith.Memory is
       end Hex_Image;
 
    begin
-      Ada.Wide_Wide_Text_IO.Put_Line
+      Ada.Text_IO.Put_Line
         ("Total number of cells:"
-         & Cell_Address'Wide_Wide_Image (Memory.Core'Length));
-      Ada.Wide_Wide_Text_IO.Put_Line
+         & Cell_Address'Image (Memory.Core'Length));
+      Ada.Text_IO.Put_Line
         ("Allocated cell count: "
-         & Natural'Wide_Wide_Image (Memory.Alloc_Count));
-      Ada.Wide_Wide_Text_IO.Put_Line
+         & Natural'Image (Memory.Alloc_Count));
+      Ada.Text_IO.Put_Line
         ("Free cell count: "
-         & Natural'Wide_Wide_Image
+         & Natural'Image
            (Natural (Memory.Core'Length
             - Memory.Alloc_Count)));
-      Ada.Wide_Wide_Text_IO.Put_Line
+      Ada.Text_IO.Put_Line
         ("GC:"
-         & Natural'Wide_Wide_Image (Memory.GC_Count)
+         & Natural'Image (Memory.GC_Count)
          & " @"
-         & Natural'Wide_Wide_Image (Natural (Memory.GC_Time * 1000.0))
+         & Natural'Image (Natural (Memory.GC_Time * 1000.0))
          & "ms");
-      Ada.Wide_Wide_Text_IO.Put_Line
+      Ada.Text_IO.Put_Line
         ("Allocated cells:"
-         & Natural'Wide_Wide_Image (Memory.Allocations));
-      Ada.Wide_Wide_Text_IO.Put_Line
+         & Natural'Image (Memory.Allocations));
+      Ada.Text_IO.Put_Line
         ("Reclaimed cells:"
-         & Natural'Wide_Wide_Image (Memory.Collections));
+         & Natural'Image (Memory.Collections));
 
    end Report;
 

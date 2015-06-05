@@ -1,5 +1,5 @@
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Wide_Wide_Unbounded;
+with Ada.Strings.Unbounded;
 
 package body Lith.Objects.Large_Integers is
 
@@ -325,7 +325,7 @@ package body Lith.Objects.Large_Integers is
 
    overriding function Name
      (Item : Large_Integer_Object)
-      return Wide_Wide_String
+      return String
    is
       pragma Unreferenced (Item);
    begin
@@ -348,12 +348,12 @@ package body Lith.Objects.Large_Integers is
    overriding function Print
      (Item  : Large_Integer_Object;
       Store : in out Object_Store'Class)
-      return Wide_Wide_String
+      return String
    is
       pragma Unreferenced (Store);
-      use Ada.Strings.Wide_Wide_Unbounded;
+      use Ada.Strings.Unbounded;
       Acc : Large_Integer_Object := Item;
-      Text : Unbounded_Wide_Wide_String;
+      Text : Unbounded_String;
       R    : Integer;
    begin
       if Acc.Is_Zero then
@@ -362,8 +362,8 @@ package body Lith.Objects.Large_Integers is
          while not Acc.Is_Zero loop
             Acc.Divide (10, R);
             declare
-               Ch : constant Wide_Wide_Character :=
-                      Wide_Wide_Character'Val (R + 48);
+               Ch : constant Character :=
+                      Character'Val (R + 48);
             begin
                Text := Ch & Text;
             end;
@@ -371,7 +371,7 @@ package body Lith.Objects.Large_Integers is
          if Item.Negative then
             Text := '-' & Text;
          end if;
-         return To_Wide_Wide_String (Text);
+         return To_String (Text);
       end if;
    end Print;
 

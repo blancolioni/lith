@@ -1,11 +1,10 @@
-with Ada.Characters.Conversions;
 with Ada.Unchecked_Deallocation;
 
 package body Lith.IO.Text_IO is
 
    procedure Free is
      new Ada.Unchecked_Deallocation
-       (Ada.Wide_Wide_Text_IO.File_Type,
+       (Ada.Text_IO.File_Type,
         File_Access);
 
    -----------
@@ -14,7 +13,7 @@ package body Lith.IO.Text_IO is
 
    overriding procedure Close (Port : in out Text_Port_Type) is
    begin
-      Ada.Wide_Wide_Text_IO.Close (Port.File.all);
+      Ada.Text_IO.Close (Port.File.all);
       Free (Port.File);
       Port.Open := False;
    end Close;
@@ -25,7 +24,7 @@ package body Lith.IO.Text_IO is
 
    function Col (Port : Text_Port_Type'Class) return Positive is
    begin
-      return Positive (Ada.Wide_Wide_Text_IO.Col (Port.File.all));
+      return Positive (Ada.Text_IO.Col (Port.File.all));
    end Col;
 
    -----------------
@@ -34,7 +33,7 @@ package body Lith.IO.Text_IO is
 
    overriding function End_Of_File (Port : Text_Port_Type) return Boolean is
    begin
-      return Ada.Wide_Wide_Text_IO.End_Of_File (Port.File.all);
+      return Ada.Text_IO.End_Of_File (Port.File.all);
    end End_Of_File;
 
    ------------------------------
@@ -47,14 +46,13 @@ package body Lith.IO.Text_IO is
    is
       Port : Text_Port_Type;
    begin
-      Port.File := new Ada.Wide_Wide_Text_IO.File_Type;
+      Port.File := new Ada.Text_IO.File_Type;
       declare
          Path : constant String :=
-                  Ada.Characters.Conversions.To_String
-                    (Lith.Objects.To_String (Store, Store.Argument (1)));
+                  Lith.Objects.To_String (Store, Store.Argument (1));
       begin
-         Ada.Wide_Wide_Text_IO.Open
-           (Port.File.all, Ada.Wide_Wide_Text_IO.In_File, Path);
+         Ada.Text_IO.Open
+           (Port.File.all, Ada.Text_IO.In_File, Path);
       end;
       Port.Open := True;
       Port.Input := True;
@@ -77,11 +75,10 @@ package body Lith.IO.Text_IO is
    is
       Port : Text_Port_Type;
    begin
-      Port.File := new Ada.Wide_Wide_Text_IO.File_Type;
-      Ada.Wide_Wide_Text_IO.Create
-        (Port.File.all, Ada.Wide_Wide_Text_IO.Out_File,
-         Ada.Characters.Conversions.To_String
-           (Lith.Objects.To_String (Store, Store.Argument (1))));
+      Port.File := new Ada.Text_IO.File_Type;
+      Ada.Text_IO.Create
+        (Port.File.all, Ada.Text_IO.Out_File,
+         Lith.Objects.To_String (Store, Store.Argument (1)));
       Port.Open := True;
       Port.Input := False;
       Port.Output := True;
@@ -108,7 +105,7 @@ package body Lith.IO.Text_IO is
 
    function Line (Port : Text_Port_Type'Class) return Positive is
    begin
-      return Positive (Ada.Wide_Wide_Text_IO.Line (Port.File.all));
+      return Positive (Ada.Text_IO.Line (Port.File.all));
    end Line;
 
    ---------------
@@ -117,18 +114,18 @@ package body Lith.IO.Text_IO is
 
    function Peek_Char
      (Port : Text_Port_Type'Class)
-      return Wide_Wide_Character
+      return Character
    is
-      use Ada.Strings.Wide_Wide_Unbounded;
-      Ch          : Wide_Wide_Character;
+      use Ada.Strings.Unbounded;
+      Ch          : Character;
       End_Of_Line : Boolean;
    begin
-      if Port.Front /= Null_Unbounded_Wide_Wide_String then
+      if Port.Front /= Null_Unbounded_String then
          return Element (Port.Front, 1);
       else
-         Ada.Wide_Wide_Text_IO.Look_Ahead (Port.File.all, Ch, End_Of_Line);
+         Ada.Text_IO.Look_Ahead (Port.File.all, Ch, End_Of_Line);
          if End_Of_Line then
-            return Wide_Wide_Character'Val (10);
+            return Character'Val (10);
          else
             return Ch;
          end if;
@@ -141,9 +138,9 @@ package body Lith.IO.Text_IO is
 
    procedure Put_Back
      (Port : in out Text_Port_Type'Class;
-      Text : Wide_Wide_String)
+      Text : String)
    is
-      use Ada.Strings.Wide_Wide_Unbounded;
+      use Ada.Strings.Unbounded;
    begin
       Port.Front := Text & Port.Front;
    end Put_Back;
@@ -154,21 +151,21 @@ package body Lith.IO.Text_IO is
 
    function Read_Char
      (Port : in out Text_Port_Type'Class)
-      return Wide_Wide_Character
+      return Character
    is
-      use Ada.Strings.Wide_Wide_Unbounded;
-      Ch          : Wide_Wide_Character;
+      use Ada.Strings.Unbounded;
+      Ch          : Character;
    begin
-      if Port.Front /= Null_Unbounded_Wide_Wide_String then
+      if Port.Front /= Null_Unbounded_String then
          Ch := Element (Port.Front, 1);
          Port.Front :=
            Unbounded_Slice (Port.Front, 2, Length (Port.Front) - 1);
          return Ch;
-      elsif Ada.Wide_Wide_Text_IO.End_Of_Line (Port.File.all) then
-         Ada.Wide_Wide_Text_IO.Skip_Line (Port.File.all);
-         return Wide_Wide_Character'Val (10);
+      elsif Ada.Text_IO.End_Of_Line (Port.File.all) then
+         Ada.Text_IO.Skip_Line (Port.File.all);
+         return Character'Val (10);
       else
-         Ada.Wide_Wide_Text_IO.Get (Port.File.all, Ch);
+         Ada.Text_IO.Get (Port.File.all, Ch);
          return Ch;
       end if;
    end Read_Char;

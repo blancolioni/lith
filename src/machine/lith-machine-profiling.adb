@@ -1,5 +1,5 @@
 with Lith.Objects.Symbols;
-with Ada.Wide_Wide_Text_IO;
+with Ada.Text_IO;
 
 package body Lith.Machine.Profiling is
 
@@ -82,13 +82,13 @@ package body Lith.Machine.Profiling is
 
       procedure Show (Centre : Cost_Centre) is
       begin
-         Ada.Wide_Wide_Text_IO.Put
-           (Duration'Wide_Wide_Image (Centre.Total_Time));
-         Ada.Wide_Wide_Text_IO.Set_Col (16);
-         Ada.Wide_Wide_Text_IO.Put
-           (Duration'Wide_Wide_Image (Centre.Ex_Children));
-         Ada.Wide_Wide_Text_IO.Set_Col (32);
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put
+           (Duration'Image (Centre.Total_Time));
+         Ada.Text_IO.Set_Col (16);
+         Ada.Text_IO.Put
+           (Duration'Image (Centre.Ex_Children));
+         Ada.Text_IO.Set_Col (32);
+         Ada.Text_IO.Put_Line
            (Lith.Objects.Symbols.Get_Name (Centre.Name));
       end Show;
 

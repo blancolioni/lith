@@ -1,6 +1,5 @@
-with Ada.Characters.Conversions;
 with Ada.Strings.Fixed;
-with Ada.Wide_Wide_Characters.Handling;
+with Ada.Characters.Handling;
 
 with Lith.Objects.Large_Integers;
 
@@ -19,20 +18,20 @@ package body Lith.Parser.Lexical.Identifiers is
    type Integer_Base is range 2 .. 16;
 
    function Is_Base_Digit
-     (Ch : Wide_Wide_Character;
+     (Ch : Character;
       Base : Integer_Base)
       return Boolean;
 
    function Base_Digit_Value
-     (Ch : Wide_Wide_Character;
+     (Ch : Character;
       Base : Integer_Base)
       return Natural;
 
    function Scan_Identifier
-     (Text : Wide_Wide_String;
+     (Text : String;
       Call_Back : access
         procedure (State : State_Type;
-                   Ch    : Wide_Wide_Character))
+                   Ch    : Character))
       return End_State;
 
    ----------------------
@@ -40,25 +39,24 @@ package body Lith.Parser.Lexical.Identifiers is
    ----------------------
 
    function Base_Digit_Value
-     (Ch : Wide_Wide_Character;
+     (Ch : Character;
       Base : Integer_Base)
       return Natural
    is
-      use Ada.Wide_Wide_Characters.Handling;
-      use Ada.Characters.Conversions;
+      use Ada.Characters.Handling;
       use Ada.Strings.Fixed;
    begin
       if Is_Digit (Ch) then
-         return Index ("0123456789", (1 => To_Character (Ch))) - 1;
+         return Index ("0123456789", (1 => Ch)) - 1;
       elsif Is_Upper (Ch) then
-         return Index ("ABCDEF", (1 => To_Character (Ch))) + 9;
+         return Index ("ABCDEF", (1 => Ch)) + 9;
       elsif Is_Lower (Ch) then
-         return Index ("abcdef", (1 => To_Character (Ch))) + 9;
+         return Index ("abcdef", (1 => Ch)) + 9;
       else
          raise Program_Error with
            "bad digit for base"
            & Integer_Base'Image (Base)
-           & " number: " & To_Character (Ch);
+           & " number: " & Ch;
       end if;
    end Base_Digit_Value;
 
@@ -67,7 +65,7 @@ package body Lith.Parser.Lexical.Identifiers is
    -------------------------
 
    function Classify_Identifier
-     (Text : Wide_Wide_String)
+     (Text : String)
       return Lith.Parser.Tokens.Token
    is
       Final_State : constant End_State :=
@@ -89,11 +87,11 @@ package body Lith.Parser.Lexical.Identifiers is
    -------------------
 
    function Is_Base_Digit
-     (Ch : Wide_Wide_Character;
+     (Ch : Character;
       Base : Integer_Base)
       return Boolean
    is
-      use Ada.Wide_Wide_Characters.Handling;
+      use Ada.Characters.Handling;
    begin
       case Base is
          when 2 =>
@@ -118,7 +116,7 @@ package body Lith.Parser.Lexical.Identifiers is
 
    procedure Push_Integer
      (Store : in out Lith.Objects.Object_Store'Class;
-      Text  : in     Wide_Wide_String)
+      Text  : in     String)
    is
       use Lith.Objects.Large_Integers;
 
@@ -129,7 +127,7 @@ package body Lith.Parser.Lexical.Identifiers is
 
       procedure On_Character
         (State : State_Type;
-         Ch    : Wide_Wide_Character);
+         Ch    : Character);
 
       ------------------
       -- On_Character --
@@ -137,7 +135,7 @@ package body Lith.Parser.Lexical.Identifiers is
 
       procedure On_Character
         (State : State_Type;
-         Ch    : Wide_Wide_Character)
+         Ch    : Character)
       is
       begin
          case State is
@@ -189,13 +187,13 @@ package body Lith.Parser.Lexical.Identifiers is
    ---------------------
 
    function Scan_Identifier
-     (Text : Wide_Wide_String;
+     (Text : String;
       Call_Back : access
         procedure (State : State_Type;
-                   Ch    : Wide_Wide_Character))
+                   Ch    : Character))
       return End_State
    is
-      use Ada.Wide_Wide_Characters.Handling;
+      use Ada.Characters.Handling;
 
       Base   : Integer_Base := 10;
       State  : State_Type := Start;
@@ -207,7 +205,7 @@ package body Lith.Parser.Lexical.Identifiers is
          end if;
          exit when State in End_State;
          declare
-            Ch : constant Wide_Wide_Character := Text (I);
+            Ch : constant Character := Text (I);
             Last : constant Boolean := I = Text'Last;
          begin
             case State is

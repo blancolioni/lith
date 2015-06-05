@@ -1,10 +1,9 @@
-with Ada.Characters.Conversions;
 with Ada.Directories;
 with Ada.Exceptions;
-with Ada.Strings.Wide_Wide_Fixed;
+with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
-with Ada.Wide_Wide_Characters.Handling;
-with Ada.Wide_Wide_Text_IO;
+with Ada.Characters.Handling;
+with Ada.Text_IO;
 
 with Lith.Environment;
 with Lith.Parser;
@@ -36,12 +35,11 @@ package body Lith.Machine is
 
    overriding procedure Add_Hook
      (Machine : in out Root_Lith_Machine;
-      Name    : Wide_Wide_String;
+      Name    : String;
       Hook    : Lith.Objects.Evaluation_Hook)
    is
    begin
-      Machine.Evaluation_Hooks.Insert
-        (Ada.Characters.Conversions.To_String (Name), Hook);
+      Machine.Evaluation_Hooks.Insert (Name, Hook);
    end Add_Hook;
 
    --------------
@@ -143,12 +141,11 @@ package body Lith.Machine is
 
    overriding function Call_Hook
      (Machine   : in out Root_Lith_Machine;
-      Name      : Wide_Wide_String;
+      Name      : String;
       Arguments : Lith.Objects.Object)
       return Lith.Objects.Object
    is
-      Key : constant String :=
-              Ada.Characters.Conversions.To_String (Name);
+      Key : constant String := Name;
    begin
       if Machine.Evaluation_Hooks.Contains (Key) then
          return Machine.Evaluation_Hooks.Element (Key).Call (Arguments);
@@ -224,7 +221,7 @@ package body Lith.Machine is
               Machine.Cons (Car, Cdr);
    begin
       if Trace_Machine then
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("machine: cons --> " & Machine.Show (T));
       end if;
       Machine.Push (T);
@@ -400,7 +397,7 @@ package body Lith.Machine is
       end Process;
 
    begin
-      Ada.Wide_Wide_Text_IO.Put_Line
+      Ada.Text_IO.Put_Line
         ("Profile complete");
       Machine.Profiling := False;
 
@@ -525,23 +522,21 @@ package body Lith.Machine is
    ----------
 
    overriding function Load (Machine : in out Root_Lith_Machine;
-                             Path    : Wide_Wide_String)
+                             Path    : String)
                              return Boolean
    is
    begin
       Lith.Parser.Parse_File
-        (Machine,
-         Ada.Characters.Conversions.To_String (Path));
+        (Machine, Path);
       return True;
    exception
       when E : others =>
-         Ada.Wide_Wide_Text_IO.Put_Line
-           (Ada.Wide_Wide_Text_IO.Standard_Error,
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
             "Cannot load "
             & Path
             & ": "
-            & Ada.Characters.Conversions.To_Wide_Wide_String
-              (Ada.Exceptions.Exception_Message (E)));
+            & Ada.Exceptions.Exception_Message (E));
          return False;
    end Load;
 
@@ -588,12 +583,12 @@ package body Lith.Machine is
    begin
       if Trace_Machine then
          declare
-            Stack_Name : constant Wide_Wide_String :=
+            Stack_Name : constant String :=
                            (case Stack is
                                when Primary   => "[S]",
                                when Secondary => "[D]");
          begin
-            Ada.Wide_Wide_Text_IO.Put_Line
+            Ada.Text_IO.Put_Line
               ("machine: pop " & Stack_Name & " " & Machine.Show (Result)
                & " <-- " &
                (case Stack is
@@ -630,12 +625,12 @@ package body Lith.Machine is
       end case;
       if Trace_Machine then
          declare
-            Stack_Name : constant Wide_Wide_String :=
+            Stack_Name : constant String :=
                            (case Stack is
                                when Primary   => "[S]",
                                when Secondary => "[D]");
          begin
-            Ada.Wide_Wide_Text_IO.Put_Line
+            Ada.Text_IO.Put_Line
               ("machine: push " & Stack_Name & " " & Machine.Show (Value)
                & " --> " & Machine.Show (Machine.Stack));
          end;
@@ -648,7 +643,7 @@ package body Lith.Machine is
 
    procedure Push
      (Machine : in out Root_Lith_Machine;
-      Symbol_Name : Wide_Wide_String)
+      Symbol_Name : String)
    is
       use Lith.Objects, Lith.Objects.Symbols;
    begin
@@ -683,8 +678,8 @@ package body Lith.Machine is
             Count := Count + 1;
             exit when Count > Max_Lines;
 
-            Ada.Wide_Wide_Text_IO.Put_Line
-              (Natural'Wide_Wide_Image
+            Ada.Text_IO.Put_Line
+              (Natural'Image
                  (Rec.Info.Hit_Count)
                & "    "
                & Machine.Show (Rec.Proc));
@@ -694,8 +689,8 @@ package body Lith.Machine is
             Count := Count + 1;
             exit when Count > Max_Lines;
 
-            Ada.Wide_Wide_Text_IO.Put_Line
-              (Natural'Wide_Wide_Image
+            Ada.Text_IO.Put_Line
+              (Natural'Image
                  (Rec.Info.Hit_Count)
                & "    "
                & Machine.Show (Rec.Reference));
@@ -711,19 +706,19 @@ package body Lith.Machine is
      (Machine : in out Root_Lith_Machine)
    is
    begin
-      Ada.Wide_Wide_Text_IO.Put_Line
+      Ada.Text_IO.Put_Line
         (" S: " & Machine.Show (Machine.Stack));
-      Ada.Wide_Wide_Text_IO.Put_Line
+      Ada.Text_IO.Put_Line
         (" E: " & Machine.Show (Machine.Environment));
-      Ada.Wide_Wide_Text_IO.Put_Line
+      Ada.Text_IO.Put_Line
         (" C: " & Machine.Show (Machine.Control));
-      Ada.Wide_Wide_Text_IO.Put_Line
+      Ada.Text_IO.Put_Line
         (" D: " & Machine.Show (Machine.Dump));
-      Ada.Wide_Wide_Text_IO.Put_Line
+      Ada.Text_IO.Put_Line
         (" H: " & Machine.Show (Machine.Handlers));
-      Ada.Wide_Wide_Text_IO.Put_Line
+      Ada.Text_IO.Put_Line
         ("Eval:"
-         & Natural'Wide_Wide_Image (Natural (Machine.Eval_Time * 1000.0))
+         & Natural'Image (Natural (Machine.Eval_Time * 1000.0))
          & "ms");
    end Report_State;
 
@@ -775,11 +770,10 @@ package body Lith.Machine is
 
    overriding procedure Set_Context
      (Machine   : in out Root_Lith_Machine;
-      File_Name : Wide_Wide_String;
+      File_Name : String;
       Line      : Natural)
    is
-      Name : constant String :=
-               Ada.Characters.Conversions.To_String (File_Name);
+      Name : constant String := File_Name;
       File : File_Id;
    begin
       if Machine.Source_Files.Contains (Name) then
@@ -816,18 +810,18 @@ package body Lith.Machine is
 
    function Show (Machine : Root_Lith_Machine'Class;
                   Ref     : Source_Reference)
-                  return Wide_Wide_String
+                  return String
    is
-      function Line_Name return Wide_Wide_String;
-      function Source_Name return Wide_Wide_String;
+      function Line_Name return String;
+      function Source_Name return String;
 
       ---------------
       -- Line_Name --
       ---------------
 
-      function Line_Name return Wide_Wide_String is
-         Result : constant Wide_Wide_String :=
-                    Line_Number'Wide_Wide_Image (Ref.Line);
+      function Line_Name return String is
+         Result : constant String :=
+                    Line_Number'Image (Ref.Line);
       begin
          return Result (2 .. Result'Last);
       end Line_Name;
@@ -836,19 +830,15 @@ package body Lith.Machine is
       -- Source_Name --
       -----------------
 
-      function Source_Name return Wide_Wide_String is
-         Path : constant String :=
-                  Ada.Characters.Conversions.To_String
-                    (Machine.Source_File_Names (Ref.File));
+      function Source_Name return String is
+         Path : constant String := Machine.Source_File_Names (Ref.File);
          File : constant String :=
                   Ada.Directories.Simple_Name (Path);
       begin
          if True then
-            return Ada.Characters.Conversions.To_Wide_Wide_String
-              (File);
+            return File;
          else
-            return Ada.Characters.Conversions.To_Wide_Wide_String
-              (Path);
+            return Path;
          end if;
       end Source_Name;
 
@@ -869,7 +859,7 @@ package body Lith.Machine is
    overriding function Show
      (Machine : in out Root_Lith_Machine;
       Value   : Lith.Objects.Object)
-      return Wide_Wide_String
+      return String
    is
       use Lith.Objects;
 
@@ -878,15 +868,15 @@ package body Lith.Machine is
 
       function List_Image
         (Current : Object)
-         return Wide_Wide_String;
+         return String;
 
       function Hex_Image
         (Value : Natural)
-         return Wide_Wide_String;
+         return String;
 
       function String_Image
         (Start : Object)
-         return Wide_Wide_String;
+         return String;
 
       ---------------
       -- Hex_Image --
@@ -894,12 +884,12 @@ package body Lith.Machine is
 
       function Hex_Image
         (Value : Natural)
-         return Wide_Wide_String
+         return String
       is
-         Hex_Ds : constant Wide_Wide_String :=
+         Hex_Ds : constant String :=
                     "0123456789abcdef";
 
-         function Hex (D : Natural) return Wide_Wide_Character
+         function Hex (D : Natural) return Character
          is (Hex_Ds (D + 1));
 
       begin
@@ -952,7 +942,7 @@ package body Lith.Machine is
 
       function List_Image
         (Current : Object)
-         return Wide_Wide_String
+         return String
       is
       begin
          if Is_Pair (Current) then
@@ -973,7 +963,7 @@ package body Lith.Machine is
 
       function String_Image
         (Start : Object)
-         return Wide_Wide_String
+         return String
       is
       begin
          if Start = Nil then
@@ -984,8 +974,7 @@ package body Lith.Machine is
          else
             raise Constraint_Error
               with "String contains non-character: "
-              & Ada.Characters.Conversions.To_String
-              (Machine.Show (Start));
+              & Machine.Show (Start);
          end if;
       end String_Image;
 
@@ -1001,28 +990,28 @@ package body Lith.Machine is
       elsif Value = String_Value then
          return "<string>";
       elsif Is_Integer (Value) then
-         return Ada.Strings.Wide_Wide_Fixed.Trim
-           (Integer'Wide_Wide_Image (To_Integer (Value)),
+         return Ada.Strings.Fixed.Trim
+           (Integer'Image (To_Integer (Value)),
             Ada.Strings.Left);
       elsif Is_Symbol (Value) then
          return Lith.Objects.Symbols.Get_Name (To_Symbol (Value));
       elsif Is_Character (Value) then
          declare
-            Ch : constant Wide_Wide_Character :=
+            Ch : constant Character :=
                    To_Character (Value);
          begin
-            if Ada.Wide_Wide_Characters.Handling.Is_Graphic (Ch) then
+            if Ada.Characters.Handling.Is_Graphic (Ch) then
                return "#\" & Ch;
             else
                return "#\x"
                  & Hex_Image
-                 (Wide_Wide_Character'Pos (Ch));
+                 (Character'Pos (Ch));
             end if;
          end;
       elsif Is_Function (Value) then
          return Lith.Objects.Hex_Image (Value);
       elsif Is_Apply (Value) then
-         return "apply" & Integer'Wide_Wide_Image (-Argument_Count (Value));
+         return "apply" & Integer'Image (-Argument_Count (Value));
       elsif Is_External_Object (Value) then
          return Machine.Get_External_Object (Value).Print (Machine);
       elsif Is_Pair (Value) then
@@ -1054,7 +1043,7 @@ package body Lith.Machine is
      (Machine : in out Root_Lith_Machine'Class)
    is
    begin
-      Ada.Wide_Wide_Text_IO.Put_Line
+      Ada.Text_IO.Put_Line
         ("Start profiling ...");
       Machine.Source_Profile.Clear;
       Machine.Procedure_Profile.Clear;

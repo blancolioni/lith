@@ -56,8 +56,8 @@ package Lith.Objects is
      with Pre => Is_Apply (Item);
 
    function Is_Character (Item : Object) return Boolean;
-   function To_Object (Ch : Wide_Wide_Character) return Object;
-   function To_Character (Item : Object) return Wide_Wide_Character
+   function To_Object (Ch : Character) return Object;
+   function To_Character (Item : Object) return Character
      with Pre => Is_Character (Item);
 
    type External_Object_Address is new Natural;
@@ -71,7 +71,7 @@ package Lith.Objects is
    function Is_Atom (Item : Object) return Boolean;
    function Is_Pair (Item : Object) return Boolean;
 
-   function Hex_Image (Item : Object) return Wide_Wide_String;
+   function Hex_Image (Item : Object) return String;
 
    type Stack_Type is (Primary, Secondary);
 
@@ -81,12 +81,12 @@ package Lith.Objects is
 
    function Name
      (Item : External_Object_Interface)
-      return Wide_Wide_String
+      return String
       is abstract;
 
    function Print (Item  : External_Object_Interface;
                    Store : in out Object_Store'Class)
-                   return Wide_Wide_String
+                   return String
                    is abstract;
 
    function Equal (X, Y  : External_Object_Interface;
@@ -148,17 +148,17 @@ package Lith.Objects is
 
    function Show (Store    : in out Object_Store;
                   Item     : Object)
-                  return Wide_Wide_String
+                  return String
                   is abstract;
 
    function Load (Store    : in out Object_Store;
-                  Path     : Wide_Wide_String)
+                  Path     : String)
                   return Boolean
                   is abstract;
 
    function To_String (Store    : in out Object_Store'Class;
                        Item     : Object)
-                       return Wide_Wide_String;
+                       return String;
 
    function Cons (Store : in out Object_Store;
                   Car, Cdr : Object)
@@ -209,7 +209,7 @@ package Lith.Objects is
 
    procedure Set_Context
      (Store       : in out Object_Store;
-      File_Name   : Wide_Wide_String;
+      File_Name   : String;
       Line_Number : Natural)
    is abstract;
 
@@ -266,13 +266,13 @@ package Lith.Objects is
    type Evaluation_Hook is access all Evaluation_Hook_Interface'Class;
 
    procedure Add_Hook (Store : in out Object_Store;
-                       Name    : Wide_Wide_String;
+                       Name    : String;
                        Hook    : Evaluation_Hook)
    is abstract;
 
    function Call_Hook
      (Store     : in out Object_Store;
-      Name      : Wide_Wide_String;
+      Name      : String;
       Arguments : Object)
       return Object
       is abstract;

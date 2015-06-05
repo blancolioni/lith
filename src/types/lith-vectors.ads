@@ -10,12 +10,12 @@ package Lith.Vectors is
 
    overriding function Name
      (Item  : Lith_Vector_Type)
-      return Wide_Wide_String;
+      return String;
 
    overriding function Print
      (Item  : Lith_Vector_Type;
       Store : in out Lith.Objects.Object_Store'Class)
-      return Wide_Wide_String;
+      return String;
 
    overriding function Equal
      (X, Y  : Lith_Vector_Type;

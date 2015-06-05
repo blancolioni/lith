@@ -8,12 +8,12 @@ package Lith.Bytevectors is
 
    overriding function Name
      (Item  : Lith_Bytevector_Type)
-      return Wide_Wide_String;
+      return String;
 
    overriding function Print
      (Item  : Lith_Bytevector_Type;
       Store : in out Lith.Objects.Object_Store'Class)
-      return Wide_Wide_String;
+      return String;
 
    overriding function Equal
      (X, Y  : Lith_Bytevector_Type;

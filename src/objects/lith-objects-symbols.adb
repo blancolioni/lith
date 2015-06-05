@@ -1,6 +1,6 @@
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Wide_Wide_Characters.Handling;
-with Ada.Strings.Wide_Wide_Fixed.Wide_Wide_Hash;
+with Ada.Characters.Handling;
+with Ada.Strings.Fixed.Hash;
 
 with Lith.Objects.Symbol_Vectors;
 
@@ -8,14 +8,14 @@ package body Lith.Objects.Symbols is
 
    package Symbol_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps
-       (Key_Type        => Wide_Wide_String,
+       (Key_Type        => String,
         Element_Type    => Lith.Objects.Symbol_Type,
-        Hash            => Ada.Strings.Wide_Wide_Fixed.Wide_Wide_Hash,
+        Hash            => Ada.Strings.Fixed.Hash,
         Equivalent_Keys => "=",
         "="             => Lith.Objects."=");
 
    package Symbol_Names is
-     new Lith.Objects.Symbol_Vectors (Wide_Wide_String);
+     new Lith.Objects.Symbol_Vectors (String);
 
    Symbol_To_Name_Map : Symbol_Names.Vector;
    Name_To_Symbol_Map : Symbol_Maps.Map;
@@ -43,16 +43,16 @@ package body Lith.Objects.Symbols is
 
    function Builtin_Symbol_To_String
      (Symbol : Builtin_Symbol)
-      return Wide_Wide_String;
+      return String;
 
    function Builtin_Symbol_To_String
      (Symbol : Builtin_Symbol)
-      return Wide_Wide_String
+      return String
    is
-      use Ada.Wide_Wide_Characters.Handling;
-      Image : constant Wide_Wide_String :=
-                Builtin_Symbol'Wide_Wide_Image (Symbol);
-      Result : Wide_Wide_String :=
+      use Ada.Characters.Handling;
+      Image : constant String :=
+                Builtin_Symbol'Image (Symbol);
+      Result : String :=
                  To_Lower (Image (5 .. Image'Last));
    begin
       for I in Result'Range loop
@@ -178,7 +178,7 @@ package body Lith.Objects.Symbols is
 
    function Get_Name
      (Symbol : Lith.Objects.Symbol_Type)
-      return Wide_Wide_String
+      return String
    is
    begin
       return Symbol_To_Name_Map.Element (Symbol);
@@ -189,7 +189,7 @@ package body Lith.Objects.Symbols is
    ----------------
 
    function Get_Symbol
-     (Name : Wide_Wide_String)
+     (Name : String)
       return Lith.Objects.Symbol_Type
    is
       Result : Lith.Objects.Symbol_Type;
@@ -221,7 +221,7 @@ begin
          Sym_Value : constant Symbol_Type :=
                        Symbol_Type'(Builtin_Symbol'Pos (Sym_Name) + 1);
          New_Value : Symbol_Type;
-         Name : constant Wide_Wide_String :=
+         Name : constant String :=
                   (if Sym_Name in Anonymous_Builtin_Symbol
                    then "<" & Builtin_Symbol_To_String (Sym_Name) & ">"
                    elsif Sym_Name = Sym_Ellipsis

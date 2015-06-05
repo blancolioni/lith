@@ -26,7 +26,7 @@ package body Lith.Objects.Interfaces is
    Defs : Function_Vectors.Vector;
 
    procedure New_Def
-     (Name : Wide_Wide_String;
+     (Name : String;
       Rec  : Function_Record);
 
    ---------------------
@@ -34,7 +34,7 @@ package body Lith.Objects.Interfaces is
    ---------------------
 
    procedure Define_Function
-     (Name           : Wide_Wide_String;
+     (Name           : String;
       Argument_Count : Natural;
       Strict         : Boolean;
       Eval           : Evaluator)
@@ -51,7 +51,7 @@ package body Lith.Objects.Interfaces is
    ---------------------
 
    procedure Define_Function
-     (Name           : Wide_Wide_String;
+     (Name           : String;
       Argument_Count : Natural;
       Eval           : Simple_Evaluator)
    is
@@ -86,7 +86,7 @@ package body Lith.Objects.Interfaces is
    -------------
 
    procedure New_Def
-     (Name : Wide_Wide_String;
+     (Name : String;
       Rec  : Function_Record)
    is
    begin
@@ -109,7 +109,7 @@ package body Lith.Objects.Interfaces is
       procedure Create_Standard_Objects
         (Store : in out Object_Store'Class)
       is
-         Is_Type_Name : constant Wide_Wide_String :=
+         Is_Type_Name : constant String :=
            (if Type_Predicate_Name = "?"
             then Type_Name & "?"
             else Type_Predicate_Name);

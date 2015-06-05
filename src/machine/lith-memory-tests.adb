@@ -1,4 +1,4 @@
-with Ada.Wide_Wide_Text_IO;
+with Ada.Text_IO;
 
 package body Lith.Memory.Tests is
 
@@ -10,7 +10,7 @@ package body Lith.Memory.Tests is
       use Lith.Objects;
    begin
 
-      Ada.Wide_Wide_Text_IO.Put_Line ("begin self test");
+      Ada.Text_IO.Put_Line ("begin self test");
 
       for I in 1 .. 10_000 loop
 
@@ -39,7 +39,7 @@ package body Lith.Memory.Tests is
          end;
       end loop;
 
-      Ada.Wide_Wide_Text_IO.Put_Line ("self test complete");
+      Ada.Text_IO.Put_Line ("self test complete");
    end Self_Test;
 
 end Lith.Memory.Tests;
