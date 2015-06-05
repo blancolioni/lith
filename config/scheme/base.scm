@@ -116,7 +116,7 @@
 (define (member . args)
    (let ((obj (car args))
          (xs (cadr args))
-         (compare (if (null? (cddr args)) equal? (caddr args))))
+         (compare (if (null? (cddr args)) equal? (car (cddr args)))))
         (member-3 obj xs compare)))
 
 (define (member-3 obj xs compare)
@@ -127,7 +127,7 @@
 (define (assoc . args)
    (let ((obj (car args))
          (alist (cadr args))
-         (compare (if (null? (cddr args)) equal? (caddr args))))
+         (compare (if (null? (cddr args)) equal? (car (cddr args)))))
         (assoc-3 obj alist compare)))
 
 (define (assoc-3 obj alist compare)
