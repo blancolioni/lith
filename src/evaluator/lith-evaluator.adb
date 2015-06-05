@@ -1,5 +1,5 @@
 with Ada.Characters.Conversions;
-with Ada.Wide_Wide_Text_IO;
+with Ada.Text_IO;
 
 with Lith.Environment;
 with Lith.Objects.Interfaces;
@@ -63,9 +63,9 @@ package body Lith.Evaluator is
       Result    : Object  := Env;
    begin
       if Trace_Eval then
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("create-env: formals: " & Store.Show (Formals));
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("create-env: actuals: " & Store.Show (Actuals));
       end if;
 
@@ -91,7 +91,7 @@ package body Lith.Evaluator is
                Acc := Store.Pop;
             else
                if Trace_Eval then
-                  Ada.Wide_Wide_Text_IO.Put_Line
+                  Ada.Text_IO.Put_Line
                     (Store.Show (Store.Car (Formal_It))
                      & " <-- "
                      & Store.Show (Value));
@@ -127,7 +127,7 @@ package body Lith.Evaluator is
             Store.Push (Store.Cons (Store.Pop, Result));
             Result := Store.Pop;
             if Trace_Eval then
-               Ada.Wide_Wide_Text_IO.Put_Line
+               Ada.Text_IO.Put_Line
                  (Store.Show (Rest_Name)
                   & " <-- "
                   & Store.Show (T));
@@ -155,7 +155,7 @@ package body Lith.Evaluator is
    begin
 
       if Trace_Eval then
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("apply: [" & Store.Show (Fn) & "] " & Store.Show (Args));
       end if;
       if Is_Integer (Fn) then
@@ -246,7 +246,7 @@ package body Lith.Evaluator is
                         return Result;
                      else
                         if Trace_Macros then
-                           Ada.Wide_Wide_Text_IO.Put_Line
+                           Ada.Text_IO.Put_Line
                              ("expansion: "
                               & Store.Show (Result));
                         end if;
@@ -299,11 +299,11 @@ package body Lith.Evaluator is
    begin
 
       if Trace_Eval then
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("Eval: "
             & (if Quasiquoting then "[qq] " else "")
             & Store.Show (Expr));
-         Ada.Wide_Wide_Text_IO.Put_Line ("  in env: " & Store.Show (Env));
+         Ada.Text_IO.Put_Line ("  in env: " & Store.Show (Env));
       end if;
 
       if Expr = Nil then
@@ -353,7 +353,7 @@ package body Lith.Evaluator is
       end if;
 
       if Trace_Eval then
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("Result: "
             & Store.Show (Result));
       end if;

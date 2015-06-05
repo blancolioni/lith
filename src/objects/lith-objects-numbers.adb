@@ -795,10 +795,10 @@ package body Lith.Objects.Numbers is
 
    procedure Push_Float
      (Store : in out Object_Store'Class;
-      Text  : Wide_Wide_String)
+      Text  : String)
    is
    begin
-      Push_Float (Store, Lith_Float'Wide_Wide_Value (Text));
+      Push_Float (Store, Lith_Float'Value (Text));
    end Push_Float;
 
    ----------------------------

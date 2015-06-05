@@ -44,7 +44,7 @@ package Lith.Machine is
 
    procedure Push
      (Machine : in out Root_Lith_Machine;
-      Symbol_Name : Wide_Wide_String);
+      Symbol_Name : String);
 
    overriding function Pop
      (Machine : in out Root_Lith_Machine;
@@ -105,13 +105,13 @@ package Lith.Machine is
 
    overriding procedure Set_Context
      (Machine     : in out Root_Lith_Machine;
-      File_Name   : Wide_Wide_String;
+      File_Name   : String;
       Line        : Natural);
 
    overriding function Show
      (Machine : in out Root_Lith_Machine;
       Value   : Lith.Objects.Object)
-      return Wide_Wide_String;
+      return String;
 
    overriding function Argument_Count
      (Machine : Root_Lith_Machine)
@@ -143,17 +143,17 @@ package Lith.Machine is
       Start   : in out Lith.Objects.Object);
 
    overriding function Load (Machine : in out Root_Lith_Machine;
-                             Path    : Wide_Wide_String)
+                             Path    : String)
                              return Boolean;
 
    overriding procedure Add_Hook
      (Machine : in out Root_Lith_Machine;
-      Name    : Wide_Wide_String;
+      Name    : String;
       Hook    : Lith.Objects.Evaluation_Hook);
 
    overriding function Call_Hook
      (Machine   : in out Root_Lith_Machine;
-      Name      : Wide_Wide_String;
+      Name      : String;
       Arguments : Lith.Objects.Object)
       return Lith.Objects.Object;
 
@@ -180,7 +180,7 @@ private
 
    function Show (Machine : Root_Lith_Machine'Class;
                   Ref     : Source_Reference)
-                  return Wide_Wide_String;
+                  return String;
 
    package Source_File_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps
@@ -192,7 +192,7 @@ private
    package Source_File_Vectors is
      new Ada.Containers.Indefinite_Vectors
        (Index_Type   => Real_File_Id,
-        Element_Type => Wide_Wide_String);
+        Element_Type => String);
 
    type Profile_Info_Record is
       record

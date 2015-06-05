@@ -1,4 +1,4 @@
-with Ada.Wide_Wide_Text_IO;
+with Ada.Text_IO;
 
 with Lith.Parser.Tokens;             use Lith.Parser.Tokens;
 with Lith.Parser.Lexical;            use Lith.Parser.Lexical;
@@ -22,7 +22,7 @@ package body Lith.Parser is
 
    function Parse_Expression
      (Store : in out Lith.Objects.Object_Store'Class;
-      Expr    : Wide_Wide_String)
+      Expr    : String)
       return Lith.Objects.Object
    is
    begin
@@ -51,7 +51,7 @@ package body Lith.Parser is
                        Store.Evaluate (Top, Lith.Objects.Nil);
          begin
             if False then
-               Ada.Wide_Wide_Text_IO.Put_Line
+               Ada.Text_IO.Put_Line
                  (Store.Show (Result));
             end if;
          end;
@@ -94,7 +94,7 @@ package body Lith.Parser is
             Scan;
          elsif Tok = Tok_End_Of_File then
             Error ("Missing ')' in expression started on line"
-                   & Natural'Wide_Wide_Image (Start_Line));
+                   & Natural'Image (Start_Line));
             Store.Push (Lith.Objects.Nil);
          else
             Parse_Rest_Of_List;
@@ -159,7 +159,7 @@ package body Lith.Parser is
          when Tok_String =>
             Store.Push (Lith.Objects.String_Value);
             declare
-               S : constant Wide_Wide_String := Tok_Text;
+               S : constant String := Tok_Text;
             begin
                for Ch of S loop
                   Store.Push (Lith.Objects.To_Object (Ch));

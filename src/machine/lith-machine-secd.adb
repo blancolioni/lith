@@ -1,6 +1,5 @@
-with Ada.Characters.Conversions;
 with Ada.Exceptions;
-with Ada.Wide_Wide_Text_IO;
+with Ada.Text_IO;
 
 with Lith.Environment;
 with Lith.Objects.Interfaces;
@@ -149,9 +148,9 @@ package body Lith.Machine.SECD is
          Call_It := Local_Call;
 
          if Trace_Patterns then
-            Ada.Wide_Wide_Text_IO.Put_Line
+            Ada.Text_IO.Put_Line
               ("Match: pattern = " & Machine.Show (Pat));
-            Ada.Wide_Wide_Text_IO.Put_Line
+            Ada.Text_IO.Put_Line
               ("          call = " & Machine.Show (Local_Call));
          end if;
 
@@ -219,12 +218,12 @@ package body Lith.Machine.SECD is
 
          if Match (Machine.Cdr (Pat)) then
             if Trace_Patterns then
-               Ada.Wide_Wide_Text_IO.Put_Line
+               Ada.Text_IO.Put_Line
                  ("found match: "
                   & Machine.Show (Machine.Cdr (Pat))
                   & " --> "
                   & Machine.Show (Code));
-               Ada.Wide_Wide_Text_IO.Put_Line
+               Ada.Text_IO.Put_Line
                  ("applying: "
                   & Machine.Show (Machine.Top));
             end if;
@@ -235,7 +234,7 @@ package body Lith.Machine.SECD is
 
             if Trace_Patterns then
                Machine.Report_State;
-               Ada.Wide_Wide_Text_IO.Put_Line
+               Ada.Text_IO.Put_Line
                  ("result: "
                   & Machine.Show (Machine.Top));
             end if;
@@ -300,7 +299,7 @@ package body Lith.Machine.SECD is
       begin
 
          if Trace_Eval then
-            Ada.Wide_Wide_Text_IO.Put_Line
+            Ada.Text_IO.Put_Line
               (Machine.Show (Name)
                & " <-- "
                & Machine.Show (Value));
@@ -349,8 +348,7 @@ package body Lith.Machine.SECD is
 
       if not Is_Pair (Formals) and then not Is_Symbol (Formals) then
          raise Evaluation_Error with
-         Ada.Characters.Conversions.To_String
-           (Machine.Show (Formal_It))
+         Machine.Show (Formal_It)
            & " cannot be used as a formal argument";
       end if;
 
@@ -374,11 +372,9 @@ package body Lith.Machine.SECD is
                if Formal_It = Nil then
                   raise Evaluation_Error with
                     "too many arguments: "
-                    & Ada.Characters.Conversions.To_String
-                    (Machine.Show (Formals))
+                    & Machine.Show (Formals)
                     & " at actual: "
-                    & Ada.Characters.Conversions.To_String
-                    (Machine.Show (Actual));
+                    & Machine.Show (Actual);
                end if;
 
                Save_Binding (Machine.Car (Formal_It), Actual);
@@ -408,7 +404,7 @@ package body Lith.Machine.SECD is
       end if;
 
       if Trace_Eval then
-         Ada.Wide_Wide_Text_IO.Put_Line
+         Ada.Text_IO.Put_Line
            ("create environment: "
             & Machine.Show (Machine.Environment));
       end if;
@@ -486,7 +482,7 @@ package body Lith.Machine.SECD is
       procedure Save_State is
       begin
          if Trace_Eval then
-            Ada.Wide_Wide_Text_IO.Put_Line ("saving context ...");
+            Ada.Text_IO.Put_Line ("saving context ...");
          end if;
          Machine.Dump := Machine.Cons (Machine.Control, Machine.Dump);
          Machine.Dump := Machine.Cons (Machine.Environment, Machine.Dump);
@@ -532,7 +528,7 @@ package body Lith.Machine.SECD is
             end;
 
             if Trace_Eval then
-               Ada.Wide_Wide_Text_IO.Put_Line
+               Ada.Text_IO.Put_Line
                  ("Eval: "
                   & Show (Machine, Machine.Current_Context)
                   & " "
@@ -546,7 +542,7 @@ package body Lith.Machine.SECD is
                C := Machine.Cdr (C);
                Is_Tail_Context := True;
                if Trace_Eval then
-                  Ada.Wide_Wide_Text_IO.Put_Line
+                  Ada.Text_IO.Put_Line
                     ("tail-context: " & Machine.Show (C));
                end if;
             end if;
@@ -590,7 +586,7 @@ package body Lith.Machine.SECD is
                   Push_Control (Machine.Pop);
                elsif C = Stack_Drop then
                   if Trace_Eval then
-                     Ada.Wide_Wide_Text_IO.Put_Line
+                     Ada.Text_IO.Put_Line
                        ("stack-drop: stack = "
                         & Machine.Show (Machine.Stack));
                   end if;
@@ -614,17 +610,17 @@ package body Lith.Machine.SECD is
                   begin
                      if Machine.Environment = Nil then
                         if Trace_Definitions then
-                           Ada.Wide_Wide_Text_IO.Put_Line
+                           Ada.Text_IO.Put_Line
                              (Machine.Show (Name) & " = "
                               & Machine.Show (Value));
-                           Ada.Wide_Wide_Text_IO.Put_Line
+                           Ada.Text_IO.Put_Line
                              (Machine.Show (Machine.Stack));
                         end if;
                         begin
                            Lith.Environment.Define (To_Symbol (Name), Value);
                         exception
                            when others =>
-                              Ada.Wide_Wide_Text_IO.Put_Line
+                              Ada.Text_IO.Put_Line
                                 ("fail: "
                                  & Machine.Show (Name) & " = "
                                  & Machine.Show (Value));
@@ -686,7 +682,7 @@ package body Lith.Machine.SECD is
                   Machine.R (1) := Machine.Pop;  --  proc
                   Machine.R (2) := Machine.Pop;  --  args
 
-                  Ada.Wide_Wide_Text_IO.Put_Line
+                  Ada.Text_IO.Put_Line
                     ("apply: " & Machine.Show (Machine.R (1))
                      & " " & Machine.Show (Machine.R (2)));
 
@@ -718,11 +714,9 @@ package body Lith.Machine.SECD is
                         Machine.Push (Value);
                      else
                         raise Evaluation_Error with
-                        Ada.Characters.Conversions.To_String
-                          (Show (Machine, Machine.Current_Context))
+                        Show (Machine, Machine.Current_Context)
                           & " undefined: "
-                          & Ada.Characters.Conversions.To_String
-                          (Get_Name (To_Symbol (C)));
+                          & Get_Name (To_Symbol (C));
                      end if;
                   end;
                end if;
@@ -749,13 +743,12 @@ package body Lith.Machine.SECD is
                      end;
                   exception
                      when E : others =>
-                        Ada.Wide_Wide_Text_IO.Put_Line
-                          (Ada.Wide_Wide_Text_IO.Standard_Error,
+                        Ada.Text_IO.Put_Line
+                          (Ada.Text_IO.Standard_Error,
                            "Error: "
                            & Show (Machine, Machine.Current_Context)
                            & " "
-                           & Ada.Characters.Conversions.To_Wide_Wide_String
-                             (Ada.Exceptions.Exception_Message (E)));
+                           & Ada.Exceptions.Exception_Message (E));
                         raise;
                   end;
 
@@ -765,14 +758,14 @@ package body Lith.Machine.SECD is
                then
                   if Machine.Car (F) = Macro_Symbol then
                      if Trace_Eval then
-                        Ada.Wide_Wide_Text_IO.Put_Line
+                        Ada.Text_IO.Put_Line
                           ("macro: pushing post-macro");
                      end if;
                      Push_Control (Lith.Objects.Symbols.Stack_To_Control);
                   end if;
 
                   if Trace_Eval and then Is_Tail_Context then
-                     Ada.Wide_Wide_Text_IO.Put_Line
+                     Ada.Text_IO.Put_Line
                        ("tail-call: " & Machine.Show (F));
                   end if;
 
@@ -819,8 +812,7 @@ package body Lith.Machine.SECD is
                else
                   raise Evaluation_Error with
                     "bad application: "
-                    & Ada.Characters.Conversions.To_String
-                    (Machine.Show (F));
+                    & Machine.Show (F);
                end if;
 
             else
@@ -918,7 +910,7 @@ package body Lith.Machine.SECD is
                      Value : constant Object := Machine.Args (2);
                   begin
                      if Trace_Eval then
-                        Ada.Wide_Wide_Text_IO.Put_Line
+                        Ada.Text_IO.Put_Line
                           ("define: "
                            & Machine.Show (Name)
                            & " = "
@@ -950,7 +942,7 @@ package body Lith.Machine.SECD is
                      end if;
 
                      if Trace_Patterns then
-                        Ada.Wide_Wide_Text_IO.Put_Line
+                        Ada.Text_IO.Put_Line
                           ("applying syntax: "
                            & Machine.Show (Syntax));
                      end if;
@@ -958,7 +950,7 @@ package body Lith.Machine.SECD is
                      Machine.Control :=
                        Machine.Cons (Machine.Pop, Cs);
                      if Trace_Patterns then
-                        Ada.Wide_Wide_Text_IO.Put_Line
+                        Ada.Text_IO.Put_Line
                           ("control: "
                            & Machine.Show (Machine.Control));
                      end if;
@@ -987,10 +979,10 @@ package body Lith.Machine.SECD is
                   Machine.Cons;
                   Machine.Control := Machine.Pop;
                   if Trace_Eval then
-                     Ada.Wide_Wide_Text_IO.Put_Line
+                     Ada.Text_IO.Put_Line
                        ("dynamic-wind: control = "
                         & Machine.Show (Machine.Control));
-                     Ada.Wide_Wide_Text_IO.Put_Line
+                     Ada.Text_IO.Put_Line
                        ("dynamic-wind: dump = "
                         & Machine.Show (Machine.Dump));
                   end if;
@@ -1021,12 +1013,12 @@ package body Lith.Machine.SECD is
                   begin
 
                      if Trace_Eval then
-                        Ada.Wide_Wide_Text_IO.Put_Line
+                        Ada.Text_IO.Put_Line
                           ("raise exception");
                      end if;
 
                      if Machine.Handlers = Nil then
-                        Ada.Wide_Wide_Text_IO.Put_Line
+                        Ada.Text_IO.Put_Line
                           ("Unhandled exception: "
                            & Machine.Show (Machine.Args (1)));
                         Restore_State (Nil);
@@ -1087,7 +1079,7 @@ package body Lith.Machine.SECD is
                   end if;
 
                   if Trace_Eval then
-                     Ada.Wide_Wide_Text_IO.Put_Line
+                     Ada.Text_IO.Put_Line
                        ("unwind-continue");
                   end if;
 
@@ -1149,7 +1141,7 @@ package body Lith.Machine.SECD is
                      Macro : constant Boolean := Is_Macro (Machine, F);
                   begin
                      if Trace_Eval then
-                        Ada.Wide_Wide_Text_IO.Put_Line
+                        Ada.Text_IO.Put_Line
                           ("Is_Macro: " & Machine.Show (F)
                            & " = "
                            & (if Macro then "yes" else "no"));
@@ -1174,7 +1166,7 @@ package body Lith.Machine.SECD is
            Machine.Dump /= Nil
          loop
             if Trace_Eval then
-               Ada.Wide_Wide_Text_IO.Put_Line ("restoring context ...");
+               Ada.Text_IO.Put_Line ("restoring context ...");
             end if;
 
             declare
@@ -1259,7 +1251,6 @@ package body Lith.Machine.SECD is
      (Machine    : in out Root_Lith_Machine'Class)
       return Boolean
    is
-      use Ada.Characters.Conversions;
       use Lith.Objects;
 
       function Get_Library_Path (Library_Name : Object) return String;
@@ -1277,7 +1268,7 @@ package body Lith.Machine.SECD is
                Symbol : constant Symbol_Type :=
                           To_Symbol (Machine.Car (Library_Name));
                Name   : constant String :=
-                          To_String (Lith.Objects.Symbols.Get_Name (Symbol));
+                          Lith.Objects.Symbols.Get_Name (Symbol);
             begin
                return "/" & Name
                  & Get_Library_Path (Machine.Cdr (Library_Name));
@@ -1297,14 +1288,13 @@ package body Lith.Machine.SECD is
                Lith.Paths.Config_Path & Path);
          exception
             when E : others =>
-               Ada.Wide_Wide_Text_IO.Put_Line
-                 (Ada.Wide_Wide_Text_IO.Standard_Error,
+               Ada.Text_IO.Put_Line
+                 (Ada.Text_IO.Standard_Error,
                   "error opening library "
                   & Machine.Show (Machine.Args (I)));
-               Ada.Wide_Wide_Text_IO.Put_Line
-                 (Ada.Wide_Wide_Text_IO.Standard_Error,
-                  To_Wide_Wide_String
-                    (Ada.Exceptions.Exception_Message (E)));
+               Ada.Text_IO.Put_Line
+                 (Ada.Text_IO.Standard_Error,
+                  Ada.Exceptions.Exception_Message (E));
                return False;
          end;
       end loop;

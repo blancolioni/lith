@@ -1,7 +1,6 @@
-with Ada.Characters.Conversions;
 with Ada.Directories;
 with Ada.Exceptions;
-with Ada.Wide_Wide_Text_IO;
+with Ada.Text_IO;
 
 with Lith.Environment;
 with Lith.Objects;
@@ -17,7 +16,7 @@ package body Lith.Repl is
    -------------
 
    procedure Execute (Machine : Lith.Machine.Lith_Machine) is
-      use Ada.Wide_Wide_Text_IO;
+      use Ada.Text_IO;
       use Lith.Objects;
    begin
 
@@ -36,7 +35,7 @@ package body Lith.Repl is
          Put ("Lith> ");
          Flush;
          declare
-            Expr_Text : constant Wide_Wide_String := Get_Line;
+            Expr_Text : constant String := Get_Line;
          begin
             if Expr_Text'Length > 0 then
                declare
@@ -53,16 +52,15 @@ package body Lith.Repl is
             end if;
          exception
             when E : others =>
-               Ada.Wide_Wide_Text_IO.Put_Line
-                 (Ada.Wide_Wide_Text_IO.Standard_Error,
-                  Ada.Characters.Conversions.To_Wide_Wide_String
-                  (Ada.Exceptions.Exception_Message (E)));
+               Ada.Text_IO.Put_Line
+                 (Ada.Text_IO.Standard_Error,
+                  Ada.Exceptions.Exception_Message (E));
          end;
       end loop;
 
    exception
-      when Ada.Wide_Wide_Text_IO.End_Error =>
-         Ada.Wide_Wide_Text_IO.Put_Line ("Exiting");
+      when Ada.Text_IO.End_Error =>
+         Ada.Text_IO.Put_Line ("Exiting");
    end Execute;
 
 end Lith.Repl;

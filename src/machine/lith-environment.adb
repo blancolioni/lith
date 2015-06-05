@@ -1,4 +1,3 @@
-with Ada.Characters.Conversions;
 with Lith.Objects.Symbol_Maps;
 
 with Lith.Objects.Symbols;
@@ -24,8 +23,7 @@ package body Lith.Environment is
    exception
       when Constraint_Error =>
          raise Constraint_Error with
-         Ada.Characters.Conversions.To_String
-           (Lith.Objects.Symbols.Get_Name (Name))
+         Lith.Objects.Symbols.Get_Name (Name)
            & ": already defined";
 
    end Define;

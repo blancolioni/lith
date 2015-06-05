@@ -12,7 +12,7 @@ package Lith.Objects.Numbers is
 
    procedure Push_Float
      (Store : in out Object_Store'Class;
-      Text  : Wide_Wide_String);
+      Text  : String);
    --  Interprets Text as a floating point number and pushes it
 
    --  exact number arithmetic

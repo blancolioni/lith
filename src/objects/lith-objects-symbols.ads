@@ -1,10 +1,10 @@
 package Lith.Objects.Symbols is
 
-   function Get_Symbol (Name : Wide_Wide_String)
+   function Get_Symbol (Name : String)
                         return Lith.Objects.Symbol_Type;
 
    function Get_Name (Symbol : Lith.Objects.Symbol_Type)
-                      return Wide_Wide_String;
+                      return String;
 
    function Is_Predefined
      (Symbol : Lith.Objects.Symbol_Type)

@@ -9,7 +9,7 @@ package Lith.IO is
    overriding function Print
      (Item  : Port_Type;
       Store : in out Lith.Objects.Object_Store'Class)
-      return Wide_Wide_String;
+      return String;
 
    overriding function Equal
      (X, Y  : Port_Type;

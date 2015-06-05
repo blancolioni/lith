@@ -5,12 +5,12 @@ package Lith.Objects.Real is
 
    overriding function Name
      (Item : Real_Object)
-      return Wide_Wide_String;
+      return String;
 
    overriding function Print
      (Item  : Real_Object;
       Store : in out Object_Store'Class)
-      return Wide_Wide_String;
+      return String;
 
    overriding function Equal
      (X, Y  : Real_Object;
@@ -39,7 +39,7 @@ package Lith.Objects.Real is
       return Boolean;
 
    function To_Real
-     (Text : Wide_Wide_String)
+     (Text : String)
       return Real_Object'Class;
 
 private

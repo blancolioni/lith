@@ -1,4 +1,4 @@
-with Ada.Strings.Wide_Wide_Unbounded;
+with Ada.Strings.Unbounded;
 
 with Lith.Objects.Interfaces;
 
@@ -137,7 +137,7 @@ package body Lith.Vectors is
 
    overriding function Name
      (Item  : Lith_Vector_Type)
-      return Wide_Wide_String
+      return String
    is
       pragma Unreferenced (Item);
    begin
@@ -151,19 +151,19 @@ package body Lith.Vectors is
    overriding function Print
      (Item  : Lith_Vector_Type;
       Store : in out Lith.Objects.Object_Store'Class)
-      return Wide_Wide_String
+      return String
    is
-      use Ada.Strings.Wide_Wide_Unbounded;
-      Result : Unbounded_Wide_Wide_String :=
-                 Null_Unbounded_Wide_Wide_String;
+      use Ada.Strings.Unbounded;
+      Result : Unbounded_String :=
+                 Null_Unbounded_String;
    begin
       for Element of Item.V loop
-         if Result /= Null_Unbounded_Wide_Wide_String then
+         if Result /= Null_Unbounded_String then
             Result := Result & " ";
          end if;
          Result := Result & Store.Show (Element);
       end loop;
-      return To_Wide_Wide_String (Result);
+      return To_String (Result);
    end Print;
 
    --------------

@@ -1,5 +1,3 @@
-with Ada.Characters.Conversions;
-
 package body Lith.Objects is
 
    ------------------
@@ -39,10 +37,10 @@ package body Lith.Objects is
    -- Hex_Image --
    ---------------
 
-   function Hex_Image (Item : Object) return Wide_Wide_String is
+   function Hex_Image (Item : Object) return String is
 
       Payload : Object_Payload := Item.Payload;
-      Tag     : constant Wide_Wide_Character :=
+      Tag     : constant Character :=
                   (case Item.Tag is
                       when Integer_Object   => 'i',
                       when Pair_Object      => 'p',
@@ -53,11 +51,11 @@ package body Lith.Objects is
                       when Internal_Object  => '-',
                       when External_Object  => 'e');
 
-      Result : Wide_Wide_String (1 .. 8);
+      Result : String (1 .. 8);
 
       function Hex_Digit
         (Item : Object_Payload)
-         return Wide_Wide_Character;
+         return Character;
       --  Item should be in range 0 .. 15
 
       ---------------
@@ -66,9 +64,9 @@ package body Lith.Objects is
 
       function Hex_Digit
         (Item : Object_Payload)
-         return Wide_Wide_Character
+         return Character
       is
-         Hex_Digits : constant Wide_Wide_String := "0123456789ABCDEF";
+         Hex_Digits : constant String := "0123456789ABCDEF";
       begin
          return Hex_Digits (Positive (Item + 1));
       end Hex_Digit;
@@ -213,9 +211,9 @@ package body Lith.Objects is
    -- To_Character --
    ------------------
 
-   function To_Character (Item : Object) return Wide_Wide_Character is
+   function To_Character (Item : Object) return Character is
    begin
-      return Wide_Wide_Character'Val (Item.Payload);
+      return Character'Val (Item.Payload);
    end To_Character;
 
    --------------------------------
@@ -302,10 +300,10 @@ package body Lith.Objects is
    -- To_Object --
    ---------------
 
-   function To_Object (Ch : Wide_Wide_Character) return Object is
+   function To_Object (Ch : Character) return Object is
    begin
       return (Object_Payload
-              (Wide_Wide_Character'Pos (Ch)),
+              (Character'Pos (Ch)),
               Character_Object);
    end To_Object;
 
@@ -324,10 +322,10 @@ package body Lith.Objects is
 
    function To_String (Store    : in out Object_Store'Class;
                        Item     : Object)
-                       return Wide_Wide_String
+                       return String
    is
       It : Object := Store.Cdr (Item);
-      Result : Wide_Wide_String (1 .. 100);
+      Result : String (1 .. 100);
       Count  : Natural := 0;
    begin
       while It /= Nil loop
@@ -337,8 +335,7 @@ package body Lith.Objects is
          else
             raise Constraint_Error with
               "String contains non-character: "
-              & Ada.Characters.Conversions.To_String
-              (Store.Show (Store.Car (It)));
+              & Store.Show (Store.Car (It));
          end if;
          It := Store.Cdr (It);
       end loop;
