@@ -31,7 +31,7 @@ package Lith.Objects.Symbol_Maps is
         procedure (Item : Element_Type));
 
    procedure Update
-     (Container : Map;
+     (Container : in out Map;
       Process   : not null access
         procedure (Item : in out Element_Type));
 

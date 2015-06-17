@@ -98,13 +98,18 @@ package body Lith.Objects.Symbol_Maps is
    ------------
 
    procedure Update
-     (Container : Map;
+     (Container : in out Map;
       Process   : not null access
         procedure (Item : in out Element_Type))
    is
    begin
-      for Item of Container.Internal loop
-         Process (Item);
+      for Position in Container.Internal.Iterate loop
+         declare
+            Item : Element_Type := Internal_Symbol_Maps.Element (Position);
+         begin
+            Process (Item);
+            Container.Internal.Replace_Element (Position, Item);
+         end;
       end loop;
    end Update;
 
