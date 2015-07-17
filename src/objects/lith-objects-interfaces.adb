@@ -1,4 +1,4 @@
-with Ada.Containers.Vectors;
+with Ada.Containers.Indefinite_Vectors;
 
 with Lith.Environment;
 with Lith.Parser;
@@ -6,45 +6,28 @@ with Lith.Objects.Symbols;
 
 package body Lith.Objects.Interfaces is
 
-   type Function_Record (Simple : Boolean := True) is
+   type Simple_Function_Evaluator is
+     new Root_Function_Interface with
       record
-         Argument_Count : Natural;
-         Strict         : Boolean;
-         case Simple is
-            when False =>
-               Env_Eval    : Evaluator;
-            when True =>
-               Simple_Eval : Simple_Evaluator;
-         end case;
+         Eval : Simple_Evaluator;
       end record;
 
+   overriding function Evaluate
+     (Fn : Simple_Function_Evaluator;
+      Store : in out Object_Store'Class)
+     return Object
+   is (Fn.Eval (Store));
+
    package Function_Vectors is
-     new Ada.Containers.Vectors
+     new Ada.Containers.Indefinite_Vectors
        (Index_Type   => Positive,
-        Element_Type => Function_Record);
+        Element_Type => Root_Function_Interface'Class);
 
    Defs : Function_Vectors.Vector;
 
    procedure New_Def
      (Name : String;
-      Rec  : Function_Record);
-
-   ---------------------
-   -- Define_Function --
-   ---------------------
-
-   procedure Define_Function
-     (Name           : String;
-      Argument_Count : Natural;
-      Strict         : Boolean;
-      Eval           : Evaluator)
-   is
-      New_Item : constant Function_Record :=
-                   (Simple => False, Argument_Count => Argument_Count,
-                    Strict => Strict, Env_Eval => Eval);
-   begin
-      New_Def (Name, New_Item);
-   end Define_Function;
+      Eval : Root_Function_Interface'Class);
 
    ---------------------
    -- Define_Function --
@@ -55,11 +38,23 @@ package body Lith.Objects.Interfaces is
       Argument_Count : Natural;
       Eval           : Simple_Evaluator)
    is
-      New_Item : constant Function_Record :=
-                   (Simple => True, Argument_Count => Argument_Count,
-                    Strict => True, Simple_Eval => Eval);
+      pragma Unreferenced (Argument_Count);
    begin
-      New_Def (Name, New_Item);
+      New_Def (Name,
+               Simple_Function_Evaluator'
+                 (Root_Function_Interface with Eval => Eval));
+   end Define_Function;
+
+   ---------------------
+   -- Define_Function --
+   ---------------------
+
+   procedure Define_Function
+     (Name   : String;
+      Eval   : Root_Function_Interface'Class)
+   is
+   begin
+      New_Def (Name, Eval);
    end Define_Function;
 
    --------------
@@ -72,13 +67,11 @@ package body Lith.Objects.Interfaces is
       Environment : Object)
       return Object
    is
-      Def : constant Function_Record := Defs (Positive (Fn));
+      pragma Unreferenced (Environment);
+      Def : constant Root_Function_Interface'Class :=
+        Defs (Positive (Fn));
    begin
-      if Def.Simple then
-         return Def.Simple_Eval (Store);
-      else
-         return Def.Env_Eval (Store, Environment);
-      end if;
+      return Def.Evaluate (Store);
    end Evaluate;
 
    -------------
@@ -87,10 +80,10 @@ package body Lith.Objects.Interfaces is
 
    procedure New_Def
      (Name : String;
-      Rec  : Function_Record)
+      Eval : Root_Function_Interface'Class)
    is
    begin
-      Defs.Append (Rec);
+      Defs.Append (Eval);
       Lith.Environment.Define
         (Name  => Lith.Objects.Symbols.Get_Symbol (Name),
          Value => To_Object (Function_Type (Defs.Last_Index)));

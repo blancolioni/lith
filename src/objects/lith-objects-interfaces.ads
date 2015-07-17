@@ -1,10 +1,5 @@
 package Lith.Objects.Interfaces is
 
-   type Evaluator is access
-     function (Store       : in out Object_Store'Class;
-               Environment : Object)
-               return Object;
-
    type Simple_Evaluator is access
      function (Store       : in out Object_Store'Class)
      return Object;
@@ -12,13 +7,19 @@ package Lith.Objects.Interfaces is
    procedure Define_Function
      (Name           : String;
       Argument_Count : Natural;
-      Strict         : Boolean;
-      Eval           : Evaluator);
+      Eval           : Simple_Evaluator);
+
+   type Root_Function_Interface is interface;
+
+   function Evaluate
+     (Fn : Root_Function_Interface;
+      Store : in out Object_Store'Class)
+     return Object
+      is abstract;
 
    procedure Define_Function
-     (Name           : String;
-      Argument_Count : Natural;
-      Eval           : Simple_Evaluator);
+     (Name   : String;
+      Eval   : Root_Function_Interface'Class);
 
    function Evaluate
      (Store       : in out Object_Store'Class;
