@@ -19,6 +19,24 @@ package body Lith.Primitives is
                          Ada.Calendar.Clock;
    Jiffies_Per_Second : constant := 1000.0;
 
+   type Predicate_Function is access
+     function (Value : Lith.Objects.Object) return Boolean;
+
+   type Predicate_Evaluator is
+     new Lith.Objects.Interfaces.Root_Function_Interface with
+      record
+         Fn : Predicate_Function;
+      end record;
+
+   overriding function Evaluate
+     (Predicate : Predicate_Evaluator;
+      Store     : in out Lith.Objects.Object_Store'Class)
+     return Lith.Objects.Object;
+
+   procedure Define_Predicate_Function
+     (Name : String;
+      Evaluator : Predicate_Function);
+
    function Evaluate_ALU
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
@@ -87,8 +105,8 @@ package body Lith.Primitives is
       return Lith.Objects.Object;
 
    function Evaluate_Is_Null
-     (Store       : in out Lith.Objects.Object_Store'Class)
-      return Lith.Objects.Object;
+     (Item : Lith.Objects.Object)
+     return Boolean;
 
    function Evaluate_Is_Pair
      (Store       : in out Lith.Objects.Object_Store'Class)
@@ -179,7 +197,6 @@ package body Lith.Primitives is
       Define_Function ("jiffies-per-second", 1,
                        Evaluate_Jiffies_Per_Second'Access);
       Define_Function ("load", 1, Evaluate_Load'Access);
-      Define_Function ("null?", 1, Evaluate_Is_Null'Access);
       Define_Function ("pair?", 1, Evaluate_Is_Pair'Access);
       Define_Function ("profile-start-cost-centre", 1,
                        Evaluate_Profile_Start_Cost_Centre'Access);
@@ -187,15 +204,49 @@ package body Lith.Primitives is
                        Evaluate_Profile_Finish_Cost_Centre'Access);
       Define_Function ("real?", 1, Evaluate_Is_Real'Access);
       Define_Function ("symbol?", 1, Evaluate_Is_Symbol'Access);
-      Define_Function ("integer?", 1, Evaluate_Is_Integer'Access);
       Define_Function ("random", 1, Evaluate_Random'Access);
       Define_Function ("set-car!", 2, Evaluate_Set_Car'Access);
       Define_Function ("set-cdr!", 2, Evaluate_Set_Cdr'Access);
       Define_Function ("string->symbol", 1, Evaluate_String_To_Symbol'Access);
       Define_Function ("symbol->string", 1, Evaluate_Symbol_To_String'Access);
       Define_Function ("write-char", 2, Evaluate_Write_Char'Access);
+
+      Define_Predicate_Function
+        ("null?", Evaluate_Is_Null'Access);
+      Define_Function
+        ("integer?", 1, Evaluate_Is_Integer'Access);
+
       Lith.Primitives.ALU.Add_Operators;
    end Add_Primitives;
+
+   -------------------------------
+   -- Define_Predicate_Function --
+   -------------------------------
+
+   procedure Define_Predicate_Function
+     (Name : String;
+      Evaluator : Predicate_Function)
+   is
+   begin
+      Lith.Objects.Interfaces.Define_Function
+        (Name,
+         Predicate_Evaluator'(Fn => Evaluator));
+   end Define_Predicate_Function;
+
+   --------------
+   -- Evaluate --
+   --------------
+
+   overriding function Evaluate
+     (Predicate : Predicate_Evaluator;
+      Store     : in out Lith.Objects.Object_Store'Class)
+     return Lith.Objects.Object
+   is
+   begin
+      return Lith.Objects.To_Object
+        (Predicate.Fn
+           (Store.Argument (1)));
+   end Evaluate;
 
    ------------------
    -- Evaluate_ALU --
@@ -468,16 +519,12 @@ package body Lith.Primitives is
    ----------------------
 
    function Evaluate_Is_Null
-     (Store       : in out Lith.Objects.Object_Store'Class)
-      return Lith.Objects.Object
+     (Item : Lith.Objects.Object)
+      return Boolean
    is
-      use Lith.Objects;
+      use type Lith.Objects.Object;
    begin
-      if Store.Argument (1) = Nil then
-         return True_Value;
-      else
-         return False_Value;
-      end if;
+      return Item = Lith.Objects.Nil;
    end Evaluate_Is_Null;
 
    ----------------------
