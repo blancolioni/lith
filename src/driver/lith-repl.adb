@@ -3,7 +3,6 @@ with Ada.Exceptions;
 with Ada.Text_IO;
 
 with Lith.Environment;
-with Lith.Objects;
 with Lith.Parser;
 with Lith.Objects.Symbols;
 
@@ -15,18 +14,20 @@ package body Lith.Repl is
    -- Execute --
    -------------
 
-   procedure Execute (Machine : Lith.Machine.Lith_Machine) is
+   procedure Execute
+     (Store : not null access Lith.Objects.Object_Store'Class)
+   is
       use Ada.Text_IO;
       use Lith.Objects;
    begin
 
       Lith.Parser.Parse_File
-        (Machine.all,
+        (Store.all,
          Lith.Paths.Config_Path & "/interaction-environment.scm");
 
       if Ada.Directories.Exists ("auto.l") then
          Lith.Parser.Parse_File
-           (Machine.all, String'("auto.l"));
+           (Store.all, String'("auto.l"));
       end if;
 
       while Lith.Environment.Get
@@ -41,12 +42,12 @@ package body Lith.Repl is
                declare
                   Expr : constant Lith.Objects.Object :=
                            Lith.Parser.Parse_Expression
-                             (Machine.all, Expr_Text);
+                             (Store.all, Expr_Text);
                   Result : constant Object :=
-                             Machine.Evaluate (Expr, Lith.Objects.Nil);
+                             Store.Evaluate (Expr, Lith.Objects.Nil);
                begin
                   if Result /= No_Value then
-                     Put_Line (Machine.Show (Result));
+                     Put_Line (Store.Show (Result));
                   end if;
                end;
             end if;

@@ -1,7 +1,8 @@
-with Lith.Machine;
+with Lith.Objects;
 
 package Lith.Repl is
 
-   procedure Execute (Machine : Lith.Machine.Lith_Machine);
+   procedure Execute
+     (Store : not null access Lith.Objects.Object_Store'Class);
 
 end Lith.Repl;

@@ -1,4 +1,5 @@
 with Lith.Init;
+with Lith.Repl;
 
 package body Lith.Library is
 
@@ -23,5 +24,14 @@ package body Lith.Library is
          raise Constraint_Error with "load failed";
       end if;
    end Load;
+
+   ----------------
+   -- Start_Repl --
+   ----------------
+
+   procedure Start_Repl is
+   begin
+      Lith.Repl.Execute (Lith.Init.Main_Store);
+   end Start_Repl;
 
 end Lith.Library;
