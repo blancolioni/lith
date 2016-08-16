@@ -221,8 +221,7 @@ package Lith.Objects is
    function Argument (Store : Object_Store;
                       Index : Positive)
                       return Object
-                      is abstract
-     with Pre'Class => Index <= Store.Argument_Count;
+                      is abstract;
 
    procedure Report_State (Store : in out Object_Store) is abstract;
 
