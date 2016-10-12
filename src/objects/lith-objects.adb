@@ -317,6 +317,23 @@ package body Lith.Objects is
    end To_Object;
 
    ---------------
+   -- To_Object --
+   ---------------
+
+   function To_Object (Store : in out Object_Store'Class;
+                       Value : String)
+                       return Object
+   is
+   begin
+      Store.Push (String_Value);
+      for Ch of Value loop
+         Store.Push (To_Object (Ch));
+      end loop;
+      Store.Create_List (Value'Length + 1);
+      return Store.Pop;
+   end To_Object;
+
+   ---------------
    -- To_String --
    ---------------
 
