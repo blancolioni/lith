@@ -12,6 +12,7 @@ package Lith.Objects is
    type Object is private;
 
    Nil                  : constant Object;
+   Undefined            : constant Object;
    True_Value           : constant Object;
    False_Value          : constant Object;
    No_Value             : constant Object;
@@ -304,6 +305,10 @@ private
    Nil : constant Object :=
            (Payload => 1,
             Tag     => Internal_Object);
+
+   Undefined : constant Object :=
+                 (Payload => 2,
+                  Tag     => Internal_Object);
 
    True_Value : constant Object :=
                   (Payload => 2,
