@@ -28,6 +28,18 @@ package body Lith.Environment is
 
    end Define;
 
+   ------------
+   -- Define --
+   ------------
+
+   procedure Define
+     (Name  : String;
+      Value : Lith.Objects.Object)
+   is
+   begin
+      Define (Lith.Objects.Symbols.Get_Symbol (Name), Value);
+   end Define;
+
    ---------
    -- Get --
    ---------
@@ -61,6 +73,19 @@ package body Lith.Environment is
       else
          return Default;
       end if;
+   end Get;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Name    : String;
+      Default : Lith.Objects.Object := Lith.Objects.Nil)
+      return Lith.Objects.Object
+   is
+   begin
+      return Get (Lith.Objects.Symbols.Get_Symbol (Name), Default);
    end Get;
 
    ----------
