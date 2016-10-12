@@ -161,6 +161,10 @@ package Lith.Objects is
                        Item     : Object)
                        return String;
 
+   function To_Object (Store : in out Object_Store'Class;
+                       Value : String)
+                       return Object;
+
    function Cons (Store : in out Object_Store;
                   Car, Cdr : Object)
                   return Object is abstract;
