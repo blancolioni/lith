@@ -25,8 +25,9 @@ package body Lith.Init is
    -- Start_Lith --
    ----------------
 
-   procedure Start_Lith is
-      Core_Size       : constant := 64 * 1024;
+   procedure Start_Lith
+     (Core_Size : Natural := 64 * 1024)
+   is
    begin
 
       Library_Machine := Lith.Machine.Create (Core_Size);
