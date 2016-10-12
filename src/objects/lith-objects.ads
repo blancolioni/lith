@@ -96,7 +96,9 @@ package Lith.Objects is
                    is abstract;
 
    procedure Mark (Item  : in out External_Object_Interface;
-                   Store : in out Object_Store'Class)
+                   Store : in out Object_Store'Class;
+                   Mark  : not null access
+                     procedure (X : in out Object))
    is null;
 
    procedure Finalize (Item  : in out External_Object_Interface;

@@ -28,7 +28,9 @@ package Lith.Vectors is
 
    overriding procedure Mark
      (Item  : in out Lith_Vector_Type;
-      Store : in out Lith.Objects.Object_Store'Class);
+      Store : in out Lith.Objects.Object_Store'Class;
+      Mark  : not null access
+        procedure (X : in out Lith.Objects.Object));
 
    procedure Register
      (Store : in out Lith.Objects.Object_Store'Class);
