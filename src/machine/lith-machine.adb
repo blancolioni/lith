@@ -710,6 +710,7 @@ package body Lith.Machine is
      (Machine : in out Root_Lith_Machine)
    is
    begin
+      Machine.Report_Memory;
       Ada.Text_IO.Put_Line
         (" S: " & Machine.Show (Machine.Stack));
       Ada.Text_IO.Put_Line
