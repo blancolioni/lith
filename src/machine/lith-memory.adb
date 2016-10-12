@@ -5,7 +5,7 @@ package body Lith.Memory is
 
    use Lith.Objects;
 
-   Trace_GC : constant Boolean := False;
+   Trace_GC : constant Boolean := True;
 
    function From_Space (Memory : Lith_Memory;
                         Item   : Object)
@@ -276,10 +276,24 @@ package body Lith.Memory is
                   return Object
    is
       Addr : Cell_Address;
+      procedure External_Mark
+        (X : in out Lith.Objects.Object);
+
+      -------------------
+      -- External_Mark --
+      -------------------
+
+      procedure External_Mark
+        (X : in out Lith.Objects.Object)
+      is
+      begin
+         X := Move (Memory, X);
+      end External_Mark;
+
    begin
       if Is_External_Object (Item) then
          Memory.Callback.Mark_External_Object
-           (To_External_Object_Address (Item));
+           (To_External_Object_Address (Item), External_Mark'Access);
       end if;
 
       if not From_Space (Memory, Item) then

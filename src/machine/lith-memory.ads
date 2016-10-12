@@ -58,8 +58,10 @@ package Lith.Memory is
    procedure Before_GC (GC : in out GC_Interface) is null;
    procedure After_GC (GC : in out GC_Interface) is null;
    procedure Mark_External_Object
-     (GC : in out GC_Interface;
-      External : Lith.Objects.External_Object_Address)
+     (GC       : in out GC_Interface;
+      External : Lith.Objects.External_Object_Address;
+      Mark     : not null access
+        procedure (X : in out Lith.Objects.Object))
    is null;
 
    type GC_Callback is access all GC_Interface'Class;

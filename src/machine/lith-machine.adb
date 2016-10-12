@@ -558,9 +558,13 @@ package body Lith.Machine is
 
    overriding procedure Mark_External_Object
      (Machine : in out Root_Lith_Machine;
-      External : Lith.Objects.External_Object_Address)
+      External : Lith.Objects.External_Object_Address;
+      Mark     : not null access
+        procedure (X : in out Lith.Objects.Object))
    is
    begin
+      Machine.External_Objects (External).External_Object.Mark
+        (Machine, Mark);
       Machine.External_Objects (External).Marked := True;
    end Mark_External_Object;
 

@@ -289,7 +289,9 @@ private
    overriding procedure After_GC (Machine : in out Root_Lith_Machine);
    overriding procedure Mark_External_Object
      (Machine : in out Root_Lith_Machine;
-      External : Lith.Objects.External_Object_Address);
+      External : Lith.Objects.External_Object_Address;
+      Mark     : not null access
+        procedure (X : in out Lith.Objects.Object));
 
    function Is_Free (Machine : Root_Lith_Machine'Class;
                      Address : Lith.Objects.Cell_Address)

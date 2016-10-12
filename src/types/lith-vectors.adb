@@ -123,11 +123,14 @@ package body Lith.Vectors is
 
    overriding procedure Mark
      (Item  : in out Lith_Vector_Type;
-      Store : in out Lith.Objects.Object_Store'Class)
+      Store : in out Lith.Objects.Object_Store'Class;
+      Mark  : not null access
+        procedure (X : in out Lith.Objects.Object))
    is
+      pragma Unreferenced (Store);
    begin
-      for E of Item.V loop
-         Store.Mark (E);
+      for I in 1 .. Item.V.Last_Index loop
+         Mark (Item.V (I));
       end loop;
    end Mark;
 
