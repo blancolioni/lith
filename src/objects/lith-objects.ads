@@ -320,8 +320,8 @@ private
 
    type Object is
       record
-         Payload : Object_Payload;
-         Tag     : Object_Tag;
+         Payload : Object_Payload := 1;
+         Tag     : Object_Tag     := Internal_Object;
       end record
      with Pack, Size => 32;
 
