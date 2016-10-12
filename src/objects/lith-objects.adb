@@ -18,6 +18,21 @@ package body Lith.Objects is
       return Natural (Item.Payload);
    end Argument_Count;
 
+   -----------------
+   -- Create_List --
+   -----------------
+
+   procedure Create_List
+     (Store  : in out Object_Store'Class;
+      Length : Natural)
+   is
+   begin
+      Store.Push_Nil;
+      for I in 1 .. Length loop
+         Store.Cons;
+      end loop;
+   end Create_List;
+
    ----------
    -- Drop --
    ----------
@@ -32,6 +47,38 @@ package body Lith.Objects is
          Unused := Store.Pop (Stack);
       end loop;
    end Drop;
+
+   ----------------
+   -- Env_Insert --
+   ----------------
+
+   procedure Env_Insert
+     (Store : in out Object_Store'Class;
+      Name  : Symbol_Type;
+      Value : Object)
+   is
+   begin
+      Store.Push (Name);
+      Store.Push (Value);
+      Store.Cons;
+      Store.Swap;
+      Store.Cons;
+   end Env_Insert;
+
+   --------------
+   -- Evaluate --
+   --------------
+
+   procedure Evaluate
+     (Store : in out Object_Store'Class;
+      Expr  : Object;
+      Env   : Object := Nil)
+   is
+      Unused : constant Object := Store.Evaluate (Expr, Env);
+      pragma Unreferenced (Unused);
+   begin
+      null;
+   end Evaluate;
 
    ---------------
    -- Hex_Image --
@@ -179,6 +226,26 @@ package body Lith.Objects is
    begin
       Store.Push (To_Object (Value));
    end Push;
+
+   ----------------------------
+   -- Push_Empty_Environment --
+   ----------------------------
+
+   procedure Push_Empty_Environment (Store : in out Object_Store'Class) is
+   begin
+      Store.Push_Nil;
+   end Push_Empty_Environment;
+
+   --------------
+   -- Push_Nil --
+   --------------
+
+   procedure Push_Nil
+     (Store : in out Object_Store'Class)
+   is
+   begin
+      Store.Push (Nil);
+   end Push_Nil;
 
    ----------
    -- Swap --

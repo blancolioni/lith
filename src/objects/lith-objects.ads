@@ -195,6 +195,9 @@ package Lith.Objects is
      (Store   : in out Object_Store'Class;
       Value   : Integer);
 
+   procedure Push_Nil
+     (Store : in out Object_Store'Class);
+
    function Pop (Store : in out Object_Store;
                  Stack     : Stack_Type := Primary)
                  return Object
@@ -212,11 +215,29 @@ package Lith.Objects is
                       return Object
                       is abstract;
 
+   procedure Push_Empty_Environment (Store : in out Object_Store'Class);
+   procedure Env_Insert (Store : in out Object_Store'Class;
+      Name  : Symbol_Type;
+                         Value : Object);
+
+   procedure Evaluate
+     (Store : in out Object_Store'Class;
+      Expr  : Object;
+      Env   : Object := Nil);
+
    procedure Set_Context
      (Store       : in out Object_Store;
       File_Name   : String;
       Line_Number : Natural)
    is abstract;
+
+   procedure Create_List
+     (Store : in out Object_Store'Class;
+      Length : Natural);
+   --  Turn the Length items on top of stack into a list, and push it
+   --  onto the stack.  The new list terminates with Nil, and the
+   --  top of the stack is that last element;
+   --  Equivalent to: push_nil, cons, ..., cons
 
    function Argument_Count (Store : Object_Store)
                             return Natural
