@@ -336,19 +336,19 @@ private
                   Tag     => Internal_Object);
 
    True_Value : constant Object :=
-                  (Payload => 2,
+                  (Payload => 3,
                    Tag     => Internal_Object);
 
    No_Value : constant Object :=
-                (Payload => 3,
+                (Payload => 4,
                  Tag     => Internal_Object);
 
    String_Value : constant Object :=
-                    (Payload => 4,
+                    (Payload => 5,
                      Tag     => Internal_Object);
 
    End_Of_File_Object  : constant Object :=
-                           (Payload => 5,
+                           (Payload => 6,
                             Tag     => Internal_Object);
 
    type Symbol_Type is new Object_Payload;
