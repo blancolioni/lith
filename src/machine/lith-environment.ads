@@ -18,4 +18,13 @@ package Lith.Environment is
 
    procedure Mark (Store : in out Lith.Objects.Object_Store'Class);
 
+   procedure Define
+     (Name  : String;
+      Value : Lith.Objects.Object);
+
+   function Get
+     (Name    : String;
+      Default : Lith.Objects.Object := Lith.Objects.Nil)
+      return Lith.Objects.Object;
+
 end Lith.Environment;
