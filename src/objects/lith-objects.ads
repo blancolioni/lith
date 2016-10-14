@@ -212,20 +212,27 @@ package Lith.Objects is
                  is abstract;
 
    function Evaluate (Store : in out Object_Store;
-                      Expr  : Object;
-                      Env   : Object)
+                      Expr  : Object)
                       return Object
                       is abstract;
 
-   procedure Push_Empty_Environment (Store : in out Object_Store'Class);
-   procedure Env_Insert (Store : in out Object_Store'Class;
+   procedure New_Environment
+     (Store : in out Object_Store)
+   is abstract;
+
+   procedure Create_Binding
+     (Store : in out Object_Store;
       Name  : Symbol_Type;
-                         Value : Object);
+      Value : Object)
+   is abstract;
+
+   procedure Pop_Environment
+     (Store : in out Object_Store)
+   is abstract;
 
    procedure Evaluate
      (Store : in out Object_Store'Class;
-      Expr  : Object;
-      Env   : Object := Nil);
+      Expr  : Object);
 
    procedure Set_Context
      (Store       : in out Object_Store;

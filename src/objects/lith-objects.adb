@@ -48,33 +48,15 @@ package body Lith.Objects is
       end loop;
    end Drop;
 
-   ----------------
-   -- Env_Insert --
-   ----------------
-
-   procedure Env_Insert
-     (Store : in out Object_Store'Class;
-      Name  : Symbol_Type;
-      Value : Object)
-   is
-   begin
-      Store.Push (Name);
-      Store.Push (Value);
-      Store.Cons;
-      Store.Swap;
-      Store.Cons;
-   end Env_Insert;
-
    --------------
    -- Evaluate --
    --------------
 
    procedure Evaluate
      (Store : in out Object_Store'Class;
-      Expr  : Object;
-      Env   : Object := Nil)
+      Expr  : Object)
    is
-      Unused : constant Object := Store.Evaluate (Expr, Env);
+      Unused : constant Object := Store.Evaluate (Expr);
       pragma Unreferenced (Unused);
    begin
       null;
@@ -226,15 +208,6 @@ package body Lith.Objects is
    begin
       Store.Push (To_Object (Value));
    end Push;
-
-   ----------------------------
-   -- Push_Empty_Environment --
-   ----------------------------
-
-   procedure Push_Empty_Environment (Store : in out Object_Store'Class) is
-   begin
-      Store.Push_Nil;
-   end Push_Empty_Environment;
 
    --------------
    -- Push_Nil --
