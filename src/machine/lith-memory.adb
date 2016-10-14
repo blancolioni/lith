@@ -5,7 +5,7 @@ package body Lith.Memory is
 
    use Lith.Objects;
 
-   Trace_GC : constant Boolean := True;
+   Trace_GC : constant Boolean := False;
 
    function From_Space (Memory : Lith_Memory;
                         Item   : Object)
