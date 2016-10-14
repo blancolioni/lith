@@ -6,13 +6,11 @@ with Lith.Objects.Interfaces;
 with Lith.Parser;
 with Lith.Objects.Symbols;
 
+with Lith.Options;
+
 with Lith.Paths;
 
 package body Lith.Machine.SECD is
-
-   Trace_Definitions : constant Boolean := False;
-   Trace_Eval        : Boolean := False;
-   Trace_Patterns    : Boolean := False;
 
    function Import_Libraries
      (Machine    : in out Root_Lith_Machine'Class)
@@ -147,7 +145,7 @@ package body Lith.Machine.SECD is
          Pat_It := Pat;
          Call_It := Local_Call;
 
-         if Trace_Patterns then
+         if Lith.Options.Trace_Patterns then
             Ada.Text_IO.Put_Line
               ("Match: pattern = " & Machine.Show (Pat));
             Ada.Text_IO.Put_Line
@@ -217,7 +215,7 @@ package body Lith.Machine.SECD is
          Code := Machine.Car (Machine.Cdar (Pats));
 
          if Match (Machine.Cdr (Pat)) then
-            if Trace_Patterns then
+            if Lith.Options.Trace_Patterns then
                Ada.Text_IO.Put_Line
                  ("found match: "
                   & Machine.Show (Machine.Cdr (Pat))
@@ -232,7 +230,7 @@ package body Lith.Machine.SECD is
             Machine.Swap;
             Machine.Drop;
 
-            if Trace_Patterns then
+            if Lith.Options.Trace_Patterns then
                Machine.Report_State;
                Ada.Text_IO.Put_Line
                  ("result: "
@@ -298,7 +296,7 @@ package body Lith.Machine.SECD is
          It : Object;
       begin
 
-         if Trace_Eval then
+         if Lith.Options.Trace_Evaluation then
             Ada.Text_IO.Put_Line
               (Machine.Show (Name)
                & " <-- "
@@ -403,7 +401,7 @@ package body Lith.Machine.SECD is
          Save_Binding (Rest_Name, Machine.Pop);
       end if;
 
-      if Trace_Eval then
+      if Lith.Options.Trace_Evaluation then
          Ada.Text_IO.Put_Line
            ("create environment: "
             & Machine.Show (Machine.Environment));
@@ -481,7 +479,7 @@ package body Lith.Machine.SECD is
 
       procedure Save_State is
       begin
-         if Trace_Eval then
+         if Lith.Options.Trace_Evaluation then
             Ada.Text_IO.Put_Line ("saving context ...");
          end if;
          Machine.Dump := Machine.Cons (Machine.Control, Machine.Dump);
@@ -522,12 +520,12 @@ package body Lith.Machine.SECD is
                   Trace, Found);
 
                if Found and then Trace /= False_Value then
-                  Trace_Eval := True;
-                  Trace_Patterns := True;
+                  Lith.Options.Trace_Evaluation := True;
+                  Lith.Options.Trace_Patterns := True;
                end if;
             end;
 
-            if Trace_Eval then
+            if Lith.Options.Trace_Evaluation then
                Ada.Text_IO.Put_Line
                  ("Eval: "
                   & Show (Machine, Machine.Current_Context)
@@ -541,7 +539,7 @@ package body Lith.Machine.SECD is
             then
                C := Machine.Cdr (C);
                Is_Tail_Context := True;
-               if Trace_Eval then
+               if Lith.Options.Trace_Evaluation then
                   Ada.Text_IO.Put_Line
                     ("tail-context: " & Machine.Show (C));
                end if;
@@ -585,7 +583,7 @@ package body Lith.Machine.SECD is
                elsif C = Lith.Objects.Symbols.Stack_To_Control then
                   Push_Control (Machine.Pop);
                elsif C = Stack_Drop then
-                  if Trace_Eval then
+                  if Lith.Options.Trace_Evaluation then
                      Ada.Text_IO.Put_Line
                        ("stack-drop: stack = "
                         & Machine.Show (Machine.Stack));
@@ -609,7 +607,7 @@ package body Lith.Machine.SECD is
                      Name  : constant Object := Machine.Top (2);
                   begin
                      if Machine.Environment = Nil then
-                        if Trace_Definitions then
+                        if Lith.Options.Trace_Definitions then
                            Ada.Text_IO.Put_Line
                              (Machine.Show (Name) & " = "
                               & Machine.Show (Value));
@@ -757,14 +755,16 @@ package body Lith.Machine.SECD is
                            or else Machine.Car (F) = Macro_Symbol)
                then
                   if Machine.Car (F) = Macro_Symbol then
-                     if Trace_Eval then
+                     if Lith.Options.Trace_Evaluation then
                         Ada.Text_IO.Put_Line
                           ("macro: pushing post-macro");
                      end if;
                      Push_Control (Lith.Objects.Symbols.Stack_To_Control);
                   end if;
 
-                  if Trace_Eval and then Is_Tail_Context then
+                  if Lith.Options.Trace_Evaluation
+                    and then Is_Tail_Context
+                  then
                      Ada.Text_IO.Put_Line
                        ("tail-call: " & Machine.Show (F));
                   end if;
@@ -909,7 +909,7 @@ package body Lith.Machine.SECD is
                      Name  : constant Object := Machine.Args (1);
                      Value : constant Object := Machine.Args (2);
                   begin
-                     if Trace_Eval then
+                     if Lith.Options.Trace_Evaluation then
                         Ada.Text_IO.Put_Line
                           ("define: "
                            & Machine.Show (Name)
@@ -941,7 +941,7 @@ package body Lith.Machine.SECD is
                           "syntax arguments not found";
                      end if;
 
-                     if Trace_Patterns then
+                     if Lith.Options.Trace_Patterns then
                         Ada.Text_IO.Put_Line
                           ("applying syntax: "
                            & Machine.Show (Syntax));
@@ -949,7 +949,7 @@ package body Lith.Machine.SECD is
                      Apply_Syntax (Machine, Call, Syntax);
                      Machine.Control :=
                        Machine.Cons (Machine.Pop, Cs);
-                     if Trace_Patterns then
+                     if Lith.Options.Trace_Patterns then
                         Ada.Text_IO.Put_Line
                           ("control: "
                            & Machine.Show (Machine.Control));
@@ -978,7 +978,7 @@ package body Lith.Machine.SECD is
                   Machine.Cons;
                   Machine.Cons;
                   Machine.Control := Machine.Pop;
-                  if Trace_Eval then
+                  if Lith.Options.Trace_Evaluation then
                      Ada.Text_IO.Put_Line
                        ("dynamic-wind: control = "
                         & Machine.Show (Machine.Control));
@@ -1012,7 +1012,7 @@ package body Lith.Machine.SECD is
                      Found   : Boolean;
                   begin
 
-                     if Trace_Eval then
+                     if Lith.Options.Trace_Evaluation then
                         Ada.Text_IO.Put_Line
                           ("raise exception");
                      end if;
@@ -1078,7 +1078,7 @@ package body Lith.Machine.SECD is
                      end;
                   end if;
 
-                  if Trace_Eval then
+                  if Lith.Options.Trace_Evaluation then
                      Ada.Text_IO.Put_Line
                        ("unwind-continue");
                   end if;
@@ -1140,7 +1140,7 @@ package body Lith.Machine.SECD is
                   declare
                      Macro : constant Boolean := Is_Macro (Machine, F);
                   begin
-                     if Trace_Eval then
+                     if Lith.Options.Trace_Evaluation then
                         Ada.Text_IO.Put_Line
                           ("Is_Macro: " & Machine.Show (F)
                            & " = "
@@ -1165,7 +1165,7 @@ package body Lith.Machine.SECD is
          while Machine.Control = Nil and then
            Machine.Dump /= Nil
          loop
-            if Trace_Eval then
+            if Lith.Options.Trace_Evaluation then
                Ada.Text_IO.Put_Line ("restoring context ...");
             end if;
 

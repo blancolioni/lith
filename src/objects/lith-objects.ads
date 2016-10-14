@@ -78,6 +78,14 @@ package Lith.Objects is
 
    type External_Object_Interface is interface;
 
+   type Binding_Type is
+      record
+         Name  : Symbol_Type;
+         Value : Object;
+      end record;
+
+   type Array_Of_Bindings is array (Positive range <>) of Binding_Type;
+
    type Object_Store is limited interface;
 
    function Name
@@ -216,6 +224,24 @@ package Lith.Objects is
                       return Object
                       is abstract;
 
+   function Evaluate (Store         : in out Object_Store'Class;
+                      Expr          : Object;
+                      Binding_Name  : Symbol_Type;
+                      Binding_Value : Object)
+                      return Object;
+   --  Evaluate Expr in an environment containing one value (Binding_Value),
+   --  referenced by Binding_Name
+
+   procedure Evaluate
+     (Store : in out Object_Store'Class;
+      Expr  : Object);
+
+   procedure Evaluate
+     (Store         : in out Object_Store'Class;
+      Expr          : Object;
+      Binding_Name  : Symbol_Type;
+      Binding_Value : Object);
+
    procedure New_Environment
      (Store : in out Object_Store)
    is abstract;
@@ -229,10 +255,6 @@ package Lith.Objects is
    procedure Pop_Environment
      (Store : in out Object_Store)
    is abstract;
-
-   procedure Evaluate
-     (Store : in out Object_Store'Class;
-      Expr  : Object);
 
    procedure Set_Context
      (Store       : in out Object_Store;

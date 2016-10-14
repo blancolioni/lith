@@ -13,9 +13,9 @@ with Lith.Machine.SECD;
 
 with Lith.Memory.Tests;
 
-package body Lith.Machine is
+with Lith.Options;
 
-   Trace_Machine : constant Boolean := False;
+package body Lith.Machine is
 
 --     function Get
 --       (Machine : Root_Lith_Machine'Class;
@@ -220,7 +220,7 @@ package body Lith.Machine is
       T   : constant Lith.Objects.Object :=
               Machine.Cons (Car, Cdr);
    begin
-      if Trace_Machine then
+      if Lith.Options.Trace_Stack then
          Ada.Text_IO.Put_Line
            ("machine: cons --> " & Machine.Show (T));
       end if;
@@ -618,7 +618,7 @@ package body Lith.Machine is
       Result : constant Lith.Objects.Object :=
                  Machine.Car (SP);
    begin
-      if Trace_Machine then
+      if Lith.Options.Trace_Stack then
          declare
             Stack_Name : constant String :=
                            (case Stack is
@@ -671,7 +671,7 @@ package body Lith.Machine is
          when Secondary =>
             Machine.Dump := Machine.Cons (Value, Machine.Dump);
       end case;
-      if Trace_Machine then
+      if Lith.Options.Trace_Stack then
          declare
             Stack_Name : constant String :=
                            (case Stack is
