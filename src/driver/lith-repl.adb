@@ -44,7 +44,7 @@ package body Lith.Repl is
                            Lith.Parser.Parse_Expression
                              (Store.all, Expr_Text);
                   Result : constant Object :=
-                             Store.Evaluate (Expr, Lith.Objects.Nil);
+                             Store.Evaluate (Expr);
                begin
                   if Result /= No_Value then
                      Put_Line (Store.Show (Result));

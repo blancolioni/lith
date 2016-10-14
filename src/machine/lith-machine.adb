@@ -275,6 +275,27 @@ package body Lith.Machine is
       return Machine;
    end Create;
 
+   --------------------
+   -- Create_Binding --
+   --------------------
+
+   overriding procedure Create_Binding
+     (Machine : in out Root_Lith_Machine;
+      Name    : Lith.Objects.Symbol_Type;
+      Value   : Lith.Objects.Object)
+   is
+   begin
+      Machine.Push (Value);
+      Machine.Push (Name);
+      Machine.Swap;
+      Machine.Cons;
+      Machine.Push (Machine.Car (Machine.Environment));
+      Machine.Cons;
+      Machine.Push (Machine.Cdr (Machine.Environment));
+      Machine.Cons;
+      Machine.Environment := Machine.Pop;
+   end Create_Binding;
+
    -------------------------------
    -- Create_External_Reference --
    -------------------------------
@@ -317,8 +338,7 @@ package body Lith.Machine is
 
    overriding function Evaluate
      (Machine     : in out Root_Lith_Machine;
-      Expression  : Lith.Objects.Object;
-      Environment : Lith.Objects.Object)
+      Expression  : Lith.Objects.Object)
       return Lith.Objects.Object
    is
       use Ada.Calendar;
@@ -339,7 +359,6 @@ package body Lith.Machine is
 
       end if;
 
-      Machine.Environment := Environment;
       Machine.Control := Machine.Cons (Expression, Lith.Objects.Nil);
       Lith.Machine.SECD.Evaluate (Machine);
 
@@ -568,6 +587,20 @@ package body Lith.Machine is
       Machine.External_Objects (External).Marked := True;
    end Mark_External_Object;
 
+   ---------------------
+   -- New_Environment --
+   ---------------------
+
+   overriding procedure New_Environment
+     (Machine : in out Root_Lith_Machine)
+   is
+   begin
+      Machine.Push (Lith.Objects.Nil);
+      Machine.Push (Machine.Environment);
+      Machine.Cons;
+      Machine.Environment := Machine.Pop;
+   end New_Environment;
+
    ---------
    -- Pop --
    ---------
@@ -609,6 +642,17 @@ package body Lith.Machine is
       end case;
       return Result;
    end Pop;
+
+   ---------------------
+   -- Pop_Environment --
+   ---------------------
+
+   overriding procedure Pop_Environment
+     (Machine : in out Root_Lith_Machine)
+   is
+   begin
+      Machine.Environment := Machine.Cdr (Machine.Environment);
+   end Pop_Environment;
 
    ----------
    -- Push --

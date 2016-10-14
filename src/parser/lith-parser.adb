@@ -48,7 +48,7 @@ package body Lith.Parser is
          declare
             Top : constant Lith.Objects.Object := Store.Pop;
             Result : constant Lith.Objects.Object :=
-                       Store.Evaluate (Top, Lith.Objects.Nil);
+                       Store.Evaluate (Top);
          begin
             if False then
                Ada.Text_IO.Put_Line

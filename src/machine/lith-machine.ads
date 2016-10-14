@@ -99,8 +99,7 @@ package Lith.Machine is
 
    overriding function Evaluate
      (Machine     : in out Root_Lith_Machine;
-      Expression  : Lith.Objects.Object;
-      Environment : Lith.Objects.Object)
+      Expression  : Lith.Objects.Object)
       return Lith.Objects.Object;
 
    overriding procedure Set_Context
@@ -141,6 +140,17 @@ package Lith.Machine is
    overriding procedure Mark
      (Machine : in out Root_Lith_Machine;
       Start   : in out Lith.Objects.Object);
+
+   overriding procedure New_Environment
+     (Machine : in out Root_Lith_Machine);
+
+   overriding procedure Create_Binding
+     (Machine : in out Root_Lith_Machine;
+      Name    : Lith.Objects.Symbol_Type;
+      Value   : Lith.Objects.Object);
+
+   overriding procedure Pop_Environment
+     (Machine : in out Root_Lith_Machine);
 
    overriding function Load (Machine : in out Root_Lith_Machine;
                              Path    : String)
