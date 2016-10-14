@@ -144,18 +144,6 @@ package body Lith.Memory is
       Memory.Top  := Memory.To_Space + Memory.Space_Size;
       Memory.Free := Memory.To_Space;
       Memory.Scan := Memory.To_Space;
-
-      if Trace_GC then
-         Ada.Text_IO.Put_Line
-           ("Flip: To_Space = " &
-              Hex_Image (To_Object (Memory.To_Space)));
-         Ada.Text_IO.Put_Line
-           ("Flip: From_Space = " &
-              Hex_Image (To_Object (Memory.From_Space)));
-         Ada.Text_IO.Put_Line
-           ("Flip: free = " &
-              Hex_Image (To_Object (Memory.Free)));
-      end if;
    end Flip;
 
    ----------------
