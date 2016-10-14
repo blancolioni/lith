@@ -62,6 +62,43 @@ package body Lith.Objects is
       null;
    end Evaluate;
 
+   --------------
+   -- Evaluate --
+   --------------
+
+   procedure Evaluate
+     (Store         : in out Object_Store'Class;
+      Expr          : Object;
+      Binding_Name  : Symbol_Type;
+      Binding_Value : Object)
+   is
+      Unused : constant Object :=
+                 Store.Evaluate (Expr, Binding_Name, Binding_Value);
+      pragma Unreferenced (Unused);
+   begin
+      null;
+   end Evaluate;
+
+   --------------
+   -- Evaluate --
+   --------------
+
+   function Evaluate
+     (Store         : in out Object_Store'Class;
+      Expr          : Object;
+      Binding_Name  : Symbol_Type;
+      Binding_Value : Object)
+      return Object
+   is
+   begin
+      Store.Push (Binding_Value, Secondary);
+      Store.New_Environment;
+      Store.Create_Binding (Binding_Name, Store.Pop (Secondary));
+      return Result : constant Object := Store.Evaluate (Expr) do
+         Store.Pop_Environment;
+      end return;
+   end Evaluate;
+
    ---------------
    -- Hex_Image --
    ---------------
