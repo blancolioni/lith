@@ -276,7 +276,9 @@ package body Lith.Parser.Lexical is
          declare
             Line : constant String := Get_Line (File);
          begin
-            if Line (Line'Last) = Character'Val (13) then
+            if Line'Length > 0
+              and then Line (Line'Last) = Character'Val (13)
+            then
                Current_Stream.Lines.Append (Line (1 .. Line'Last - 1));
             else
                Current_Stream.Lines.Append (Line);
