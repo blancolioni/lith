@@ -65,6 +65,9 @@ package Lith.Machine is
       Car, Cdr : Lith.Objects.Object)
       return Lith.Objects.Object;
 
+   overriding procedure Reset
+     (Machine  : in out Root_Lith_Machine);
+
    function Car
      (Machine : in out Root_Lith_Machine'Class)
       return Lith.Objects.Object;

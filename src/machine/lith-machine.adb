@@ -783,6 +783,21 @@ package body Lith.Machine is
       Lith.Memory.Reserve_Memory (Machine.Core, Minimum);
    end Reserve_Memory;
 
+   -----------
+   -- Reset --
+   -----------
+
+   overriding procedure Reset
+     (Machine  : in out Root_Lith_Machine)
+   is
+   begin
+      Machine.Stack := Lith.Objects.Nil;
+      Machine.Environment := Lith.Objects.Nil;
+      Machine.Control := Lith.Objects.Nil;
+      Machine.Dump := Lith.Objects.Nil;
+      Machine.Handlers := Lith.Objects.Nil;
+   end Reset;
+
    -------------
    -- Set_Car --
    -------------
