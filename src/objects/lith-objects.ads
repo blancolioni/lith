@@ -262,6 +262,11 @@ package Lith.Objects is
       Line_Number : Natural)
    is abstract;
 
+   procedure Reset
+     (Store : in out Object_Store)
+   is abstract;
+   --  clear everything except the global environment
+
    procedure Create_List
      (Store : in out Object_Store'Class;
       Length : Natural);
