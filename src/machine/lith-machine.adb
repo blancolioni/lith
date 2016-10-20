@@ -366,7 +366,23 @@ package body Lith.Machine is
          Machine.Eval_Time := Machine.Eval_Time + (Clock - Machine.Start_Eval);
          Machine.Evaluating := False;
       end if;
-      return Machine.Pop;
+
+      declare
+         use Lith.Objects;
+         Result : constant Object := Machine.Pop;
+      begin
+         if Machine.Dump /= Nil
+           or else Machine.Control /= Nil
+           or else Machine.Stack /= Nil
+         then
+            Ada.Text_IO.Put_Line
+              (Ada.Text_IO.Standard_Error,
+               "warning: machine state not clean after evaluation");
+            Machine.Report_State;
+         end if;
+         return Result;
+      end;
+
    end Evaluate;
 
    --------------------
