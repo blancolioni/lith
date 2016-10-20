@@ -1058,7 +1058,11 @@ package body Lith.Machine is
            (Integer'Image (To_Integer (Value)),
             Ada.Strings.Left);
       elsif Is_Symbol (Value) then
-         return Lith.Objects.Symbols.Get_Name (To_Symbol (Value));
+         if Value = Lith.Objects.Symbols.Quote_Symbol then
+            return "'";
+         else
+            return Lith.Objects.Symbols.Get_Name (To_Symbol (Value));
+         end if;
       elsif Is_Character (Value) then
          declare
             Ch : constant Character :=
@@ -1082,7 +1086,14 @@ package body Lith.Machine is
          if Is_String then
             return '"' & String_Image (Machine.Cdr (Value)) & '"';
          elsif Is_List then
-            return "(" & List_Image (Value) & ")";
+            if Machine.Car (Value) = Lith.Objects.Symbols.Quote_Symbol
+              and then Machine.Cdr (Value) /= Nil
+              and then Machine.Cddr (Value) = Nil
+            then
+               return "'" & Machine.Show (Machine.Cadr (Value));
+            else
+               return "(" & List_Image (Value) & ")";
+            end if;
          else
             declare
                Car : constant Object := Machine.Car (Value);
