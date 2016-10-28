@@ -257,6 +257,23 @@ package body Lith.Objects is
       Store.Push (Nil);
    end Push_Nil;
 
+   ---------------
+   -- Scan_List --
+   ---------------
+
+   procedure Scan_List
+     (Store   : in out Object_Store'Class;
+      Process : not null access
+        procedure (Value : Object))
+   is
+   begin
+      Store.Push (Store.Top);
+      while Is_Pair (Store.Top) loop
+         Process (Store.Car (Store.Top));
+         Store.Push (Store.Cdr (Store.Pop));
+      end loop;
+   end Scan_List;
+
    ----------
    -- Swap --
    ----------
