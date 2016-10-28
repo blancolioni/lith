@@ -292,6 +292,7 @@ package body Lith.Objects is
          Process (Store.Car (Store.Top));
          Store.Push (Store.Cdr (Store.Pop));
       end loop;
+      Store.Drop;
    end Scan_List;
 
    ----------
