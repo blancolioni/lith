@@ -34,18 +34,32 @@ package body Lith.Library is
       Lith.Init.Start_Lith (Core_Size);
       if Import_Scheme_Base then
          Lith.Parser.Parse_File
-           (Store.all,
+           (Library_Store.all,
             Lith.Paths.Config_Path & "/interaction-environment.scm");
       end if;
    end Initialise;
+
+   -------------------
+   -- Library_Store --
+   -------------------
+
+   function Library_Store return access Lith.Objects.Object_Store'Class is
+   begin
+      return Lith.Init.Main_Store;
+   end Library_Store;
 
    ----------
    -- Load --
    ----------
 
-   procedure Load (Path : String) is
+   procedure Load
+     (Path : String;
+      To_Store : access Lith.Objects.Object_Store'Class := null)
+   is
       Success : constant Boolean :=
-                  Lith.Init.Main_Store.Load (Path);
+                  (if To_Store = null
+                   then Lith.Init.Main_Store.Load (Path)
+                   else To_Store.Load (Path));
    begin
       if not Success then
          raise Constraint_Error with "load failed";
@@ -57,16 +71,20 @@ package body Lith.Library is
    ------------------
 
    function New_Instance
-     (Core_Size          : Natural := 64 * 1024)
+     (Core_Size          : Natural := 64 * 1024;
+      Import_Scheme_Base : Boolean := True)
       return Object_Store_Instance
    is
       Machine : constant Lith.Machine.Lith_Machine :=
                   Lith.Machine.Create (Core_Size);
    begin
       Lith.Init.Init_Store (Machine.all);
-      Lith.Parser.Parse_File
-        (Machine.all,
-         Lith.Paths.Config_Path & "/interaction-environment.scm");
+
+      if Import_Scheme_Base then
+         Lith.Parser.Parse_File
+           (Machine.all,
+            Lith.Paths.Config_Path & "/interaction-environment.scm");
+      end if;
       return Object_Store_Instance (Machine);
    end New_Instance;
 
@@ -74,18 +92,15 @@ package body Lith.Library is
    -- Start_Repl --
    ----------------
 
-   procedure Start_Repl is
+   procedure Start_Repl
+     (With_Store : access Lith.Objects.Object_Store'Class := null)
+   is
    begin
-      Lith.Repl.Execute (Lith.Init.Main_Store);
+      if With_Store = null then
+         Lith.Repl.Execute (Lith.Init.Main_Store);
+      else
+         Lith.Repl.Execute (With_Store);
+      end if;
    end Start_Repl;
-
-   -----------
-   -- Store --
-   -----------
-
-   function Store return access Lith.Objects.Object_Store'Class is
-   begin
-      return Lith.Init.Main_Store;
-   end Store;
 
 end Lith.Library;
