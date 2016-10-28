@@ -275,6 +275,12 @@ package Lith.Objects is
    --  top of the stack is that last element;
    --  Equivalent to: push_nil, cons, ..., cons
 
+   procedure Scan_List
+     (Store : in out Object_Store'Class;
+      Process : not null access
+        procedure (Value : Object));
+   --  Call Process for each value of the list found at the top of the stack
+
    function Argument_Count (Store : Object_Store)
                             return Natural
                             is abstract;
