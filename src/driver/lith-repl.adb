@@ -5,7 +5,7 @@ with Ada.Text_IO;
 with Lith.Parser;
 with Lith.Objects.Symbols;
 
-with Lith.Paths;
+--  with Lith.Paths;
 
 package body Lith.Repl is
 
@@ -20,9 +20,9 @@ package body Lith.Repl is
       use Lith.Objects;
    begin
 
-      Lith.Parser.Parse_File
-        (Store.all,
-         Lith.Paths.Config_Path & "/interaction-environment.scm");
+--        Lith.Parser.Parse_File
+--          (Store.all,
+--           Lith.Paths.Config_Path & "/interaction-environment.scm");
 
       if Ada.Directories.Exists ("auto.l") then
          Lith.Parser.Parse_File

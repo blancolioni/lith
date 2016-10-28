@@ -1,6 +1,7 @@
 with Lith.Bytevectors;
 with Lith.Machine;
 with Lith.IO;
+with Lith.Objects.Interfaces;
 with Lith.Parser;
 with Lith.Paths;
 with Lith.Primitives;
@@ -18,6 +19,7 @@ package body Lith.Init is
      (Store : in out Lith.Objects.Object_Store'Class)
    is
    begin
+      Lith.Objects.Interfaces.Bind_Primitives (Store);
       Lith.Parser.Parse_File
         (Store,
          Lith.Paths.Config_Path & "/lith.l");

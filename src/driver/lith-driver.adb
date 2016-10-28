@@ -39,10 +39,11 @@ begin
       Machine.Start_Profile;
    end if;
 
+   Lith.Parser.Parse_File
+     (Machine.all,
+      Lith.Paths.Config_Path & "/interaction-environment.scm");
+
    if Lith.Options.Self_Test then
-      Lith.Parser.Parse_File
-        (Machine.all,
-         Lith.Paths.Config_Path & "/interaction-environment.scm");
       Lith.Parser.Parse_File
         (Machine.all,
          Lith.Paths.Config_Path & "/self-test.scm");
