@@ -103,6 +103,8 @@ package body Lith.Options is
 
       Core_Size := Integer_Value ("core-size", 'm', 64 * 1024);
 
+      Interactive := Boolean_Value ("interactive", 'i');
+
    end Load_Options;
 
    ------------------

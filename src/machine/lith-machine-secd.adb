@@ -1,7 +1,6 @@
 with Ada.Exceptions;
 with Ada.Text_IO;
 
-with Lith.Environment;
 with Lith.Objects.Interfaces;
 with Lith.Parser;
 with Lith.Objects.Symbols;
@@ -515,7 +514,7 @@ package body Lith.Machine.SECD is
                Trace : Object;
                Found : Boolean;
             begin
-               Environment.Get
+               Machine.Get_Top_Level
                  (Get_Symbol ("*trace-eval*"),
                   Trace, Found);
 
@@ -615,7 +614,8 @@ package body Lith.Machine.SECD is
                              (Machine.Show (Machine.Stack));
                         end if;
                         begin
-                           Lith.Environment.Define (To_Symbol (Name), Value);
+                           Machine.Define_Top_Level
+                             (To_Symbol (Name), Value);
                         exception
                            when others =>
                               Ada.Text_IO.Put_Line
@@ -652,10 +652,10 @@ package body Lith.Machine.SECD is
                        or else (Found and then Global)
                      then
                         if Found then
-                           Lith.Environment.Replace
+                           Machine.Define_Top_Level
                              (To_Symbol (Name), Value);
                         else
-                           Lith.Environment.Define
+                           Machine.Define_Top_Level
                              (To_Symbol (Name), Value);
                         end if;
                      else
@@ -1238,7 +1238,8 @@ package body Lith.Machine.SECD is
          Outer := Machine.Cdr (Outer);
       end loop;
 
-      Lith.Environment.Get (Symbol, Result, Found);
+      Machine.Get_Top_Level
+        (Symbol, Result, Found);
       Global := Found;
       Found_Env := Nil;
    end Get;

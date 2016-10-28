@@ -5,7 +5,6 @@ with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;
 with Ada.Text_IO;
 
-with Lith.Environment;
 with Lith.Parser;
 with Lith.Objects.Symbols;
 
@@ -131,7 +130,21 @@ package body Lith.Machine is
          end;
       end loop;
 
-      Lith.Environment.Mark (Machine);
+      declare
+         procedure Set_Mark (Item : in out Lith.Objects.Object);
+
+         --------------
+         -- Set_Mark --
+         --------------
+
+         procedure Set_Mark (Item : in out Lith.Objects.Object) is
+         begin
+            Machine.Mark (Item);
+         end Set_Mark;
+
+      begin
+         Machine.Top_Environment.Update (Set_Mark'Access);
+      end;
 
    end Before_GC;
 
@@ -332,6 +345,23 @@ package body Lith.Machine is
       return Lith.Objects.To_Object (Address);
    end Create_External_Reference;
 
+   ----------------------
+   -- Define_Top_Level --
+   ----------------------
+
+   overriding procedure Define_Top_Level
+     (Machine : in out Root_Lith_Machine;
+      Name    : Lith.Objects.Symbol_Type;
+      Value   : Lith.Objects.Object)
+   is
+   begin
+      if Machine.Top_Environment.Contains (Name) then
+         Machine.Top_Environment.Replace (Name, Value);
+      else
+         Machine.Top_Environment.Insert (Name, Value);
+      end if;
+   end Define_Top_Level;
+
    --------------
    -- Evaluate --
    --------------
@@ -487,6 +517,25 @@ package body Lith.Machine is
       return Machine.External_Objects (Address).External_Object;
    end Get_External_Object;
 
+   -------------------
+   -- Get_Top_Level --
+   -------------------
+
+   overriding procedure Get_Top_Level
+     (Machine : Root_Lith_Machine;
+      Name    : Lith.Objects.Symbol_Type;
+      Value   : out Lith.Objects.Object;
+      Found   : out Boolean)
+   is
+   begin
+      if Machine.Top_Environment.Contains (Name) then
+         Value := Machine.Top_Environment.Element (Name);
+         Found := True;
+      else
+         Found := False;
+      end if;
+   end Get_Top_Level;
+
    ---------
    -- Hit --
    ---------
@@ -518,7 +567,7 @@ package body Lith.Machine is
         and then (Is_Function (Item)
                   or else Lith.Objects.Symbols.Is_Predefined
                     (To_Symbol (Item))
-                  or else Lith.Environment.Get (To_Symbol (Item), No_Value)
+                  or else Machine.Get_Top_Level (To_Symbol (Item), No_Value)
                   /= No_Value)
       then
          declare

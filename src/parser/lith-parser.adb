@@ -41,6 +41,7 @@ package body Lith.Parser is
       Path    : String)
    is
    begin
+      Ada.Text_IO.Put_Line ("loading: " & Path);
       Open (Path);
       while Tok /= Tok_End_Of_File loop
          Parse_S_Expression (Store, Quasiquote => False);

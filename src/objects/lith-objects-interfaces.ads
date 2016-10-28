@@ -35,4 +35,7 @@ package Lith.Objects.Interfaces is
         (Store : in out Object_Store'Class);
    end Registration;
 
+   procedure Bind_Primitives
+     (Store : in out Object_Store'Class);
+
 end Lith.Objects.Interfaces;

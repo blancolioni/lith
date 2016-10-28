@@ -99,6 +99,26 @@ package body Lith.Objects is
       end return;
    end Evaluate;
 
+   ---------
+   -- Get --
+   ---------
+
+   function Get_Top_Level
+     (Store   : Object_Store'Class;
+      Name    : Lith.Objects.Symbol_Type;
+      Default : Lith.Objects.Object := Lith.Objects.Nil)
+      return Lith.Objects.Object
+   is
+      Found : Boolean;
+      Value : Object;
+   begin
+      Store.Get_Top_Level (Name, Value, Found);
+      if not Found then
+         Value := Default;
+      end if;
+      return Value;
+   end Get_Top_Level;
+
    ---------------
    -- Hex_Image --
    ---------------
