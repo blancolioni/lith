@@ -155,6 +155,17 @@ package Lith.Machine is
    overriding procedure Pop_Environment
      (Machine : in out Root_Lith_Machine);
 
+   overriding procedure Define_Top_Level
+     (Machine : in out Root_Lith_Machine;
+      Name    : Lith.Objects.Symbol_Type;
+      Value   : Lith.Objects.Object);
+
+   overriding procedure Get_Top_Level
+     (Machine : Root_Lith_Machine;
+      Name    : Lith.Objects.Symbol_Type;
+      Value   : out Lith.Objects.Object;
+      Found   : out Boolean);
+
    overriding function Load (Machine : in out Root_Lith_Machine;
                              Path    : String)
                              return Boolean;
@@ -267,11 +278,16 @@ private
    subtype Argument_Index is Positive range 1 .. 32;
    type Argument_Values is array (Argument_Index) of Lith.Objects.Object;
 
+   package Environment_Maps is
+     new Lith.Objects.Symbol_Maps (Lith.Objects.Object,
+                                   Lith.Objects."=");
+
    type Root_Lith_Machine is limited new Lith.Objects.Object_Store
      and Lith.Memory.GC_Interface with
       record
          Core_Size         : Natural;
          Core              : Lith.Memory.Lith_Memory;
+         Top_Environment   : Environment_Maps.Map;
          Source_Refs       : access Memory_Source_Reference_Type;
          Stack             : Lith.Objects.Object;
          Environment       : Lith.Objects.Object;

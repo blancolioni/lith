@@ -267,6 +267,26 @@ package Lith.Objects is
    is abstract;
    --  clear everything except the global environment
 
+   procedure Define_Top_Level
+     (Store : in out Object_Store;
+      Name  : Lith.Objects.Symbol_Type;
+      Value : Lith.Objects.Object)
+   is abstract;
+   --  define a top-level value
+
+   procedure Get_Top_Level
+     (Store : Object_Store;
+      Name  : Lith.Objects.Symbol_Type;
+      Value : out Lith.Objects.Object;
+      Found : out Boolean)
+   is abstract;
+
+   function Get_Top_Level
+     (Store   : Object_Store'Class;
+      Name    : Lith.Objects.Symbol_Type;
+      Default : Lith.Objects.Object := Lith.Objects.Nil)
+      return Lith.Objects.Object;
+
    procedure Create_List
      (Store : in out Object_Store'Class;
       Length : Natural);

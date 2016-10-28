@@ -2,7 +2,6 @@ with Ada.Directories;
 with Ada.Exceptions;
 with Ada.Text_IO;
 
-with Lith.Environment;
 with Lith.Parser;
 with Lith.Objects.Symbols;
 
@@ -30,7 +29,7 @@ package body Lith.Repl is
            (Store.all, String'("auto.l"));
       end if;
 
-      while Lith.Environment.Get
+      while Store.Get_Top_Level
         (Lith.Objects.Symbols.Get_Symbol ("__exit")) = False_Value
       loop
          Put ("Lith> ");

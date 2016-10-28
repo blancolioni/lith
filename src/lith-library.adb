@@ -1,10 +1,26 @@
+with Ada.Unchecked_Deallocation;
+
 with Lith.Init;
+with Lith.Machine;
 with Lith.Parser;
 with Lith.Repl;
 
 with Lith.Paths;
 
 package body Lith.Library is
+
+   --------------------
+   -- Close_Instance --
+   --------------------
+
+   procedure Close_Instance (Instance : in out Object_Store_Instance) is
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Lith.Objects.Object_Store'Class,
+                                        Object_Store_Instance);
+   begin
+      Free (Instance);
+      Instance := null;
+   end Close_Instance;
 
    ----------------
    -- Initialise --
@@ -35,6 +51,24 @@ package body Lith.Library is
          raise Constraint_Error with "load failed";
       end if;
    end Load;
+
+   ------------------
+   -- New_Instance --
+   ------------------
+
+   function New_Instance
+     (Core_Size          : Natural := 64 * 1024)
+      return Object_Store_Instance
+   is
+      Machine : constant Lith.Machine.Lith_Machine :=
+                  Lith.Machine.Create (Core_Size);
+   begin
+      Lith.Init.Init_Store (Machine.all);
+      Lith.Parser.Parse_File
+        (Machine.all,
+         Lith.Paths.Config_Path & "/interaction-environment.scm");
+      return Object_Store_Instance (Machine);
+   end New_Instance;
 
    ----------------
    -- Start_Repl --
