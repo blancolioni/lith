@@ -54,6 +54,7 @@ package body Lith.Parser is
                Ada.Text_IO.Put_Line
                  (Store.Show (Result));
             end if;
+            Store.Reset;
          end;
       end loop;
       Close;

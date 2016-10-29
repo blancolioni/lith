@@ -48,6 +48,7 @@ package body Lith.Repl is
                   if Result /= No_Value then
                      Put_Line (Store.Show (Result));
                   end if;
+                  Store.Reset;
                end;
             end if;
          exception
