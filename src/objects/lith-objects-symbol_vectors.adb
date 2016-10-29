@@ -10,7 +10,12 @@ package body Lith.Objects.Symbol_Vectors is
       return Element_Type
    is
    begin
-      return Container.Internal.Element (Positive (Index));
+      if Container.Internal.Last_Index >= Positive (Index) then
+         return Container.Internal.Element (Positive (Index));
+      else
+         raise Constraint_Error with
+           "bad symbol:" & Symbol_Type'Image (Index);
+      end if;
    end Element;
 
    -----------------
