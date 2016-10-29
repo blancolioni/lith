@@ -277,6 +277,22 @@ package body Lith.Objects is
       Store.Push (Nil);
    end Push_Nil;
 
+   -----------------
+   -- Push_String --
+   -----------------
+
+   procedure Push_String
+     (Store   : in out Object_Store'Class;
+      Value   : String)
+   is
+   begin
+      Store.Push (Lith.Objects.String_Value);
+      for Ch of Value loop
+         Store.Push (Lith.Objects.To_Object (Ch));
+      end loop;
+      Store.Create_List (Value'Length + 1);
+   end Push_String;
+
    ---------------
    -- Scan_List --
    ---------------

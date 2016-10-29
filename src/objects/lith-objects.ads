@@ -18,6 +18,7 @@ package Lith.Objects is
    No_Value             : constant Object;
    String_Value         : constant Object;
    End_Of_File_Object   : constant Object;
+   Error_Value          : constant Object;
 
    function To_Object (X : Boolean) return Object
    is (if X then True_Value else False_Value);
@@ -204,6 +205,10 @@ package Lith.Objects is
    procedure Push
      (Store   : in out Object_Store'Class;
       Value   : Integer);
+
+   procedure Push_String
+     (Store   : in out Object_Store'Class;
+      Value   : String);
 
    procedure Push_Nil
      (Store : in out Object_Store'Class);
@@ -412,6 +417,10 @@ private
    End_Of_File_Object  : constant Object :=
                            (Payload => 6,
                             Tag     => Internal_Object);
+
+   Error_Value  : constant Object :=
+                    (Payload => 7,
+                     Tag     => Internal_Object);
 
    type Symbol_Type is new Object_Payload;
 
