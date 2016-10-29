@@ -158,18 +158,7 @@ package body Lith.Parser is
                  (Tok_Character_Value));
             Scan;
          when Tok_String =>
-            Store.Push (Lith.Objects.String_Value);
-            declare
-               S : constant String := Tok_Text;
-            begin
-               for Ch of S loop
-                  Store.Push (Lith.Objects.To_Object (Ch));
-               end loop;
-               Store.Push (Lith.Objects.Nil);
-               for I in 1 .. S'Length + 1 loop
-                  Store.Cons;
-               end loop;
-            end;
+            Store.Push_String (Tok_Text);
             Scan;
          when Tok_Quote =>
             Scan;
