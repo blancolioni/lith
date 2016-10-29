@@ -182,6 +182,9 @@ package body Lith.Objects.Symbols is
    is
    begin
       return Symbol_To_Name_Map.Element (Symbol);
+   exception
+      when Constraint_Error =>
+         return "#error" & Integer'Image (-Integer (Symbol));
    end Get_Name;
 
    ----------------
