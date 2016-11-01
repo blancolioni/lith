@@ -9,6 +9,11 @@ package Lith.Objects.Interfaces is
       Argument_Count : Natural;
       Eval           : Simple_Evaluator);
 
+   procedure Define_Function
+     (Store          : not null access Object_Store'Class;
+      Name           : String;
+      Eval           : Simple_Evaluator);
+
    type Root_Function_Interface is interface;
 
    function Evaluate

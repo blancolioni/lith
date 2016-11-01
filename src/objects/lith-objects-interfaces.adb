@@ -71,6 +71,24 @@ package body Lith.Objects.Interfaces is
    ---------------------
 
    procedure Define_Function
+     (Store          : not null access Object_Store'Class;
+      Name           : String;
+      Eval           : Simple_Evaluator)
+   is
+   begin
+      New_Def (Name,
+               Simple_Function_Evaluator'
+                 (Root_Function_Interface with Eval => Eval));
+      Store.Define_Top_Level
+        (Defs.Last_Element.Name,
+         To_Object (Defs.Last_Element.Fn));
+   end Define_Function;
+
+   ---------------------
+   -- Define_Function --
+   ---------------------
+
+   procedure Define_Function
      (Name   : String;
       Eval   : Root_Function_Interface'Class)
    is
