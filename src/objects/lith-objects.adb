@@ -234,6 +234,19 @@ package body Lith.Objects is
    end Is_Pair;
 
    ---------------
+   -- Is_String --
+   ---------------
+
+   function Is_String
+     (Store    : in out Object_Store'Class;
+      Item     : Object)
+      return Boolean
+   is
+   begin
+      return Is_Pair (Item) and then Store.Car (Item) = String_Value;
+   end Is_String;
+
+   ---------------
    -- Is_Symbol --
    ---------------
 
