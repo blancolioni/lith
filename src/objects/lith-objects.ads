@@ -168,6 +168,10 @@ package Lith.Objects is
                   return Boolean
                   is abstract;
 
+   function Is_String (Store    : in out Object_Store'Class;
+                       Item     : Object)
+                       return Boolean;
+
    function To_String (Store    : in out Object_Store'Class;
                        Item     : Object)
                        return String;
