@@ -30,6 +30,7 @@ package body Lith.Primitives is
 
    overriding function Evaluate
      (Predicate : Predicate_Evaluator;
+      Name      : Lith.Objects.Symbol_Type;
       Store     : in out Lith.Objects.Object_Store'Class)
      return Lith.Objects.Object;
 
@@ -239,9 +240,11 @@ package body Lith.Primitives is
 
    overriding function Evaluate
      (Predicate : Predicate_Evaluator;
+      Name      : Lith.Objects.Symbol_Type;
       Store     : in out Lith.Objects.Object_Store'Class)
      return Lith.Objects.Object
    is
+      pragma Unreferenced (Name);
    begin
       return Lith.Objects.To_Object
         (Predicate.Fn
