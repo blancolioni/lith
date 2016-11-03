@@ -21,6 +21,7 @@ package Lith.Objects.Interfaces is
    type Function_Argument_Type is private;
 
    function Any_Argument_Type return Function_Argument_Type;
+   function Atom_Argument return Function_Argument_Type;
    function Integer_Argument return Function_Argument_Type;
    function String_Argument return Function_Argument_Type;
    function Symbol_Argument return Function_Argument_Type;
@@ -106,6 +107,9 @@ private
 
    function Any_Argument_Type return Function_Argument_Type
    is (Custom_Argument (Is_Any'Access));
+
+   function Atom_Argument return Function_Argument_Type
+   is (Custom_Argument (Is_Atom'Access));
 
    function Integer_Argument return Function_Argument_Type
    is (Custom_Argument (Is_Integer'Access));
