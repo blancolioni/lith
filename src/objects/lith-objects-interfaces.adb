@@ -1,6 +1,8 @@
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Indefinite_Holders;
 with Ada.Containers.Vectors;
+with Ada.Exceptions;
+with Ada.Text_IO;
 
 with Lith.Parser;
 with Lith.Objects.Symbols;
@@ -189,7 +191,18 @@ package body Lith.Objects.Interfaces is
          end loop;
       end if;
 
-      return Fn.Eval (Store);
+      begin
+         return Fn.Eval (Store);
+      exception
+         when E : others =>
+            Ada.Text_IO.Put_Line
+              (Ada.Text_IO.Standard_Error,
+               "error while evaluating primitive "
+               & Symbols.Get_Name (Name)
+               & ": " & Ada.Exceptions.Exception_Message (E));
+            raise;
+      end;
+
    end Evaluate;
 
    -------------
