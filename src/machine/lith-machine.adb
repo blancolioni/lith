@@ -820,6 +820,16 @@ package body Lith.Machine is
    is
    begin
       Machine.Report_Memory;
+      if False then
+         Ada.Text_IO.Put_Line ("REGISTERS");
+         for R in Machine.R'Range loop
+            Ada.Text_IO.Put_Line
+              ("   " & R'Img & ": "
+               & Machine.Show (Machine.R (R)));
+         end loop;
+      end if;
+
+      Ada.Text_IO.Put_Line ("STACKS");
       Ada.Text_IO.Put_Line
         (" S: " & Machine.Show (Machine.Stack));
       Ada.Text_IO.Put_Line
