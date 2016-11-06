@@ -20,13 +20,13 @@ package body Lith.Machine.SECD is
       Formals      : Lith.Objects.Object);
 
    procedure Get
-     (Machine : Root_Lith_Machine'Class;
+     (Machine : in out Root_Lith_Machine'Class;
       Symbol  : Lith.Objects.Symbol_Type;
       Result  : out Lith.Objects.Object;
       Found   : out Boolean);
 
    procedure Get
-     (Machine   : Root_Lith_Machine'Class;
+     (Machine   : in out Root_Lith_Machine'Class;
       Symbol    : Lith.Objects.Symbol_Type;
       Result    : out Lith.Objects.Object;
       Found_Env : out Lith.Objects.Object;
@@ -34,7 +34,7 @@ package body Lith.Machine.SECD is
       Global    : out Boolean);
 
    function Is_Macro
-     (Machine : Root_Lith_Machine'Class;
+     (Machine : in out Root_Lith_Machine'Class;
       F       : Lith.Objects.Object)
       return Boolean;
    --  returns True if F ultimately (or immediately) refers to a macro
@@ -1188,7 +1188,7 @@ package body Lith.Machine.SECD is
    ---------
 
    procedure Get
-     (Machine : Root_Lith_Machine'Class;
+     (Machine : in out Root_Lith_Machine'Class;
       Symbol  : Lith.Objects.Symbol_Type;
       Result  : out Lith.Objects.Object;
       Found   : out Boolean)
@@ -1206,7 +1206,7 @@ package body Lith.Machine.SECD is
    ---------
 
    procedure Get
-     (Machine   : Root_Lith_Machine'Class;
+     (Machine   : in out Root_Lith_Machine'Class;
       Symbol    : Lith.Objects.Symbol_Type;
       Result    : out Lith.Objects.Object;
       Found_Env : out Lith.Objects.Object;
@@ -1221,6 +1221,23 @@ package body Lith.Machine.SECD is
             Inner : Object := Machine.Car (Outer);
          begin
             while Inner /= Nil loop
+               if not Is_Pair (Inner) then
+                  Ada.Text_IO.Put_Line
+                    (Ada.Text_IO.Standard_Error,
+                     "malformed environment at " & Machine.Show (Inner)
+                     & " while looking for "
+                     & Lith.Objects.Symbols.Get_Name (Symbol));
+                  Ada.Text_IO.Put_Line
+                    (Ada.Text_IO.Standard_Error,
+                     "inner environment: "
+                     & Machine.Show (Machine.Car (Outer)));
+                  Ada.Text_IO.Put_Line
+                    (Ada.Text_IO.Standard_Error,
+                     "outer environment: "
+                     & Machine.Show (Machine.Environment));
+                  raise Evaluation_Error;
+               end if;
+
                declare
                   Item : constant Object := Machine.Car (Inner);
                begin
@@ -1307,7 +1324,7 @@ package body Lith.Machine.SECD is
    --------------
 
    function Is_Macro
-     (Machine : Root_Lith_Machine'Class;
+     (Machine : in out Root_Lith_Machine'Class;
       F       : Lith.Objects.Object)
       return Boolean
    is
