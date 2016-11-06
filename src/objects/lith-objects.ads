@@ -233,23 +233,9 @@ package Lith.Objects is
                       return Object
                       is abstract;
 
-   function Evaluate (Store         : in out Object_Store'Class;
-                      Expr          : Object;
-                      Binding_Name  : Symbol_Type;
-                      Binding_Value : Object)
-                      return Object;
-   --  Evaluate Expr in an environment containing one value (Binding_Value),
-   --  referenced by Binding_Name
-
    procedure Evaluate
      (Store : in out Object_Store'Class;
       Expr  : Object);
-
-   procedure Evaluate
-     (Store         : in out Object_Store'Class;
-      Expr          : Object;
-      Binding_Name  : Symbol_Type;
-      Binding_Value : Object);
 
    procedure New_Environment
      (Store : in out Object_Store)
