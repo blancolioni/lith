@@ -1,11 +1,13 @@
 with Ada.Calendar;
 with Ada.Text_IO;
 
+with Lith.Options;
+
 package body Lith.Memory is
 
    use Lith.Objects;
 
-   Trace_GC : constant Boolean := False;
+   Trace_GC : Boolean renames Lith.Options.Trace_GC;
 
    function From_Space (Memory : Lith_Memory;
                         Item   : Object)
@@ -340,14 +342,14 @@ package body Lith.Memory is
    begin
       Ada.Text_IO.Put_Line
         ("Total number of cells:"
-         & Cell_Address'Image (Memory.Core'Length));
+         & Cell_Address'Image (Memory.Core'Length / 2));
       Ada.Text_IO.Put_Line
         ("Allocated cell count: "
          & Natural'Image (Memory.Alloc_Count));
       Ada.Text_IO.Put_Line
         ("Free cell count: "
          & Natural'Image
-           (Natural (Memory.Core'Length
+           (Natural (Memory.Core'Length / 2
             - Memory.Alloc_Count)));
       Ada.Text_IO.Put_Line
         ("GC:"
