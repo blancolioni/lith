@@ -416,4 +416,7 @@ private
 
    type Function_Type is new Object_Payload;
 
+   function To_Address (Item : Object) return Cell_Address
+   is (Cell_Address (Item.Payload));
+
 end Lith.Objects;

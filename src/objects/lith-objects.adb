@@ -302,18 +302,6 @@ package body Lith.Objects is
       Store.Push (Store.Pop (Secondary));
    end Swap;
 
-   ----------------
-   -- To_Address --
-   ----------------
-
-   function To_Address
-     (Item : Object)
-      return Cell_Address
-   is
-   begin
-      return Cell_Address (Item.Payload);
-   end To_Address;
-
    ------------------
    -- To_Character --
    ------------------
