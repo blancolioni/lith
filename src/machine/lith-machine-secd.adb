@@ -504,8 +504,6 @@ package body Lith.Machine.SECD is
 
             Machine.Control := Cs;
 
-            Set_Context (Machine, C);
-
             if Machine.Profiling then
                Machine.Hit (C);
             end if;
@@ -558,7 +556,9 @@ package body Lith.Machine.SECD is
             elsif Is_External_Object (C) then
                Machine.Push (C);
             elsif Is_Symbol (C) then
-               Machine.Hit (C);
+               if Machine.Profiling then
+                  Machine.Hit (C);
+               end if;
                if C = Choice then
                   declare
                      Cond : constant Object := Machine.Pop;
@@ -711,6 +711,11 @@ package body Lith.Machine.SECD is
                      if Found then
                         Machine.Push (Value);
                      else
+                        Ada.Text_IO.Put_Line
+                          ("undefined symbol "
+                           & Get_Name (To_Symbol (C))
+                           & " found while evaluting: "
+                           & Machine.Show (Machine.Control));
                         raise Evaluation_Error with
                         Show (Machine, Machine.Current_Context)
                           & " undefined: "
