@@ -105,7 +105,7 @@ package Lith.Machine is
       Expression  : Lith.Objects.Object)
       return Lith.Objects.Object;
 
-   overriding procedure Set_Context
+   overriding procedure Set_File_Context
      (Machine     : in out Root_Lith_Machine;
       File_Name   : String;
       Line        : Natural);
@@ -143,17 +143,6 @@ package Lith.Machine is
    overriding procedure Mark
      (Machine : in out Root_Lith_Machine;
       Start   : in out Lith.Objects.Object);
-
-   overriding procedure New_Environment
-     (Machine : in out Root_Lith_Machine);
-
-   overriding procedure Create_Binding
-     (Machine : in out Root_Lith_Machine;
-      Name    : Lith.Objects.Symbol_Type;
-      Value   : Lith.Objects.Object);
-
-   overriding procedure Pop_Environment
-     (Machine : in out Root_Lith_Machine);
 
    overriding procedure Define_Top_Level
      (Machine : in out Root_Lith_Machine;
@@ -288,7 +277,6 @@ private
          Core_Size         : Natural;
          Core              : Lith.Memory.Lith_Memory;
          Top_Environment   : Environment_Maps.Map;
-         Source_Refs       : access Memory_Source_Reference_Type;
          Stack             : Lith.Objects.Object;
          Secondary_Stack   : Lith.Objects.Object;
          Environment       : Lith.Objects.Object;
@@ -323,13 +311,28 @@ private
       Mark     : not null access
         procedure (X : in out Lith.Objects.Object));
 
+   overriding procedure Save_Context
+     (Machine : in out Root_Lith_Machine);
+
+   overriding procedure New_Evaluation_Environment
+     (Machine : in out Root_Lith_Machine);
+
+   overriding procedure Add_Binding
+     (Machine : in out Root_Lith_Machine;
+      Name    : Lith.Objects.Symbol_Type;
+      Value   : Lith.Objects.Object);
+
+   overriding procedure Close_Evaluation_Environment
+     (Machine : in out Root_Lith_Machine);
+
+   overriding function Evaluate_With_Environment
+     (Machine : in out Root_Lith_Machine;
+      Expression : Lith.Objects.Object)
+      return Lith.Objects.Object;
+
    function Is_Free (Machine : Root_Lith_Machine'Class;
                      Address : Lith.Objects.Cell_Address)
                      return Boolean;
-
-   procedure Set_Context
-     (Machine : in out Root_Lith_Machine'Class;
-      Item    : Lith.Objects.Object);
 
    procedure Hit
      (Machine  : in out Root_Lith_Machine'Class;

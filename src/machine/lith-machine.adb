@@ -28,6 +28,26 @@ package body Lith.Machine is
        (Lith.Objects.External_Object_Interface'Class,
         External_Object_Access);
 
+   -----------------
+   -- Add_Binding --
+   -----------------
+
+   overriding procedure Add_Binding
+     (Machine : in out Root_Lith_Machine;
+      Name    : Lith.Objects.Symbol_Type;
+      Value   : Lith.Objects.Object)
+   is
+      use Lith.Objects;
+      Count : constant Natural := To_Integer (Machine.Pop (Secondary));
+   begin
+      Machine.Push (Value);
+      Machine.Push (To_Object (Name));
+      Machine.Swap;
+      Machine.Cons;
+      Machine.Push (Machine.Pop, Secondary);
+      Machine.Push (To_Object (Count + 1), Secondary);
+   end Add_Binding;
+
    --------------
    -- Add_Hook --
    --------------
@@ -55,6 +75,11 @@ package body Lith.Machine is
             if Item.Marked then
                Item.Marked := False;
             elsif not Item.Free then
+--                 if Lith.Options.Trace_GC then
+--                    Ada.Text_IO.Put_Line
+--                      ("Free external:" & I'Img & ": "
+--                       & Item.External_Object.Name);
+--                 end if;
                Item.External_Object.Finalize (Machine);
                Free (Item.External_Object);
                Item.Free := True;
@@ -222,6 +247,25 @@ package body Lith.Machine is
          Lith.Objects.To_Address (Value));
    end Cdr;
 
+   ----------------------------------
+   -- Close_Evaluation_Environment --
+   ----------------------------------
+
+   overriding procedure Close_Evaluation_Environment
+     (Machine : in out Root_Lith_Machine)
+   is
+      Count : constant Natural :=
+                Lith.Objects.To_Integer (Machine.Pop (Lith.Objects.Secondary));
+   begin
+      if False then
+         Ada.Text_IO.Put_Line
+           ("Close_Evaluation_Environment");
+         Machine.Report_State;
+      end if;
+
+      Machine.Drop (Count, Lith.Objects.Secondary);
+   end Close_Evaluation_Environment;
+
    ----------
    -- Cons --
    ----------
@@ -264,8 +308,6 @@ package body Lith.Machine is
    is
       use Lith.Objects;
       Machine : constant Lith_Machine := new Root_Lith_Machine;
-      Last_Address : constant Cell_Address :=
-                       Cell_Address (Core_Size - 1);
    begin
       Machine.Core_Size := Core_Size;
       Machine.Core :=
@@ -276,11 +318,6 @@ package body Lith.Machine is
          Lith.Memory.Tests.Self_Test (Machine.Core);
       end if;
 
-      Machine.Source_Refs :=
-        new Memory_Source_Reference_Type (0 .. Last_Address);
-
-      Machine.Source_Refs.all := (others => (0, 0));
-
       Machine.Stack := Nil;
       Machine.Secondary_Stack := Nil;
       Machine.Control := Nil;
@@ -289,27 +326,6 @@ package body Lith.Machine is
 
       return Machine;
    end Create;
-
-   --------------------
-   -- Create_Binding --
-   --------------------
-
-   overriding procedure Create_Binding
-     (Machine : in out Root_Lith_Machine;
-      Name    : Lith.Objects.Symbol_Type;
-      Value   : Lith.Objects.Object)
-   is
-   begin
-      Machine.Push (Value);
-      Machine.Push (Name);
-      Machine.Swap;
-      Machine.Cons;
-      Machine.Push (Machine.Car (Machine.Environment));
-      Machine.Cons;
-      Machine.Push (Machine.Cdr (Machine.Environment));
-      Machine.Cons;
-      Machine.Environment := Machine.Pop;
-   end Create_Binding;
 
    -------------------------------
    -- Create_External_Reference --
@@ -343,6 +359,9 @@ package body Lith.Machine is
       else
          Machine.External_Objects (Address) := New_Entry;
       end if;
+
+--        Ada.Text_IO.Put_Line
+--          ("created " & External.Name & " at" & Address'Img);
 
       return Lith.Objects.To_Object (Address);
    end Create_External_Reference;
@@ -403,19 +422,98 @@ package body Lith.Machine is
          use Lith.Objects;
          Result : constant Object := Machine.Pop;
       begin
-         if Machine.Dump /= Nil
-           or else Machine.Control /= Nil
-           or else Machine.Stack /= Nil
-         then
-            Ada.Text_IO.Put_Line
-              (Ada.Text_IO.Standard_Error,
-               "warning: machine state not clean after evaluation");
-            Machine.Report_State;
+         if False then
+            if Machine.Dump /= Nil
+              or else Machine.Control /= Nil
+              or else Machine.Stack /= Nil
+            then
+               Ada.Text_IO.Put_Line
+                 (Ada.Text_IO.Standard_Error,
+                  "warning: machine state not clean after evaluation");
+               Machine.Report_State;
+            end if;
          end if;
          return Result;
       end;
 
    end Evaluate;
+
+   -------------------------------
+   -- Evaluate_With_Environment --
+   -------------------------------
+
+   overriding function Evaluate_With_Environment
+     (Machine    : in out Root_Lith_Machine;
+      Expression : Lith.Objects.Object)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects;
+      Count : constant Natural := To_Integer (Machine.Pop (Secondary));
+      Env   : Object renames Machine.R (1);
+      It    : Object renames Machine.R (2);
+      Expr  : Object renames Machine.R (3);
+   begin
+
+      if False then
+         Ada.Text_IO.Put_Line
+           ("Evaluate_With_Environment: count =" & Count'Img);
+         Machine.Report_State;
+      end if;
+
+      Env := Machine.Secondary_Stack;
+      Expr := Expression;
+
+      It := Env;
+      for I in 1 .. Count loop
+         Machine.Push (Machine.Caar (It), Secondary);
+         It := Machine.Cdr (It);
+      end loop;
+
+      Machine.Push (Lith.Objects.Symbols.Lambda_Symbol);
+      for I in 1 .. Count loop
+         Machine.Push (Machine.Pop (Secondary));
+      end loop;
+      Machine.Create_List (Count);
+      Machine.Push (Expr);
+      Machine.Create_List (3);
+
+      It := Env;
+      for I in 1 .. Count loop
+         Machine.Push (Machine.Cdar (It), Secondary);
+         It := Machine.Cdr (It);
+      end loop;
+
+      for I in 1 .. Count loop
+         Machine.Push (Machine.Pop (Secondary));
+      end loop;
+
+      Machine.Create_List (Count + 1);
+
+      if False then
+         Ada.Text_IO.Put_Line
+           ("Evaluate_With_Environment: calling Evaluate");
+         Machine.Report_State;
+      end if;
+
+      Expr := Machine.Evaluate (Machine.Pop);
+
+      if False then
+         Ada.Text_IO.Put_Line
+           ("Evaluate_With_Environment: after calling Evaluate");
+         Machine.Report_State;
+      end if;
+
+      Machine.Push (To_Object (Count), Secondary);
+
+      if False then
+         Ada.Text_IO.Put_Line
+           ("Evaluate_With_Environment: returning");
+         Machine.Report_State;
+      end if;
+
+      return Expr;
+
+   end Evaluate_With_Environment;
 
    --------------------
    -- Finish_Profile --
@@ -516,6 +614,11 @@ package body Lith.Machine is
       Address : constant Real_External_Address :=
                   Lith.Objects.To_External_Object_Address (Item);
    begin
+      if Machine.External_Objects (Address).External_Object = null then
+         Ada.Text_IO.Put_Line
+           ("attempt to retrieve free external object at"
+            & Address'Img);
+      end if;
       return Machine.External_Objects (Address).External_Object;
    end Get_External_Object;
 
@@ -549,22 +652,7 @@ package body Lith.Machine is
       use Lith.Objects;
    begin
       if Is_Address (Item) then
-         if Machine.Source_Refs (To_Address (Item)).Line /= 0 then
-            declare
-               use Profile_Source_Maps;
-               Ref : constant Source_Reference :=
-                       Machine.Source_Refs (To_Address (Item));
-               Position : constant Cursor := Machine.Source_Profile.Find (Ref);
-            begin
-               if Has_Element (Position) then
-                  Machine.Source_Profile.Replace_Element
-                    (Position,
-                     (Hit_Count => Element (Position).Hit_Count + 1));
-               else
-                  Machine.Source_Profile.Insert (Ref, (Hit_Count => 1));
-               end if;
-            end;
-         end if;
+         null;
       elsif Is_Symbol (Item)
         and then (Is_Function (Item)
                   or else Lith.Objects.Symbols.Is_Predefined
@@ -649,24 +737,25 @@ package body Lith.Machine is
         procedure (X : in out Lith.Objects.Object))
    is
    begin
+--        Ada.Text_IO.Put_Line
+--          ("mark: "
+--           & Machine.External_Objects (External).External_Object.Name);
       Machine.External_Objects (External).External_Object.Mark
         (Machine, Mark);
       Machine.External_Objects (External).Marked := True;
    end Mark_External_Object;
 
-   ---------------------
-   -- New_Environment --
-   ---------------------
+   --------------------------------
+   -- New_Evaluation_Environment --
+   --------------------------------
 
-   overriding procedure New_Environment
+   overriding procedure New_Evaluation_Environment
      (Machine : in out Root_Lith_Machine)
    is
    begin
-      Machine.Push (Lith.Objects.Nil);
-      Machine.Push (Machine.Environment);
-      Machine.Cons;
-      Machine.Environment := Machine.Pop;
-   end New_Environment;
+      Machine.Push (Lith.Objects.To_Object (Integer'(0)),
+                    Lith.Objects.Secondary);
+   end New_Evaluation_Environment;
 
    ---------
    -- Pop --
@@ -710,17 +799,6 @@ package body Lith.Machine is
       end case;
       return Result;
    end Pop;
-
-   ---------------------
-   -- Pop_Environment --
-   ---------------------
-
-   overriding procedure Pop_Environment
-     (Machine : in out Root_Lith_Machine)
-   is
-   begin
-      Machine.Environment := Machine.Cdr (Machine.Environment);
-   end Pop_Environment;
 
    ----------
    -- Push --
@@ -824,16 +902,6 @@ package body Lith.Machine is
    is
    begin
       Machine.Report_Memory;
-      if False then
-         Ada.Text_IO.Put_Line ("REGISTERS");
-         for R in Machine.R'Range loop
-            Ada.Text_IO.Put_Line
-              ("   " & R'Img & ": "
-               & Machine.Show (Machine.R (R)));
-         end loop;
-      end if;
-
-      Ada.Text_IO.Put_Line ("STACKS");
       Ada.Text_IO.Put_Line
         ("  S: " & Machine.Show (Machine.Stack));
       Ada.Text_IO.Put_Line
@@ -880,6 +948,39 @@ package body Lith.Machine is
       Machine.Handlers := Lith.Objects.Nil;
    end Reset;
 
+   ------------------
+   -- Save_Context --
+   ------------------
+
+   overriding procedure Save_Context
+     (Machine : in out Root_Lith_Machine)
+   is
+      File_Reference_Name : constant String :=
+                         "lith-file"
+                         & Integer'Image
+        (-Integer (Machine.Current_Context.File));
+      File_Reference      : constant Lith.Objects.Symbol_Type :=
+                              Lith.Objects.Symbols.Get_Symbol
+                                (File_Reference_Name);
+      Value          : Lith.Objects.Object;
+      Exists         : Boolean;
+   begin
+      Machine.Get_Top_Level (File_Reference, Value, Exists);
+      if not Exists then
+         Value := Lith.Objects.Nil;
+         Machine.Define_Top_Level (File_Reference, Value);
+      end if;
+      Machine.Push (Machine.Top);
+      Machine.Push (Machine.Get_Top_Level (File_Reference));
+      Machine.Swap;
+      Machine.Push
+        (Lith.Objects.To_Object
+           (Natural (Machine.Current_Context.Line)));
+      Machine.Create_List (2);
+      Machine.Cons;
+      Machine.Define_Top_Level (File_Reference, Machine.Pop);
+   end Save_Context;
+
    -------------
    -- Set_Car --
    -------------
@@ -914,7 +1015,7 @@ package body Lith.Machine is
    -- Set_Context --
    -----------------
 
-   overriding procedure Set_Context
+   overriding procedure Set_File_Context
      (Machine   : in out Root_Lith_Machine;
       File_Name : String;
       Line      : Natural)
@@ -930,25 +1031,7 @@ package body Lith.Machine is
          Machine.Source_Files.Insert (Name, File);
       end if;
       Machine.Current_Context := (File, Line_Number (Line));
-   end Set_Context;
-
-   -----------------
-   -- Set_Context --
-   -----------------
-
-   procedure Set_Context
-     (Machine : in out Root_Lith_Machine'Class;
-      Item    : Lith.Objects.Object)
-   is
-      use Lith.Objects;
-   begin
-      if Is_Address (Item)
-        and then Machine.Source_Refs (To_Address (Item)).Line /= 0
-      then
-         Machine.Current_Context :=
-           Machine.Source_Refs (To_Address (Item));
-      end if;
-   end Set_Context;
+   end Set_File_Context;
 
    ----------
    -- Show --
