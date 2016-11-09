@@ -62,6 +62,59 @@ package body Lith.Objects is
       null;
    end Evaluate;
 
+   --------------
+   -- Evaluate --
+   --------------
+
+   function Evaluate
+     (Store      : in out Object_Store'Class;
+      Expression : Object;
+      Name       : Symbol_Type;
+      Value      : Object)
+      return Object
+   is
+   begin
+      Store.New_Evaluation_Environment;
+      Store.Add_Binding (Name, Value);
+      return X : constant Object :=
+        Store.Evaluate_With_Environment (Expression)
+      do
+         Store.Close_Evaluation_Environment;
+      end return;
+   end Evaluate;
+
+   --------------
+   -- Evaluate --
+   --------------
+
+   procedure Evaluate
+     (Store      : in out Object_Store'Class;
+      Expression : Object;
+      Name       : Symbol_Type;
+      Value      : Object)
+   is
+      Unused : constant Object :=
+                 Store.Evaluate (Expression, Name, Value);
+      pragma Unreferenced (Unused);
+   begin
+      null;
+   end Evaluate;
+
+   -------------------------------
+   -- Evaluate_With_Environment --
+   -------------------------------
+
+   procedure Evaluate_With_Environment
+     (Store      : in out Object_Store'Class;
+      Expression : Object)
+   is
+      Unused : constant Object :=
+                 Store.Evaluate_With_Environment (Expression);
+      pragma Unreferenced (Unused);
+   begin
+      null;
+   end Evaluate_With_Environment;
+
    ---------
    -- Get --
    ---------

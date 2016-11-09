@@ -107,7 +107,7 @@ package body Lith.Parser is
 
    begin
 
-      Store.Set_Context (Current_File_Name, Current_Line);
+      Store.Set_File_Context (Current_File_Name, Current_Line);
 
       case Tok is
          when Tok_Nil =>
@@ -200,6 +200,8 @@ package body Lith.Parser is
             Store.Push (Lith.Objects.Nil);
             Scan;
       end case;
+
+      Store.Save_Context;
 
    end Parse_S_Expression;
 

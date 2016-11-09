@@ -290,6 +290,7 @@ private
          Top_Environment   : Environment_Maps.Map;
          Source_Refs       : access Memory_Source_Reference_Type;
          Stack             : Lith.Objects.Object;
+         Secondary_Stack   : Lith.Objects.Object;
          Environment       : Lith.Objects.Object;
          Control           : Lith.Objects.Object;
          Dump              : Lith.Objects.Object;
