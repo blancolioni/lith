@@ -116,6 +116,7 @@ package body Lith.Machine is
       end loop;
 
       Mark (Machine.Stack);
+      Mark (Machine.Secondary_Stack);
       Mark (Machine.Environment);
       Mark (Machine.Control);
       Mark (Machine.Dump);
@@ -281,6 +282,7 @@ package body Lith.Machine is
       Machine.Source_Refs.all := (others => (0, 0));
 
       Machine.Stack := Nil;
+      Machine.Secondary_Stack := Nil;
       Machine.Control := Nil;
       Machine.Dump := Nil;
       Machine.Handlers := Nil;
@@ -679,7 +681,7 @@ package body Lith.Machine is
       SP     : constant Lith.Objects.Object :=
                  (case Stack is
                      when Primary   => Machine.Stack,
-                     when Secondary => Machine.Dump);
+                     when Secondary => Machine.Secondary_Stack);
       Result : constant Lith.Objects.Object :=
                  Machine.Car (SP);
    begin
@@ -688,14 +690,15 @@ package body Lith.Machine is
             Stack_Name : constant String :=
                            (case Stack is
                                when Primary   => "[S]",
-                               when Secondary => "[D]");
+                               when Secondary => "[SS]");
          begin
             Ada.Text_IO.Put_Line
               ("machine: pop " & Stack_Name & " " & Machine.Show (Result)
                & " <-- " &
                (case Stack is
                      when Primary => Machine.Show (Machine.Stack),
-                     when Secondary => Machine.Show (Machine.Dump)));
+                     when Secondary =>
+                        Machine.Show (Machine.Secondary_Stack)));
 
          end;
       end if;
@@ -703,7 +706,7 @@ package body Lith.Machine is
          when Primary =>
             Machine.Stack := Machine.Cdr (Machine.Stack);
          when Secondary =>
-            Machine.Dump := Machine.Cdr (Machine.Dump);
+            Machine.Secondary_Stack := Machine.Cdr (Machine.Secondary_Stack);
       end case;
       return Result;
    end Pop;
@@ -734,14 +737,15 @@ package body Lith.Machine is
          when Primary =>
             Machine.Stack := Machine.Cons (Value, Machine.Stack);
          when Secondary =>
-            Machine.Dump := Machine.Cons (Value, Machine.Dump);
+            Machine.Secondary_Stack :=
+              Machine.Cons (Value, Machine.Secondary_Stack);
       end case;
       if Lith.Options.Trace_Stack then
          declare
             Stack_Name : constant String :=
                            (case Stack is
                                when Primary   => "[S]",
-                               when Secondary => "[D]");
+                               when Secondary => "[SS]");
          begin
             Ada.Text_IO.Put_Line
               ("machine: push " & Stack_Name & " " & Machine.Show (Value)
@@ -831,15 +835,17 @@ package body Lith.Machine is
 
       Ada.Text_IO.Put_Line ("STACKS");
       Ada.Text_IO.Put_Line
-        (" S: " & Machine.Show (Machine.Stack));
+        ("  S: " & Machine.Show (Machine.Stack));
       Ada.Text_IO.Put_Line
-        (" E: " & Machine.Show (Machine.Environment));
+        (" SS: " & Machine.Show (Machine.Secondary_Stack));
       Ada.Text_IO.Put_Line
-        (" C: " & Machine.Show (Machine.Control));
+        ("  E: " & Machine.Show (Machine.Environment));
       Ada.Text_IO.Put_Line
-        (" D: " & Machine.Show (Machine.Dump));
+        ("  C: " & Machine.Show (Machine.Control));
       Ada.Text_IO.Put_Line
-        (" H: " & Machine.Show (Machine.Handlers));
+        ("  D: " & Machine.Show (Machine.Dump));
+      Ada.Text_IO.Put_Line
+        ("  H: " & Machine.Show (Machine.Handlers));
       Ada.Text_IO.Put_Line
         ("Eval:"
          & Natural'Image (Natural (Machine.Eval_Time * 1000.0))
@@ -867,6 +873,7 @@ package body Lith.Machine is
    is
    begin
       Machine.Stack := Lith.Objects.Nil;
+      Machine.Secondary_Stack := Lith.Objects.Nil;
       Machine.Environment := Lith.Objects.Nil;
       Machine.Control := Lith.Objects.Nil;
       Machine.Dump := Lith.Objects.Nil;
@@ -1217,7 +1224,7 @@ package body Lith.Machine is
       SP     : constant Lith.Objects.Object :=
                  (case Stack is
                      when Primary   => Machine.Stack,
-                     when Secondary => Machine.Dump);
+                     when Secondary => Machine.Secondary_Stack);
 
       function Get_Nth
         (From : Lith.Objects.Object;

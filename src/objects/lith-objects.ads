@@ -237,25 +237,53 @@ package Lith.Objects is
      (Store : in out Object_Store'Class;
       Expr  : Object);
 
-   procedure New_Environment
+   procedure New_Evaluation_Environment
      (Store : in out Object_Store)
    is abstract;
 
-   procedure Create_Binding
+   procedure Add_Binding
      (Store : in out Object_Store;
       Name  : Symbol_Type;
       Value : Object)
    is abstract;
 
-   procedure Pop_Environment
+   procedure Close_Evaluation_Environment
      (Store : in out Object_Store)
    is abstract;
 
-   procedure Set_Context
+   function Evaluate_With_Environment
+     (Store      : in out Object_Store;
+      Expression : Object)
+      return Object
+      is abstract;
+
+   procedure Evaluate_With_Environment
+     (Store      : in out Object_Store'Class;
+      Expression : Object);
+
+   function Evaluate
+     (Store      : in out Object_Store'Class;
+      Expression : Object;
+      Name       : Symbol_Type;
+      Value      : Object)
+      return Object;
+
+   procedure Evaluate
+     (Store      : in out Object_Store'Class;
+      Expression : Object;
+      Name       : Symbol_Type;
+      Value      : Object);
+
+   procedure Set_File_Context
      (Store       : in out Object_Store;
       File_Name   : String;
       Line_Number : Natural)
    is abstract;
+
+   procedure Save_Context
+     (Store       : in out Object_Store)
+   is abstract;
+   --  bind the object on top of the stack to the current file/line context
 
    procedure Reset
      (Store : in out Object_Store)
@@ -312,7 +340,9 @@ package Lith.Objects is
      (Store : Object_Store;
       Item  : Object)
       return access External_Object_Interface'Class
-     is abstract;
+      is abstract
+     with
+       Post'Class => Get_External_Object'Result /= null;
 
    function Create_External_Reference
      (Store    : in out Object_Store;
@@ -418,5 +448,10 @@ private
 
    function To_Address (Item : Object) return Cell_Address
    is (Cell_Address (Item.Payload));
+
+   type Evaluation_Bindings is tagged
+      record
+         Count : Natural := 0;
+      end record;
 
 end Lith.Objects;
