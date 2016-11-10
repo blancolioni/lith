@@ -158,13 +158,13 @@ package body Lith.Memory is
 
       Flip (Memory);
 
-      Mark (Memory, Memory.Alloc_Car);
-      Mark (Memory, Memory.Alloc_Cdr);
-      Mark (Memory, Memory.Test);
-
       if Memory.Callback /= null then
          Memory.Callback.Before_GC;
       end if;
+
+      Mark (Memory, Memory.Alloc_Car);
+      Mark (Memory, Memory.Alloc_Cdr);
+      Mark (Memory, Memory.Test);
 
       while Memory.Scan < Memory.Free loop
          declare
