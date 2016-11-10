@@ -20,6 +20,10 @@ package Lith.Objects.Interfaces is
 
    type Function_Argument_Type is private;
 
+   function "or"
+     (Left, Right : Function_Argument_Type)
+      return Function_Argument_Type;
+
    function Any_Argument_Type return Function_Argument_Type;
    function Atom_Argument return Function_Argument_Type;
    function Integer_Argument return Function_Argument_Type;
@@ -84,21 +88,33 @@ package Lith.Objects.Interfaces is
 
 private
 
-   type Function_Argument_Type is
+   type Argument_Option_Type is (Simple_Custom_Function,
+                                 Custom_Function,
+                                 Choice);
+
+   type Function_Argument_Type
+     (Option : Argument_Option_Type := Simple_Custom_Function)
+   is
       record
-         Simple_Validator : Simple_Argument_Validator_Function;
-         Validator        : Argument_Validator_Function;
+         case Option is
+            when Simple_Custom_Function =>
+               Simple_Validator : Simple_Argument_Validator_Function;
+            when Custom_Function =>
+               Validator        : Argument_Validator_Function;
+            when Choice =>
+               Left, Right      : access Function_Argument_Type;
+         end case;
       end record;
 
    function Custom_Argument
      (Validator : Argument_Validator_Function)
       return Function_Argument_Type
-   is ((null, Validator));
+   is ((Custom_Function, Validator));
 
    function Custom_Argument
      (Validator : Simple_Argument_Validator_Function)
       return Function_Argument_Type
-   is ((Validator, null));
+   is ((Simple_Custom_Function, Validator));
 
    function Is_Any (Store : in out Object_Store'Class;
                     Value : Object)
