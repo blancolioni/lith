@@ -132,6 +132,15 @@ package body Lith.Machine is
       end Mark;
    begin
 
+      for I in 1 .. Machine.External_Objects.Last_Index loop
+         declare
+            Item : External_Object_Record renames
+                     Machine.External_Objects (I);
+         begin
+            Item.Marked := False;
+         end;
+      end loop;
+
       for I in Machine.R'Range loop
          Mark (Machine.R (I));
       end loop;
@@ -150,15 +159,6 @@ package body Lith.Machine is
       Mark (Machine.Control);
       Mark (Machine.Dump);
       Mark (Machine.Handlers);
-
-      for I in 1 .. Machine.External_Objects.Last_Index loop
-         declare
-            Item : External_Object_Record renames
-                     Machine.External_Objects (I);
-         begin
-            Item.Marked := False;
-         end;
-      end loop;
 
       declare
          procedure Set_Mark (Item : in out Lith.Objects.Object);
