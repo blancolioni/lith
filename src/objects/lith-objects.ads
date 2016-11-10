@@ -197,6 +197,28 @@ package Lith.Objects is
       Start : in out Lith.Objects.Object)
    is abstract;
 
+   type Temporary_Register is range 1 .. 4;
+
+   procedure Set_Temporary
+     (Store     : in out Object_Store;
+      Temporary : Temporary_Register;
+      Value     : Object)
+   is abstract;
+   --  Assign Value to the indicated temporary.  Guaranteed not to
+   --  perform a garbage collection.  Any value stored in a temporary
+   --  is considered to be live when garbage collection in eventually
+   --  performed.
+
+   function Get_Temporary
+     (Store     : Object_Store;
+      Temporary : Temporary_Register)
+      return Object
+      is abstract;
+
+   procedure Clear_Temporary
+     (Store     : in out Object_Store'Class;
+      Temporary : Temporary_Register);
+
    procedure Push (Store     : in out Object_Store;
                    Value     : Object;
                    Stack     : Stack_Type := Primary)

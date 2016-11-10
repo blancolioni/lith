@@ -18,6 +18,18 @@ package body Lith.Objects is
       return Natural (Item.Payload);
    end Argument_Count;
 
+   ---------------------
+   -- Clear_Temporary --
+   ---------------------
+
+   procedure Clear_Temporary
+     (Store     : in out Object_Store'Class;
+      Temporary : Temporary_Register)
+   is
+   begin
+      Store.Set_Temporary (Temporary, Nil);
+   end Clear_Temporary;
+
    -----------------
    -- Create_List --
    -----------------

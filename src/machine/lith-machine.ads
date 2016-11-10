@@ -267,6 +267,9 @@ private
    subtype Argument_Index is Positive range 1 .. 32;
    type Argument_Values is array (Argument_Index) of Lith.Objects.Object;
 
+   type Temporary_Values is
+     array (Lith.Objects.Temporary_Register) of Lith.Objects.Object;
+
    package Environment_Maps is
      new Lith.Objects.Symbol_Maps (Lith.Objects.Object,
                                    Lith.Objects."=");
@@ -285,6 +288,7 @@ private
          Handlers          : Lith.Objects.Object;
          R                 : Register_Values     :=
                                (others => Lith.Objects.No_Value);
+         Temporaries       : Temporary_Values;
          Args              : Argument_Values :=
                                (others => Lith.Objects.No_Value);
          Arg_Count         : Natural := 0;
@@ -329,6 +333,17 @@ private
      (Machine : in out Root_Lith_Machine;
       Expression : Lith.Objects.Object)
       return Lith.Objects.Object;
+
+   overriding procedure Set_Temporary
+     (Machine   : in out Root_Lith_Machine;
+      Temporary : Lith.Objects.Temporary_Register;
+      Value     : Lith.Objects.Object);
+
+   overriding function Get_Temporary
+     (Machine   : Root_Lith_Machine;
+      Temporary : Lith.Objects.Temporary_Register)
+      return Lith.Objects.Object
+   is (Machine.Temporaries (Temporary));
 
    function Is_Free (Machine : Root_Lith_Machine'Class;
                      Address : Lith.Objects.Cell_Address)

@@ -136,6 +136,10 @@ package body Lith.Machine is
          Mark (Machine.R (I));
       end loop;
 
+      for X of Machine.Temporaries loop
+         Mark (X);
+      end loop;
+
       for I in Machine.Args'Range loop
          Mark (Machine.Args (I));
       end loop;
@@ -1032,6 +1036,19 @@ package body Lith.Machine is
       end if;
       Machine.Current_Context := (File, Line_Number (Line));
    end Set_File_Context;
+
+   -------------------
+   -- Set_Temporary --
+   -------------------
+
+   overriding procedure Set_Temporary
+     (Machine   : in out Root_Lith_Machine;
+      Temporary : Lith.Objects.Temporary_Register;
+      Value     : Lith.Objects.Object)
+   is
+   begin
+      Machine.Temporaries (Temporary) := Value;
+   end Set_Temporary;
 
    ----------
    -- Show --
