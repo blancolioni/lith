@@ -16,6 +16,8 @@ with Lith.Options;
 
 package body Lith.Machine is
 
+   Trace_External_Objects : constant Boolean := False;
+
 --     function Get
 --       (Machine : Root_Lith_Machine'Class;
 --        Pair    : Lith.Objects.Object)
@@ -75,11 +77,11 @@ package body Lith.Machine is
             if Item.Marked then
                Item.Marked := False;
             elsif not Item.Free then
---                 if Lith.Options.Trace_GC then
---                    Ada.Text_IO.Put_Line
---                      ("Free external:" & I'Img & ": "
---                       & Item.External_Object.Name);
---                 end if;
+               if Trace_External_Objects then
+                  Ada.Text_IO.Put_Line
+                    ("Free external:" & I'Img & ": "
+                     & Item.External_Object.Name);
+               end if;
                Item.External_Object.Finalize (Machine);
                Free (Item.External_Object);
                Item.Free := True;
@@ -310,8 +312,10 @@ package body Lith.Machine is
          Machine.External_Objects (Address) := New_Entry;
       end if;
 
---        Ada.Text_IO.Put_Line
---          ("created " & External.Name & " at" & Address'Img);
+      if Trace_External_Objects then
+         Ada.Text_IO.Put_Line
+           ("created " & External.Name & " at" & Address'Img);
+      end if;
 
       return Lith.Objects.To_Object (Address);
    end Create_External_Reference;
@@ -687,9 +691,12 @@ package body Lith.Machine is
         procedure (X : in out Lith.Objects.Object))
    is
    begin
---        Ada.Text_IO.Put_Line
---          ("mark: "
---           & Machine.External_Objects (External).External_Object.Name);
+      if Trace_External_Objects then
+         Ada.Text_IO.Put_Line
+           ("mark: "
+            & Machine.External_Objects (External).External_Object.Name);
+      end if;
+
       Machine.External_Objects (External).External_Object.Mark
         (Machine, Mark);
       Machine.External_Objects (External).Marked := True;
