@@ -62,30 +62,6 @@ package body Lith.Memory is
       end;
    end Allocate;
 
-   ---------
-   -- Car --
-   ---------
-
-   function Car (Memory : Lith_Memory;
-                 Address : Lith.Objects.Cell_Address)
-                 return Lith.Objects.Object
-   is
-   begin
-      return Memory.Core (Address).Car;
-   end Car;
-
-   ---------
-   -- Cdr --
-   ---------
-
-   function Cdr (Memory : Lith_Memory;
-                 Address : Lith.Objects.Cell_Address)
-                 return Lith.Objects.Object
-   is
-   begin
-      return Memory.Core (Address).Cdr;
-   end Cdr;
-
    ----------
    -- Copy --
    ----------
