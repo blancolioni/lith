@@ -44,6 +44,20 @@ package body Lith.Objects.Interfaces is
      (Name : String;
       Eval : Root_Function_Interface'Class);
 
+   ----------
+   -- "or" --
+   ----------
+
+   function "or"
+     (Left, Right : Function_Argument_Type)
+      return Function_Argument_Type
+   is
+   begin
+      return (Choice,
+              new Function_Argument_Type'(Left),
+              new Function_Argument_Type'(Right));
+   end "or";
+
    ---------------------
    -- Bind_Primitives --
    ---------------------
@@ -161,6 +175,18 @@ package body Lith.Objects.Interfaces is
       Store : in out Object_Store'Class)
       return Object
    is
+      function Validate (Item : Function_Argument_Type;
+                         Arg  : Object)
+                         return Boolean
+      is (case Item.Option is
+             when Simple_Custom_Function =>
+                Item.Simple_Validator (Arg),
+             when Custom_Function        =>
+                Item.Validator (Store, Arg),
+             when Choice                 =>
+                Validate (Item.Left.all, Arg)
+          or else Validate (Item.Right.all, Arg));
+
    begin
       if not Fn.Arg_Constraint.Is_Empty then
          if Store.Argument_Count /= Fn.Arg_Constraint.Last_Index then
@@ -176,12 +202,7 @@ package body Lith.Objects.Interfaces is
                V : constant Function_Argument_Type :=
                      Fn.Arg_Constraint (I);
             begin
-               if (V.Simple_Validator /= null
-                   and then not V.Simple_Validator (Store.Argument (I)))
-                 or else (V.Validator /= null
-                          and then not V.Validator (Store,
-                                                    Store.Argument (I)))
-               then
+               if not Validate (V, Store.Argument (I)) then
                   raise Evaluation_Error with
                   Symbols.Get_Name (Name) & ": argument" & Positive'Image (I)
                     & ": invalid actual (found "
