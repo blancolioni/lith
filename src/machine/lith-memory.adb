@@ -206,6 +206,11 @@ package body Lith.Memory is
       if Memory.Callback /= null then
          Memory.Callback.After_GC;
       end if;
+
+      if Trace_GC then
+         Ada.Text_IO.Put_Line ("GC" & Memory.GC_Count'Img & " complete");
+      end if;
+
    end GC;
 
    ---------
