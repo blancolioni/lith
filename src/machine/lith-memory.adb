@@ -185,6 +185,8 @@ package body Lith.Memory is
            ("GC freed"
             & Integer'Image
               (Old_Alloc_Count - Memory.Alloc_Count)
+            & " and kept"
+            & Integer'Image (Memory.Alloc_Count)
             & " cells in"
             & Duration'Image ((Clock - Start) * 1000.0)
             & "ms");
