@@ -58,9 +58,10 @@ begin
       Machine.Finish_Profile;
    end if;
 
-   if Lith.Options.Exit_Statistics then
+   if Lith.Options.Exit_Statistics
+     or else Lith.Options.Self_Test
+   then
       Machine.Report_State;
-      Machine.Report_Memory;
    end if;
 
    if Lith.Options.Profile then
@@ -71,7 +72,6 @@ begin
 exception
    when others =>
       Machine.Report_State;
-      Machine.Report_Memory;
       Ada.Text_IO.Put_Line
         (Ada.Text_IO.Standard_Error,
          "exiting because of unhandled exception");
