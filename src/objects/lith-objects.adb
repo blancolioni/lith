@@ -86,12 +86,17 @@ package body Lith.Objects is
       return Object
    is
    begin
+      --  protect expression from gc
+      Store.Set_Temporary (1, Expression);
+
       Store.New_Evaluation_Environment;
       Store.Add_Binding (Name, Value);
       return X : constant Object :=
-        Store.Evaluate_With_Environment (Expression)
+        Store.Evaluate_With_Environment
+          (Store.Get_Temporary (1))
       do
          Store.Close_Evaluation_Environment;
+         Store.Clear_Temporary (1);
       end return;
    end Evaluate;
 
