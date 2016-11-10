@@ -345,6 +345,22 @@ private
       return Lith.Objects.Object
    is (Machine.Temporaries (Temporary));
 
+   overriding function Car
+     (Machine : Root_Lith_Machine;
+      Value   : Lith.Objects.Object)
+      return Lith.Objects.Object
+   is (Lith.Memory.Car
+       (Machine.Core,
+        Lith.Objects.To_Address (Value)));
+
+   overriding function Cdr
+     (Machine : Root_Lith_Machine;
+      Value   : Lith.Objects.Object)
+      return Lith.Objects.Object
+   is (Lith.Memory.Cdr
+       (Machine.Core,
+        Lith.Objects.To_Address (Value)));
+
    function Is_Free (Machine : Root_Lith_Machine'Class;
                      Address : Lith.Objects.Cell_Address)
                      return Boolean;
@@ -352,5 +368,15 @@ private
    procedure Hit
      (Machine  : in out Root_Lith_Machine'Class;
       Item     : Lith.Objects.Object);
+
+   function Car
+     (Machine : in out Root_Lith_Machine'Class)
+      return Lith.Objects.Object
+   is (Machine.Car (Machine.Pop));
+
+   function Cdr
+     (Machine : in out Root_Lith_Machine'Class)
+      return Lith.Objects.Object
+   is (Machine.Cdr (Machine.Pop));
 
 end Lith.Machine;

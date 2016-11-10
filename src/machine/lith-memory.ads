@@ -50,7 +50,9 @@ package Lith.Memory is
      (Memory    : in out Lith_Memory;
       Car, Cdr  : Lith.Objects.Object)
       return Lith.Objects.Object
-     with Post => Lith.Objects.Is_Pair (Allocate'Result)
+     with
+       Inline,
+       Post => Lith.Objects.Is_Pair (Allocate'Result)
      and then Valid (Memory, Lith.Objects.To_Address (Allocate'Result));
 
    type GC_Interface is limited interface;
@@ -111,5 +113,15 @@ private
          Allocations : Natural := 0;
          Collections : Natural := 0;
       end record;
+
+   function Car (Memory  : Lith_Memory;
+                 Address : Lith.Objects.Cell_Address)
+                 return Lith.Objects.Object
+   is (Memory.Core (Address).Car);
+
+   function Cdr (Memory  : Lith_Memory;
+                 Address : Lith.Objects.Cell_Address)
+                 return Lith.Objects.Object
+   is (Memory.Core (Address).Cdr);
 
 end Lith.Memory;
