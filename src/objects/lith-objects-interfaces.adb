@@ -5,7 +5,6 @@ with Ada.Exceptions;
 with Ada.Text_IO;
 
 with Lith.Parser;
-with Lith.Objects.Symbols;
 
 package body Lith.Objects.Interfaces is
 
@@ -169,6 +168,10 @@ package body Lith.Objects.Interfaces is
       return Eval.Evaluate (Def.Name, Store);
    end Evaluate;
 
+   --------------
+   -- Evaluate --
+   --------------
+
    overriding function Evaluate
      (Fn    : Simple_Function_Evaluator;
       Name  : Symbol_Type;
@@ -191,7 +194,7 @@ package body Lith.Objects.Interfaces is
       if not Fn.Arg_Constraint.Is_Empty then
          if Store.Argument_Count /= Fn.Arg_Constraint.Last_Index then
             raise Evaluation_Error with
-            Symbols.Get_Name (Name) & ": require"
+            Get_Name (Name) & ": require"
               & Natural'Image (Fn.Arg_Constraint.Last_Index)
               & " arguments, but found"
               & Natural'Image (Store.Argument_Count);
@@ -204,7 +207,7 @@ package body Lith.Objects.Interfaces is
             begin
                if not Validate (V, Store.Argument (I)) then
                   raise Evaluation_Error with
-                  Symbols.Get_Name (Name) & ": argument" & Positive'Image (I)
+                  Get_Name (Name) & ": argument" & Positive'Image (I)
                     & ": invalid actual (found "
                     & Store.Show (Store.Argument (I)) & ")";
                end if;
@@ -219,12 +222,25 @@ package body Lith.Objects.Interfaces is
             Ada.Text_IO.Put_Line
               (Ada.Text_IO.Standard_Error,
                "error while evaluating primitive "
-               & Symbols.Get_Name (Name)
+               & Get_Name (Name)
                & ": " & Ada.Exceptions.Exception_Message (E));
             raise;
       end;
 
    end Evaluate;
+
+   ------------
+   -- Is_Any --
+   ------------
+
+   function Is_Any (Store : in out Object_Store'Class;
+                    Value : Object)
+                    return Boolean
+   is
+      pragma Unreferenced (Store, Value);
+   begin
+      return True;
+   end Is_Any;
 
    -------------
    -- New_Def --
@@ -236,7 +252,7 @@ package body Lith.Objects.Interfaces is
    is
    begin
       Defs.Append
-        ((Symbols.Get_Symbol (Name), Function_Type (Defs.Last_Index + 1),
+        ((Get_Symbol (Name), Function_Type (Defs.Last_Index + 1),
          Function_Interface_Holder.To_Holder (Eval)));
    end New_Def;
 
@@ -268,7 +284,7 @@ package body Lith.Objects.Interfaces is
                                    & "))");
             begin
                Store.Define_Top_Level
-                 (Lith.Objects.Symbols.Get_Symbol (Is_Type_Name), Is_Type_Fn);
+                 (Lith.Objects.Get_Symbol (Is_Type_Name), Is_Type_Fn);
             end;
          end if;
       end Create_Standard_Objects;

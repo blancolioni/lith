@@ -3,7 +3,7 @@ with Ada.Text_IO;
 
 with Lith.Environment;
 with Lith.Objects.Interfaces;
-with Lith.Objects.Symbols;
+with Lith.Symbols;
 
 package body Lith.Evaluator is
 
@@ -104,7 +104,7 @@ package body Lith.Evaluator is
             end if;
             Actual_It := Store.Cdr (Actual_It);
             if not Rest and then Is_Pair (Formal_It)
-              and then Store.Car (Formal_It) = Lith.Objects.Symbols.Dot
+              and then Store.Car (Formal_It) = Lith.Symbols.Dot
             then
                Formal_It := Store.Cdr (Formal_It);
                Rest_Name := Store.Car (Formal_It);
@@ -163,7 +163,7 @@ package body Lith.Evaluator is
            "Cannot apply integer:" & Integer'Image (To_Integer (Fn));
       elsif Is_Symbol (Fn) then
          if Quasiquoting then
-            if Fn = Lith.Objects.Symbols.Unquote then
+            if Fn = Lith.Symbols.Unquote then
                return Evaluate (Store, Store.Car (Args), Env, False);
             else
                declare
@@ -182,15 +182,15 @@ package body Lith.Evaluator is
                   return Result;
                end;
             end if;
-         elsif Fn = Lith.Objects.Symbols.Quote then
+         elsif Fn = Lith.Symbols.Quote then
             return Store.Car (Args);
-         elsif Fn = Lith.Objects.Symbols.Quasiquote then
+         elsif Fn = Lith.Symbols.Quasiquote then
             return Evaluate (Store, Store.Car (Args), Env, True);
-         elsif Fn = Lith.Objects.Symbols.Lambda
-           or else Fn = Lith.Objects.Symbols.Macro
+         elsif Fn = Lith.Symbols.Lambda
+           or else Fn = Lith.Symbols.Macro
          then
             return Store.Cons (Fn, Args);
-         elsif Fn = Lith.Objects.Symbols.String_Atom then
+         elsif Fn = Lith.Symbols.String_Atom then
             return Store.Cons (Fn, Args);
          else
             declare
@@ -221,12 +221,12 @@ package body Lith.Evaluator is
                             Store.Car (Fn);
             begin
                if not Quasiquoting
-                 and then (Inner_Fn = Lith.Objects.Symbols.Lambda
-                           or else Inner_Fn = Lith.Objects.Symbols.Macro)
+                 and then (Inner_Fn = Lith.Symbols.Lambda
+                           or else Inner_Fn = Lith.Symbols.Macro)
                then
                   declare
                      Strict : constant Boolean :=
-                                Inner_Fn = Lith.Objects.Symbols.Lambda;
+                                Inner_Fn = Lith.Symbols.Lambda;
                      Formals : constant Object :=
                                  Store.Car (Store.Cdr (Fn));
                      Expr    : constant Object :=
@@ -313,7 +313,7 @@ package body Lith.Evaluator is
       elsif Is_Symbol (Expr) then
          if Quasiquoting then
             Result := Expr;
-         elsif Expr = Lith.Objects.Symbols.Quote then
+         elsif Expr = Lith.Symbols.Quote then
             Result := Expr;
          else
             declare

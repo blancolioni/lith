@@ -1,3 +1,5 @@
+with Lith.Symbols;
+
 package body Lith.Objects is
 
    ------------------
@@ -132,9 +134,31 @@ package body Lith.Objects is
       null;
    end Evaluate_With_Environment;
 
-   ---------
-   -- Get --
-   ---------
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Symbol : Symbol_Type)
+                      return String
+   is
+   begin
+      return Lith.Symbols.Symbol_To_String (Symbol);
+   end Get_Name;
+
+   ----------------
+   -- Get_Symbol --
+   ----------------
+
+   function Get_Symbol (Name : String)
+                        return Symbol_Type
+   is
+   begin
+      return Lith.Symbols.String_To_Symbol (Name);
+   end Get_Symbol;
+
+   -------------------
+   -- Get_Top_Level --
+   -------------------
 
    function Get_Top_Level
      (Store   : Object_Store'Class;
@@ -293,11 +317,11 @@ package body Lith.Objects is
    ----------
 
    procedure Push
-     (Store : in out Object_Store'Class;
-      Symbol  : Lith.Objects.Symbol_Type)
+     (Store  : in out Object_Store'Class;
+      Symbol : String)
    is
    begin
-      Store.Push (To_Object (Symbol));
+      Store.Push (To_Symbol_Object (Symbol));
    end Push;
 
    ----------
@@ -356,6 +380,15 @@ package body Lith.Objects is
       end loop;
       Store.Drop;
    end Scan_List;
+
+   ------------------
+   -- Single_Quote --
+   ------------------
+
+   function Single_Quote return Object is
+   begin
+      return Lith.Symbols.Quote_Symbol;
+   end Single_Quote;
 
    ----------
    -- Swap --

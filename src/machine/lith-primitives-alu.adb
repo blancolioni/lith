@@ -1,5 +1,4 @@
 with Lith.Objects.Symbol_Maps;
-with Lith.Objects.Symbols;
 
 with Lith.Objects.Large_Integers;
 with Lith.Objects.Real;
@@ -505,7 +504,7 @@ package body Lith.Primitives.ALU is
       Real_Op          : Real_Op_Function)
    is
    begin
-      Ops.Insert (Lith.Objects.Symbols.Get_Symbol (Symbol),
+      Ops.Insert (Lith.Objects.Get_Symbol (Symbol),
                   (Arithmetic, Identity, Integer_Op, Large_Integer_Op,
                    Real_Op));
    end Operator;
@@ -519,7 +518,7 @@ package body Lith.Primitives.ALU is
       Allowed              : Allowed_Compares)
    is
    begin
-      Ops.Insert (Lith.Objects.Symbols.Get_Symbol (Symbol),
+      Ops.Insert (Lith.Objects.Get_Symbol (Symbol),
                   (Comparison, Allowed));
    end Operator;
 

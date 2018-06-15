@@ -3,9 +3,6 @@ with Ada.Exceptions;
 with Ada.Text_IO;
 
 with Lith.Parser;
-with Lith.Objects.Symbols;
-
---  with Lith.Paths;
 
 package body Lith.Repl is
 
@@ -30,7 +27,7 @@ package body Lith.Repl is
       end if;
 
       while Store.Get_Top_Level
-        (Lith.Objects.Symbols.Get_Symbol ("__exit")) = False_Value
+        (Get_Symbol ("__exit")) = False_Value
       loop
          Put ("Lith> ");
          Flush;

@@ -1,4 +1,3 @@
-with Lith.Objects.Symbols;
 with Ada.Text_IO;
 
 package body Lith.Machine.Profiling is
@@ -12,7 +11,7 @@ package body Lith.Machine.Profiling is
       Arguments : Lith.Objects.Object)
       return Lith.Objects.Object
    is
-      use Lith.Objects, Lith.Objects.Symbols;
+      use Lith.Objects;
       Cost_Centre : constant Symbol_Type :=
                       To_Symbol (Profile.Machine.Cadr (Arguments));
    begin
@@ -89,7 +88,7 @@ package body Lith.Machine.Profiling is
            (Duration'Image (Centre.Ex_Children));
          Ada.Text_IO.Set_Col (32);
          Ada.Text_IO.Put_Line
-           (Lith.Objects.Symbols.Get_Name (Centre.Name));
+           (Lith.Objects.Get_Name (Centre.Name));
       end Show;
 
    begin

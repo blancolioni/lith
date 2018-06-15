@@ -30,7 +30,6 @@ package body Lith.Vectors is
       return Boolean
    is
       pragma Unreferenced (Store);
-      use type Object_Vectors.Vector;
    begin
       return X = Y;
    end Equal;

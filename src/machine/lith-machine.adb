@@ -6,10 +6,9 @@ with Ada.Characters.Handling;
 with Ada.Text_IO;
 
 with Lith.Parser;
-with Lith.Objects.Symbols;
+with Lith.Symbols;
 
 with Lith.Machine.SECD;
-
 with Lith.Memory.Tests;
 
 with Lith.Options;
@@ -355,7 +354,7 @@ package body Lith.Machine is
 
 --           Machine.Make_List
 --             ((Lith.Objects.To_Object
---              (Lith.Objects.Symbols.Get_Symbol
+--              (Lith.Symbols.Get_Symbol
 --                   ("global-error-handler")),
 --              Lith.Objects.Nil, Lith.Objects.Nil));
 --           Machine.Push (Lith.Objects.Nil);
@@ -423,7 +422,7 @@ package body Lith.Machine is
          It := Machine.Cdr (It);
       end loop;
 
-      Machine.Push (Lith.Objects.Symbols.Lambda_Symbol);
+      Machine.Push (Lith.Symbols.Lambda_Symbol);
       for I in 1 .. Count loop
          Machine.Push (Machine.Pop (Secondary));
       end loop;
@@ -609,7 +608,7 @@ package body Lith.Machine is
          null;
       elsif Is_Symbol (Item)
         and then (Is_Function (Item)
-                  or else Lith.Objects.Symbols.Is_Predefined
+                  or else Lith.Symbols.Is_Predefined
                     (To_Symbol (Item))
                   or else Machine.Get_Top_Level (To_Symbol (Item), No_Value)
                   /= No_Value)
@@ -797,10 +796,8 @@ package body Lith.Machine is
      (Machine : in out Root_Lith_Machine;
       Symbol_Name : String)
    is
-      use Lith.Objects, Lith.Objects.Symbols;
    begin
-      Machine.Push
-        (To_Object (Get_Symbol (Symbol_Name)));
+      Machine.Push (Lith.Objects.To_Symbol_Object (Symbol_Name));
    end Push;
 
    -------------------
@@ -917,7 +914,7 @@ package body Lith.Machine is
                          & Integer'Image
         (-Integer (Machine.Current_Context.File));
       File_Reference      : constant Lith.Objects.Symbol_Type :=
-                              Lith.Objects.Symbols.Get_Symbol
+                              Lith.Symbols.String_To_Symbol
                                 (File_Reference_Name);
       Value          : Lith.Objects.Object;
       Exists         : Boolean;
@@ -1193,10 +1190,10 @@ package body Lith.Machine is
            (Integer'Image (To_Integer (Value)),
             Ada.Strings.Left);
       elsif Is_Symbol (Value) then
-         if Value = Lith.Objects.Symbols.Quote_Symbol then
+         if Value = Lith.Objects.Single_Quote then
             return "'";
          else
-            return Lith.Objects.Symbols.Get_Name (To_Symbol (Value));
+            return Lith.Objects.To_Symbol_Name (Value);
          end if;
       elsif Is_Character (Value) then
          declare
@@ -1221,7 +1218,7 @@ package body Lith.Machine is
          if Is_String then
             return '"' & String_Image (Machine.Cdr (Value)) & '"';
          elsif Is_List then
-            if Machine.Car (Value) = Lith.Objects.Symbols.Quote_Symbol
+            if Machine.Car (Value) = Lith.Symbols.Quote_Symbol
               and then Machine.Cdr (Value) /= Nil
               and then Machine.Cddr (Value) = Nil
             then

@@ -1,10 +1,13 @@
-with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Characters.Handling;
+
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Fixed.Hash;
 
 with Lith.Objects.Symbol_Vectors;
 
-package body Lith.Objects.Symbols is
+package body Lith.Symbols is
+
+   use Lith.Objects;
 
    package Symbol_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps
@@ -39,7 +42,7 @@ package body Lith.Objects.Symbols is
 
    function Get_Builtin_Symbol
      (Symbol : Builtin_Symbol)
-      return Object;
+      return Lith.Objects.Object;
 
    function Builtin_Symbol_To_String
      (Symbol : Builtin_Symbol)
@@ -69,9 +72,10 @@ package body Lith.Objects.Symbols is
 
    function Get_Builtin_Symbol
      (Symbol : Builtin_Symbol)
-      return Object
+      return Lith.Objects.Object
    is
-      Sym : constant Symbol_Type := Builtin_Symbol'Pos (Symbol) + 1;
+      Sym : constant Symbol_Type :=
+              Unchecked_From_Natural (Builtin_Symbol'Pos (Symbol) + 1);
    begin
       return To_Object (Sym);
    end Get_Builtin_Symbol;
@@ -172,26 +176,24 @@ package body Lith.Objects.Symbols is
    function With_Exception_Handler_Symbol return Object
    is (Get_Builtin_Symbol (Sym_With_Exception_Handler));
 
-   --------------
-   -- Get_Name --
-   --------------
+   -------------------
+   -- Is_Predefined --
+   -------------------
 
-   function Get_Name
+   function Is_Predefined
      (Symbol : Lith.Objects.Symbol_Type)
-      return String
+      return Boolean
    is
    begin
-      return Symbol_To_Name_Map.Element (Symbol);
-   exception
-      when Constraint_Error =>
-         return "#error" & Integer'Image (-Integer (Symbol));
-   end Get_Name;
+      return Unchecked_To_Natural (Symbol)
+        <= Builtin_Symbol'Pos (Builtin_Symbol'Last) + 1;
+   end Is_Predefined;
 
-   ----------------
-   -- Get_Symbol --
-   ----------------
+   ----------------------
+   -- String_To_Symbol --
+   ----------------------
 
-   function Get_Symbol
+   function String_To_Symbol
      (Name : String)
       return Lith.Objects.Symbol_Type
    is
@@ -204,25 +206,29 @@ package body Lith.Objects.Symbols is
          Result := Name_To_Symbol_Map.Element (Name);
       end if;
       return Result;
-   end Get_Symbol;
+   end String_To_Symbol;
 
-   -------------------
-   -- Is_Predefined --
-   -------------------
+   ----------------------
+   -- Symbol_To_String --
+   ----------------------
 
-   function Is_Predefined
+   function Symbol_To_String
      (Symbol : Lith.Objects.Symbol_Type)
-      return Boolean
+      return String
    is
    begin
-      return Symbol <= Builtin_Symbol'Pos (Builtin_Symbol'Last) + 1;
-   end Is_Predefined;
+      return Symbol_To_Name_Map.Element (Symbol);
+   exception
+      when Constraint_Error =>
+         return "#error" & Integer'Image (-Unchecked_To_Natural (Symbol));
+   end Symbol_To_String;
 
 begin
    for Sym_Name in Builtin_Symbol loop
       declare
          Sym_Value : constant Symbol_Type :=
-                       Symbol_Type'(Builtin_Symbol'Pos (Sym_Name) + 1);
+                       Unchecked_From_Natural
+                         (Builtin_Symbol'Pos (Sym_Name) + 1);
          New_Value : Symbol_Type;
          Name : constant String :=
                   (if Sym_Name in Anonymous_Builtin_Symbol
@@ -246,4 +252,4 @@ begin
       end;
    end loop;
 
-end Lith.Objects.Symbols;
+end Lith.Symbols;
