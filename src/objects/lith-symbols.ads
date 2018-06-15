@@ -1,19 +1,23 @@
-package Lith.Objects.Symbols is
+with Lith.Objects;
 
-   function Get_Symbol (Name : String)
-                        return Lith.Objects.Symbol_Type;
-
-   function Get_Name (Symbol : Lith.Objects.Symbol_Type)
-                      return String;
+private package Lith.Symbols is
 
    function Is_Predefined
      (Symbol : Lith.Objects.Symbol_Type)
       return Boolean;
 
+   function Symbol_To_String
+     (Symbol : Lith.Objects.Symbol_Type)
+      return String;
+
+   function String_To_Symbol
+     (Name : String)
+      return Lith.Objects.Symbol_Type;
+
    function Apply_Syntax_Symbol return Lith.Objects.Object;
    function Begin_Symbol return Lith.Objects.Object;
-   function Car_Symbol return Object;
-   function Cdr_Symbol return Object;
+   function Car_Symbol return Lith.Objects.Object;
+   function Cdr_Symbol return Lith.Objects.Object;
    function Choice return Lith.Objects.Object;
    function Do_Car return Lith.Objects.Object;
    function Do_Cdr return Lith.Objects.Object;
@@ -43,4 +47,4 @@ package Lith.Objects.Symbols is
    function Wildcard_Symbol return Lith.Objects.Object;
    function With_Exception_Handler_Symbol return Lith.Objects.Object;
 
-end Lith.Objects.Symbols;
+end Lith.Symbols;

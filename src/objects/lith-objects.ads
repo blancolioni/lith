@@ -20,6 +20,8 @@ package Lith.Objects is
    End_Of_File_Object   : constant Object;
    Error_Value          : constant Object;
 
+   function Single_Quote return Object;
+
    function To_Object (X : Boolean) return Object
    is (if X then True_Value else False_Value);
 
@@ -36,6 +38,21 @@ package Lith.Objects is
    function Is_Symbol (Item : Object) return Boolean;
    function To_Object (Symbol : Symbol_Type) return Object;
    function To_Symbol (Item : Object) return Symbol_Type
+     with Pre => Is_Symbol (Item);
+
+   function Get_Symbol (Name : String)
+                        return Symbol_Type;
+
+   function Get_Name (Symbol : Symbol_Type)
+                      return String;
+
+   function To_Symbol_Object
+     (Name : String)
+      return Object;
+
+   function To_Symbol_Name
+     (Item : Object)
+      return String
      with Pre => Is_Symbol (Item);
 
    type Function_Type is private;
@@ -226,7 +243,7 @@ package Lith.Objects is
 
    procedure Push
      (Store   : in out Object_Store'Class;
-      Symbol  : Lith.Objects.Symbol_Type);
+      Symbol  : String);
 
    procedure Push
      (Store   : in out Object_Store'Class;
@@ -411,6 +428,14 @@ package Lith.Objects is
       return Object
       is abstract;
 
+   function Unchecked_To_Natural
+     (Symbol : Symbol_Type)
+      return Natural;
+
+   function Unchecked_From_Natural
+     (Value : Natural)
+      return Symbol_Type;
+
 private
 
    Payload_Bits : constant := 29;
@@ -475,5 +500,25 @@ private
       record
          Count : Natural := 0;
       end record;
+
+   function To_Symbol_Object
+     (Name : String)
+      return Object
+   is (To_Object (Get_Symbol (Name)));
+
+   function To_Symbol_Name
+     (Item : Object)
+      return String
+   is (Get_Name (To_Symbol (Item)));
+
+   function Unchecked_From_Natural
+     (Value : Natural)
+      return Symbol_Type
+   is (Symbol_Type (Value));
+
+   function Unchecked_To_Natural
+     (Symbol : Symbol_Type)
+      return Natural
+   is (Natural (Symbol));
 
 end Lith.Objects;

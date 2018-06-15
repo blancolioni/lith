@@ -5,11 +5,13 @@ with Lith.Parser.Lexical;            use Lith.Parser.Lexical;
 with Lith.Parser.Lexical.Identifiers;
 
 with Lith.Objects.Real;
-with Lith.Objects.Symbols;
 
 with Lith.IO.Text_IO;
 
 package body Lith.Parser is
+
+   function "+" (Left : String) return Lith.Objects.Object
+                 renames Lith.Objects.To_Symbol_Object;
 
    procedure Parse_S_Expression
      (Store : in out Lith.Objects.Object_Store'Class;
@@ -69,8 +71,6 @@ package body Lith.Parser is
       Quasiquote : Boolean)
    is
 
-      use Lith.Objects.Symbols;
-
       procedure Parse_Rest_Of_List;
 
       ------------------------
@@ -116,7 +116,7 @@ package body Lith.Parser is
          when Tok_Left_Paren =>
             Scan;
             if Quasiquote then
-               Store.Push (Get_Symbol ("list"));
+               Store.Push (Lith.Objects.To_Symbol_Object ("list"));
             end if;
             Parse_Rest_Of_List;
             if Quasiquote then
@@ -132,23 +132,23 @@ package body Lith.Parser is
             elsif Tok_Text = "#string" then
                Store.Push (Lith.Objects.String_Value);
             elsif Quasiquote then
-               Store.Push (Get_Symbol ("quote"));
-               Store.Push (Get_Symbol (Tok_Text));
+               Store.Push (Lith.Objects.Single_Quote);
+               Store.Push (Lith.Objects.To_Symbol_Object (Tok_Text));
                Store.Push (Lith.Objects.Nil);
                Store.Cons;
                Store.Cons;
             else
-               Store.Push (Get_Symbol (Tok_Text));
+               Store.Push (+Tok_Text);
             end if;
             Scan;
          when Tok_Start_Vector =>
             Scan;
-            Store.Push (Lith.Objects.Symbols.Get_Symbol ("vector"));
+            Store.Push ("vector");
             Parse_Rest_Of_List;
             Store.Cons;
          when Tok_Start_Bytevector =>
             Scan;
-            Store.Push (Lith.Objects.Symbols.Get_Symbol ("bytevector"));
+            Store.Push ("bytevector");
             Parse_Rest_Of_List;
             Store.Cons;
 
@@ -163,13 +163,13 @@ package body Lith.Parser is
          when Tok_Quote =>
             Scan;
             if Quasiquote then
-               Store.Push (Get_Symbol ("quote"));
-               Store.Push (Get_Symbol ("quote"));
+               Store.Push (Lith.Objects.Single_Quote);
+               Store.Push (Lith.Objects.Single_Quote);
                Store.Push (Lith.Objects.Nil);
                Store.Cons;
                Store.Cons;
             else
-               Store.Push (Get_Symbol ("quote"));
+               Store.Push (Lith.Objects.Single_Quote);
             end if;
             Parse_S_Expression (Store, Quasiquote);
             Store.Push (Lith.Objects.Nil);

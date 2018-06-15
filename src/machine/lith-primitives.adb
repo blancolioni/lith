@@ -7,7 +7,6 @@ with Lith.Objects.Interfaces;
 with Lith.Objects.Large_Integers;
 with Lith.Objects.Real;
 with Lith.Primitives.ALU;
-with Lith.Objects.Symbols;
 
 with Lith.IO.Text_IO;
 with Lith.Parser;
@@ -420,8 +419,7 @@ package body Lith.Primitives is
                          Store.Get_External_Object
                            (Store.Argument (1));
             Name_Sym : constant String :=
-                         Lith.Objects.Symbols.Get_Name
-                           (To_Symbol (Store.Argument (1 + 1)));
+                         To_Symbol_Name (Store.Argument (1 + 1));
          begin
             return To_Object (X_Object.Name = Name_Sym);
          end;
@@ -463,9 +461,8 @@ package body Lith.Primitives is
       pragma Unreferenced (Store);
    begin
       Next_Gensym_Index := Next_Gensym_Index + 1;
-      return Lith.Objects.To_Object
-        (Lith.Objects.Symbols.Get_Symbol
-           ("#:g" & Integer'Image (-Next_Gensym_Index)));
+      return Lith.Objects.To_Symbol_Object
+        ("#:g" & Integer'Image (-Next_Gensym_Index));
    end Evaluate_Gensym;
 
    ------------------------------
@@ -619,7 +616,7 @@ package body Lith.Primitives is
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      use Lith.Objects, Lith.Objects.Symbols;
+      use Lith.Objects;
    begin
       return Store.Call_Hook ("cost-centre",
                               To_Object (Get_Symbol ("finish")));
@@ -633,7 +630,7 @@ package body Lith.Primitives is
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      use Lith.Objects, Lith.Objects.Symbols;
+      use Lith.Objects;
    begin
       return Store.Call_Hook ("cost-centre",
                               To_Object (Get_Symbol ("start")));
@@ -706,8 +703,7 @@ package body Lith.Primitives is
       Name : constant String :=
                Store.To_String (Store.Argument (1));
    begin
-      return Lith.Objects.To_Object
-        (Lith.Objects.Symbols.Get_Symbol (Name));
+      return Lith.Objects.To_Symbol_Object (Name);
    end Evaluate_String_To_Symbol;
 
    -------------------------------

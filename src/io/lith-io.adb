@@ -1,5 +1,4 @@
 with Lith.Objects.Interfaces;
-with Lith.Objects.Symbols;
 
 with Lith.IO.Text_IO;
 
@@ -72,8 +71,7 @@ package body Lith.IO is
                   Port      : constant Port_Type'Class :=
                                 Port_Type'Class (Ext.all);
                   Attribute : constant String :=
-                                Lith.Objects.Symbols.Get_Name
-                                  (To_Symbol (Store.Argument (2)));
+                                To_Symbol_Name (Store.Argument (2));
                begin
                   if Attribute = "input" then
                      Result := Port.Input;

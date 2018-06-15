@@ -118,8 +118,7 @@ private
 
    function Is_Any (Store : in out Object_Store'Class;
                     Value : Object)
-                    return Boolean
-   is (True);
+                    return Boolean;
 
    function Any_Argument_Type return Function_Argument_Type
    is (Custom_Argument (Is_Any'Access));
