@@ -110,6 +110,7 @@
       (test (string>=? "hello" "hello" "hella"))
       (test (string<=? "hella" "hello"))
       (test (string<=? "hella" "hello" "hello"))
+      (test (string? "0123456789012345678901234567890123456789012345678901234567890123456789"))
    )
    
 (define (unit-test-characters)
