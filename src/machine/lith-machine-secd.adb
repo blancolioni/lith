@@ -811,16 +811,18 @@ package body Lith.Machine.SECD is
 
                F := Machine.Car (C);
 
-               declare
-                  It : Object := Machine.Cdr (C);
-               begin
-                  Machine.Arg_Count := 0;
-                  while It /= Nil loop
-                     Machine.Arg_Count := Machine.Arg_Count + 1;
-                     Machine.Args (Machine.Arg_Count) := Machine.Car (It);
-                     It := Machine.Cdr (It);
-                  end loop;
-               end;
+               if F /= String_Value then
+                  declare
+                     It : Object := Machine.Cdr (C);
+                  begin
+                     Machine.Arg_Count := 0;
+                     while It /= Nil loop
+                        Machine.Arg_Count := Machine.Arg_Count + 1;
+                        Machine.Args (Machine.Arg_Count) := Machine.Car (It);
+                        It := Machine.Cdr (It);
+                     end loop;
+                  end;
+               end if;
 
                if F = Symbols.Quote_Symbol then
                   if Machine.Arg_Count /= 1 then
