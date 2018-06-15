@@ -508,20 +508,6 @@ package body Lith.Machine.SECD is
                Machine.Hit (C);
             end if;
 
-            declare
-               Trace : Object;
-               Found : Boolean;
-            begin
-               Machine.Get_Top_Level
-                 (Get_Symbol ("*trace-eval*"),
-                  Trace, Found);
-
-               if Found and then Trace /= False_Value then
-                  Lith.Options.Trace_Evaluation := True;
-                  Lith.Options.Trace_Patterns := True;
-               end if;
-            end;
-
             if Lith.Options.Trace_Evaluation then
                Ada.Text_IO.Put_Line
                  ("Eval: "
