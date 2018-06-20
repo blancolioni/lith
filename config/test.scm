@@ -130,6 +130,10 @@
       (test (char<? #\A #\B #\C))
       (test (not (char>? #\A #\B #\C)))
       (test (char=? #\C #\C #\C))
+      (test (eq? (char-upcase #\a) #\A))
+      (test (eq? (char-downcase #\P) #\p))
+      (test (eq? (char-upcase #\+) #\+))
+      (test (eq? (char-downcase #\!) #\!))
       )
       
 (define (unit-test-exceptions)
