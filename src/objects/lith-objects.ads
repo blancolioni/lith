@@ -25,6 +25,9 @@ package Lith.Objects is
    function To_Object (X : Boolean) return Object
    is (if X then True_Value else False_Value);
 
+   function To_Boolean (X : Object) return Boolean
+   is (X /= Nil and then X /= False_Value and then X /= Undefined);
+
    type Cell_Address is mod 2 ** 32
      with Size => 32;
 
