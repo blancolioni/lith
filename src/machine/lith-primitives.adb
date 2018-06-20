@@ -1,4 +1,6 @@
 with Ada.Calendar;
+with Ada.Characters.Handling;
+
 with Ada.Text_IO;
 
 with WL.Random;
@@ -49,7 +51,15 @@ package body Lith.Primitives is
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
+   function Evaluate_Char_Downcase
+     (Store       : in out Lith.Objects.Object_Store'Class)
+      return Lith.Objects.Object;
+
    function Evaluate_Char_To_Integer
+     (Store       : in out Lith.Objects.Object_Store'Class)
+      return Lith.Objects.Object;
+
+   function Evaluate_Char_Upcase
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object;
 
@@ -180,7 +190,9 @@ package body Lith.Primitives is
       Define_Function ("#alu", 3, Evaluate_ALU'Access);
       Define_Function ("car", 1, Evaluate_Car'Access);
       Define_Function ("cdr", 1, Evaluate_Cdr'Access);
+      Define_Function ("char-downcase", 1, Evaluate_Char_Downcase'Access);
       Define_Function ("char->integer", 1, Evaluate_Char_To_Integer'Access);
+      Define_Function ("char-upcase", 1, Evaluate_Char_Upcase'Access);
       Define_Function ("cons", 2, Evaluate_Cons'Access);
       Define_Function ("current-jiffy", 2, Evaluate_Current_Jiffy'Access);
       Define_Function ("eq?", 2, Evaluate_Eq'Access);
@@ -309,6 +321,21 @@ package body Lith.Primitives is
       end if;
    end Evaluate_Cdr;
 
+   ----------------------------
+   -- Evaluate_Char_Downcase --
+   ----------------------------
+
+   function Evaluate_Char_Downcase
+     (Store       : in out Lith.Objects.Object_Store'Class)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects;
+   begin
+      return To_Object
+        (Ada.Characters.Handling.To_Lower
+           (To_Character (Store.Argument (1))));
+   end Evaluate_Char_Downcase;
+
    ------------------------------
    -- Evaluate_Char_To_Integer --
    ------------------------------
@@ -324,6 +351,21 @@ package body Lith.Primitives is
            (Character'Pos
                 (To_Character (Store.Argument (1)))));
    end Evaluate_Char_To_Integer;
+
+   --------------------------
+   -- Evaluate_Char_Upcase --
+   --------------------------
+
+   function Evaluate_Char_Upcase
+     (Store       : in out Lith.Objects.Object_Store'Class)
+      return Lith.Objects.Object
+   is
+      use Lith.Objects;
+   begin
+      return To_Object
+        (Ada.Characters.Handling.To_Upper
+           (To_Character (Store.Argument (1))));
+   end Evaluate_Char_Upcase;
 
    -------------------
    -- Evaluate_Cons --
