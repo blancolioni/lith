@@ -5,6 +5,8 @@ generic
    with function "=" (Left, Right : Element_Type) return Boolean is <>;
 package Lith.Objects.Symbol_Vectors is
 
+   pragma Elaborate_Body;
+
    type Vector is tagged private;
 
    function Element (Container : Vector;

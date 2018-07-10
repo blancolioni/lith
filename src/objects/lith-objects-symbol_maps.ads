@@ -5,6 +5,8 @@ generic
    with function "=" (Left, Right : Element_Type) return Boolean is <>;
 package Lith.Objects.Symbol_Maps is
 
+   pragma Elaborate_Body;
+
    type Map is tagged private;
 
    function Contains (Container : Map;
