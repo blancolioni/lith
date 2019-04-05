@@ -7,7 +7,6 @@ source_dir = src/machine
 source_dir = src/objects
 source_dir = src/parser
 source_dir = src/types
-depend = { project = WLib version = any }
 main_unit = lith-driver
 exec_name = lith
 config_dir = config
