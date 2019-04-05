@@ -1,9 +1,8 @@
 with Ada.Calendar;
 with Ada.Characters.Handling;
+with Ada.Numerics.Discrete_Random;
 
 with Ada.Text_IO;
-
-with WL.Random;
 
 with Lith.Objects.Interfaces;
 with Lith.Objects.Large_Integers;
@@ -19,6 +18,11 @@ package body Lith.Primitives is
    Jiffy_Start_Time : constant Ada.Calendar.Time :=
                          Ada.Calendar.Clock;
    Jiffies_Per_Second : constant := 1000.0;
+
+   package Lith_Random is
+     new Ada.Numerics.Discrete_Random (Natural);
+
+   Lith_Gen : Lith_Random.Generator;
 
    type Predicate_Function is access
      function (Value : Lith.Objects.Object) return Boolean;
@@ -689,7 +693,7 @@ package body Lith.Primitives is
       Max : constant Integer :=
               Lith.Objects.To_Integer (Store.Argument (1));
       Result : constant Integer :=
-                 WL.Random.Random_Number (0, Max - 1);
+              Lith_Random.Random (Lith_Gen) mod Max;
    begin
       return Lith.Objects.To_Object (Result);
    end Evaluate_Random;
