@@ -1,7 +1,0 @@
-syntax: glob
-build/*
-*~
-*.gpr
-judge*
-*.orig
-src/driver/lith-paths.ads
