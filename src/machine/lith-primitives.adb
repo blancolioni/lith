@@ -1,5 +1,6 @@
 with Ada.Calendar;
 with Ada.Characters.Handling;
+with Ada.Directories;
 with Ada.Numerics.Discrete_Random;
 
 with Ada.Text_IO;
@@ -11,6 +12,7 @@ with Lith.Primitives.ALU;
 
 with Lith.IO.Text_IO;
 with Lith.Parser;
+with Lith.Paths;
 
 package body Lith.Primitives is
 
@@ -644,8 +646,17 @@ package body Lith.Primitives is
      (Store       : in out Lith.Objects.Object_Store'Class)
       return Lith.Objects.Object
    is
-      Path : constant String :=
-               Store.To_String (Store.Argument (1));
+      Local_Path : constant String :=
+        Store.To_String (Store.Argument (1));
+      Installed_Path : constant String :=
+        Lith.Paths.Config_File
+          (Store.To_String (Store.Argument (1)));
+      Path           : constant String :=
+        (if Ada.Directories.Exists (Local_Path)
+         then Local_Path
+         elsif Ada.Directories.Exists (Installed_Path)
+         then Installed_Path
+         else Local_Path);
    begin
       if Store.Load (Path) then
          return Lith.Objects.True_Value;

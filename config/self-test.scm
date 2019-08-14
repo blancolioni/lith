@@ -1,2 +1,2 @@
-(load "config/test.scm")
+(load "test.scm")
 (unit-test-all)
