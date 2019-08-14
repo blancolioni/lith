@@ -92,6 +92,8 @@ private
                                  Custom_Function,
                                  Choice);
 
+   type Function_Argument_Access is access Function_Argument_Type;
+
    type Function_Argument_Type
      (Option : Argument_Option_Type := Simple_Custom_Function)
    is
@@ -102,7 +104,7 @@ private
             when Custom_Function =>
                Validator        : Argument_Validator_Function;
             when Choice =>
-               Left, Right      : access Function_Argument_Type;
+               Left, Right      : Function_Argument_Access;
          end case;
       end record;
 

@@ -94,9 +94,11 @@ private
    type Core_Memory_Type is
      array (Lith.Objects.Cell_Address range <>) of Object_Pair;
 
+   type Core_Memory_Access is access Core_Memory_Type;
+
    type Lith_Memory is
       record
-         Core        : access Core_Memory_Type;
+         Core        : Core_Memory_Access;
          Top         : Lith.Objects.Cell_Address;
          Free        : Lith.Objects.Cell_Address;
          From_Space  : Lith.Objects.Cell_Address;
