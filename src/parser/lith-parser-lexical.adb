@@ -1,3 +1,4 @@
+with Ada.Characters.Latin_1;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed;
@@ -213,7 +214,8 @@ package body Lith.Parser.Lexical is
    function Is_White_Space return Boolean is
    begin
       return Ada.Characters.Handling.Is_Space
-        (Current_Stream.Ch);
+        (Current_Stream.Ch)
+        or else Current_Stream.Ch = Ada.Characters.Latin_1.HT;
    end Is_White_Space;
 
    --------------------
