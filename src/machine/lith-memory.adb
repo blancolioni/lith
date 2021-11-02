@@ -162,9 +162,11 @@ package body Lith.Memory is
          Memory.Callback.Before_GC;
       end if;
 
+      pragma Warnings (Off);  --  disable overlapping actuals warning
       Mark (Memory, Memory.Alloc_Car);
       Mark (Memory, Memory.Alloc_Cdr);
       Mark (Memory, Memory.Test);
+      pragma Warnings (On);
 
       while Memory.Scan < Memory.Free loop
          declare

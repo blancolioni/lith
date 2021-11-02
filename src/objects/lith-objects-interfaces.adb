@@ -252,8 +252,9 @@ package body Lith.Objects.Interfaces is
    is
    begin
       Defs.Append
-        ((Get_Symbol (Name), Function_Type (Defs.Last_Index + 1),
-         Function_Interface_Holder.To_Holder (Eval)));
+        (Function_Record'
+           (Get_Symbol (Name), Function_Type (Defs.Last_Index + 1),
+            Function_Interface_Holder.To_Holder (Eval)));
    end New_Def;
 
    ------------------

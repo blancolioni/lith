@@ -21,8 +21,9 @@ package body Lith.Memory.Tests is
                X    : constant Object := To_Object (I * J);
                Item : constant Object :=
                         Allocate (Memory, X, X);
+               Test : constant Object := Memory.Test;
             begin
-               Set_Cdr (Memory, To_Address (Item), Memory.Test);
+               Set_Cdr (Memory, To_Address (Item), Test);
                Memory.Test := Item;
             end;
          end loop;
